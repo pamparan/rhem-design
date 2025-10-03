@@ -1,0 +1,26 @@
+{
+  "name": "edge-device-prototype",
+  "version": "1.0.0",
+  "description": "Clickable prototype for Edge Device Management interface",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["prototype", "edge-devices", "patternfly"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@patternfly/react-core": "^6.3.1",
+    "@patternfly/react-icons": "^6.3.1",
+    "@patternfly/react-table": "^6.3.1",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7"
+  }
+}
