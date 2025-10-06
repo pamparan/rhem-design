@@ -167,7 +167,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                       isLoading={isLoading}
                       onClick={handleLogin}
                     >
-                      {isLoading ? 'Generating...' : 'Generate Login Command'}
+                      {isLoading ? 'Generating...' : 'Login'}
                     </Button>
                   </FormGroup>
                 </Form>
