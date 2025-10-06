@@ -13,29 +13,29 @@ import {
 
 export const getStatusColor = (status: DeviceStatus | ApplicationStatus | SystemUpdateStatus): string => {
   const statusColors: Record<string, string> = {
-    // Device statuses - matching dropdown filter colors exactly
-    ONLINE: '#3e8635',           // Green for success
-    OFFLINE: '#6a6e73',          // Gray for unknown/offline
-    ERROR: '#c9190b',            // Red for error
-    DEGRADED: '#f0ab00',         // Amber for warning
-    UNKNOWN: '#6a6e73',          // Gray for unknown
-    REBOOTING: '#2b9af3',        // Blue for info/progress
-    POWERED_OFF: '#2b9af3',      // Blue for info
-    SUSPENDED: '#ec7a08',        // Orange for suspended
-    PENDING_SYNC: '#2b9af3',     // Blue for info/progress
+    // Device statuses - matching the exact colors from reference image
+    ONLINE: '#5cb85c',           // Green - matches "Online" in image
+    OFFLINE: '#999999',          // Gray - matches "Unknown" in image
+    ERROR: '#d9534f',            // Red - matches "Error" in image
+    DEGRADED: '#f0ad4e',         // Orange/Yellow - matches "Degraded" in image
+    UNKNOWN: '#6c757d',          // Gray - matches "Unknown" in image
+    REBOOTING: '#337ab7',        // Blue - matches "Rebooting" in image
+    POWERED_OFF: '#333333',      // Black - matches "Powered off" in image
+    SUSPENDED: '#ff8c00',        // Orange - matches "Suspended" in image
+    PENDING_SYNC: '#5bc0de',     // Light blue - matches "Pending Sync" in image
 
     // Application statuses - matching dropdown filter colors exactly
-    HEALTHY: '#3e8635',          // Green for success
+    HEALTHY: '#5cb85c',          // Green for success
 
     // System update statuses - matching dropdown filter colors exactly
-    UP_TO_DATE: '#3e8635',       // Green for success
-    OUT_OF_DATE: '#f0ab00',      // Amber for warning
-    UPDATING: '#2b9af3',         // Blue for info/progress
-    FAILED: '#c9190b',           // Red for error
-    ROLLING_BACK: '#f0ab00',     // Amber for warning
+    UP_TO_DATE: '#5cb85c',       // Green for success
+    OUT_OF_DATE: '#f0ad4e',      // Orange for warning
+    UPDATING: '#337ab7',         // Blue for info/progress
+    FAILED: '#d9534f',           // Red for error
+    ROLLING_BACK: '#f0ad4e',     // Orange for warning
   };
 
-  return statusColors[status] || '#6a6e73';
+  return statusColors[status] || '#6c757d';
 };
 
 export const getStatusLabelStyle = (status: DeviceStatus | ApplicationStatus | SystemUpdateStatus) => {
@@ -151,7 +151,7 @@ export const generateChartData = (devices: Device[]): ChartData[] => {
   if (total === 0) return [];
 
   const statusCounts = countDevicesByStatus(devices);
-  const circumference = 2 * Math.PI * 50; // radius = 50
+  const circumference = 2 * Math.PI * 65; // radius = 65 (updated to match chart size)
   let cumulativeOffset = 0;
 
   return statusCounts.map(({ count, color, label }) => {

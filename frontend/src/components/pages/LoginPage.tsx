@@ -125,10 +125,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
           </p>
         </div>
 
-        {/* Main login card */}
-        <Card style={{ boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)' }}>
-          <CardBody style={{ padding: '32px' }}>
-            {!showLoginCommand ? (
+        {!showLoginCommand ? (
+          /* Login form with card */
+          <Card style={{ boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)' }}>
+            <CardBody style={{ padding: '32px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p>
                   Enter your credentials to generate a CLI login command for Flight Control.
@@ -172,7 +172,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                   </FormGroup>
                 </Form>
               </div>
-            ) : (
+            </CardBody>
+          </Card>
+        ) : (
+          /* Token display without card */
+          <div style={{ padding: '32px', backgroundColor: 'transparent' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <Alert
                   variant="success"
@@ -252,9 +256,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                   to manage your edge devices from your terminal.
                 </Alert>
               </div>
-            )}
-          </CardBody>
-        </Card>
+          </div>
+        )}
       </div>
     </div>
   );

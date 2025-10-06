@@ -181,24 +181,27 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   // Create donut chart data
   const createDonutSVG = (data: Array<{label: string, value: number, color: string}>, total: number, centerText: string) => {
     let cumulativePercentage = 0;
-    const radius = 80;
-    const strokeWidth = 20;
+    const radius = 65;
+    const strokeWidth = 10;
+    const circumference = 2 * Math.PI * radius;
 
     return (
-      <div style={{ position: 'relative', width: '200px', height: '200px' }}>
-        <svg width="200" height="200" style={{ transform: 'rotate(-90deg)' }}>
+      <div style={{ position: 'relative', width: '160px', height: '160px', margin: '0 auto' }}>
+        <svg width="160" height="160" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="80" cy="80" r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
           {data.map((segment, index) => {
             const percentage = total > 0 ? (segment.value / total) * 100 : 0;
-            const strokeDasharray = `${percentage * 2.51} 251`; // 251 ≈ 2π * radius / 100 * 50
-            const strokeDashoffset = -cumulativePercentage * 2.51;
+            const strokeLength = (percentage / 100) * circumference;
+            const strokeDasharray = `${strokeLength} ${circumference}`;
+            const strokeDashoffset = -cumulativePercentage * circumference / 100;
 
             cumulativePercentage += percentage;
 
             return percentage > 0 ? (
               <circle
                 key={index}
-                cx="100"
-                cy="100"
+                cx="80"
+                cy="80"
                 r={radius}
                 fill="transparent"
                 stroke={segment.color}
@@ -217,8 +220,8 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
           textAlign: 'center',
           color: '#151515',
         }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{centerText}</div>
-          <div style={{ fontSize: '12px', color: '#6a6e73', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{centerText}</div>
+          <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
             {total === 4540 ? 'Application Status' : total === 3210 ? 'Device Status' : 'System Update Status'}
           </div>
         </div>
@@ -381,28 +384,37 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                     <GridItem span={4}>
                       <div style={{ textAlign: 'center' }}>
                         {createDonutSVG([
-                          { label: 'Healthy', value: 2280, color: '#3e8635' },
-                          { label: 'Error', value: 1135, color: '#c9190b' },
-                          { label: 'Degraded', value: 228, color: '#f0ab00' },
-                          { label: 'Unknown', value: 897, color: '#6a6e73' },
+                          { label: 'Healthy', value: 2280, color: '#5cb85c' },
+                          { label: 'Error', value: 1135, color: '#d9534f' },
+                          { label: 'Degraded', value: 228, color: '#f0ad4e' },
+                          { label: 'Unknown', value: 897, color: '#6c757d' },
                         ], 4540, '4540')}
 
-                        <div style={{ marginTop: '16px', textAlign: 'left' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#3e8635', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>50% Healthy</span>
+                        {/* Legend in clean horizontal rows */}
+                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '180px', margin: '16px auto 0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
+                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>50%</span>
+                              <span>Healthy</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#d9534f', flexShrink: 0 }}></span>
+                              <span style={{ color: '#d9534f', fontWeight: '500' }}>25%</span>
+                              <span>Error</span>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#c9190b', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>25% Error</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#f0ab00', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>5% Degraded</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#6a6e73', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>20% Unknown</span>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#f0ad4e', flexShrink: 0 }}></span>
+                              <span style={{ color: '#f0ad4e', fontWeight: '500' }}>5%</span>
+                              <span>Degraded</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
+                              <span style={{ color: '#6c757d', fontWeight: '500' }}>20%</span>
+                              <span>Unknown</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -412,28 +424,37 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                     <GridItem span={4}>
                       <div style={{ textAlign: 'center' }}>
                         {createDonutSVG([
-                          { label: 'Online', value: 2247, color: '#3e8635' },
-                          { label: 'Error', value: 321, color: '#c9190b' },
-                          { label: 'Rebooting', value: 642, color: '#2b9af3' },
-                          { label: 'Unknown', value: 0, color: '#6a6e73' },
+                          { label: 'Online', value: 2247, color: '#5cb85c' },
+                          { label: 'Error', value: 321, color: '#d9534f' },
+                          { label: 'Rebooting', value: 642, color: '#337ab7' },
+                          { label: 'Unknown', value: 0, color: '#6c757d' },
                         ], 3210, '3210')}
 
-                        <div style={{ marginTop: '16px', textAlign: 'left' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#3e8635', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>70% Online</span>
+                        {/* Legend in clean horizontal rows */}
+                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '180px', margin: '16px auto 0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
+                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>70%</span>
+                              <span>Online</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#d9534f', flexShrink: 0 }}></span>
+                              <span style={{ color: '#d9534f', fontWeight: '500' }}>10%</span>
+                              <span>Error</span>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#c9190b', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>10% Error</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#2b9af3', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>20% Rebooting</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#6a6e73', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>0% Unknown</span>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#337ab7', flexShrink: 0 }}></span>
+                              <span style={{ color: '#337ab7', fontWeight: '500' }}>20%</span>
+                              <span>Rebooting</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
+                              <span style={{ color: '#6c757d', fontWeight: '500' }}>0%</span>
+                              <span>Unknown</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -443,28 +464,37 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                     <GridItem span={4}>
                       <div style={{ textAlign: 'center' }}>
                         {createDonutSVG([
-                          { label: 'Up to date', value: 1391, color: '#3e8635' },
-                          { label: 'Out of date', value: 214, color: '#f0ab00' },
-                          { label: 'Updating', value: 428, color: '#2b9af3' },
-                          { label: 'Unknown', value: 107, color: '#6a6e73' },
+                          { label: 'Up to date', value: 1391, color: '#5cb85c' },
+                          { label: 'Out of date', value: 214, color: '#f0ad4e' },
+                          { label: 'Updating', value: 428, color: '#337ab7' },
+                          { label: 'Unknown', value: 107, color: '#6c757d' },
                         ], 2140, '2140')}
 
-                        <div style={{ marginTop: '16px', textAlign: 'left' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#3e8635', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>65% Up to date</span>
+                        {/* Legend in clean horizontal rows */}
+                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px', margin: '16px auto 0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
+                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>65%</span>
+                              <span>Up to date</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#f0ad4e', flexShrink: 0 }}></span>
+                              <span style={{ color: '#f0ad4e', fontWeight: '500' }}>10%</span>
+                              <span>Out of date</span>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#f0ab00', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>10% Out of date</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#2b9af3', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>20% Updating</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ width: '12px', height: '12px', backgroundColor: '#6a6e73', marginRight: '8px' }}></div>
-                            <span style={{ fontSize: '14px' }}>5% Unknown</span>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#337ab7', flexShrink: 0 }}></span>
+                              <span style={{ color: '#337ab7', fontWeight: '500' }}>20%</span>
+                              <span>Updating</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
+                              <span style={{ color: '#6c757d', fontWeight: '500' }}>5%</span>
+                              <span>Unknown</span>
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -107,74 +107,91 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
               </div>
 
               {/* Charts Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '40px' }}>
                 {/* Application Status Chart */}
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
-                    <svg width="120" height="120" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="8"
-                              strokeDasharray="251.3 314.2" strokeDashoffset="0" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" strokeWidth="8"
-                              strokeDasharray="31.4 314.2" strokeDashoffset="-251.3" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#ef4444" strokeWidth="8"
-                              strokeDasharray="15.7 314.2" strokeDashoffset="-282.7" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#6b7280" strokeWidth="8"
-                              strokeDasharray="15.7 314.2" strokeDashoffset="-298.4" transform="rotate(-90 60 60)" />
+                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#10b981" strokeWidth="10"
+                              strokeDasharray="326.73 408.41" strokeDashoffset="0" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#f59e0b" strokeWidth="10"
+                              strokeDasharray="40.84 408.41" strokeDashoffset="-326.73" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#ef4444" strokeWidth="10"
+                              strokeDasharray="20.42 408.41" strokeDashoffset="-367.57" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#6b7280" strokeWidth="10"
+                              strokeDasharray="20.42 408.41" strokeDashoffset="-387.99" transform="rotate(-90 80 80)" />
                     </svg>
                     <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                      <div style={{ fontSize: '12px', color: '#6a6e73' }}>Application Status</div>
+                      <div style={{ fontSize: '14px', color: '#6a6e73', textAlign: 'center' }}>Application Status</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '12px', textAlign: 'left' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                      <span>80% Healthy</span>
+
+                  {/* Legend in clean horizontal rows */}
+                  <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '180px', margin: '0 auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', flexShrink: 0 }}></span>
+                        <span style={{ color: '#10b981', fontWeight: '500' }}>80%</span>
+                        <span>Healthy</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', flexShrink: 0 }}></span>
+                        <span style={{ color: '#f59e0b', fontWeight: '500' }}>10%</span>
+                        <span>Degraded</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span>
-                      <span>10% Degraded</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>
-                      <span>5% Error</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#6b7280', borderRadius: '50%' }}></span>
-                      <span>5% Unknown</span>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#ef4444', flexShrink: 0 }}></span>
+                        <span style={{ color: '#ef4444', fontWeight: '500' }}>5%</span>
+                        <span>Error</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#6b7280', flexShrink: 0 }}></span>
+                        <span style={{ color: '#6b7280', fontWeight: '500' }}>5%</span>
+                        <span>Unknown</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Device Status Chart */}
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
-                    <svg width="120" height="120" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#e5e7eb" strokeWidth="10" />
                       {deviceChartData.map((data, index) => (
                         <circle
                           key={data.status}
-                          cx="60"
-                          cy="60"
-                          r="50"
+                          cx="80"
+                          cy="80"
+                          r="65"
                           fill="none"
                           stroke={data.color}
-                          strokeWidth="8"
+                          strokeWidth="10"
                           strokeDasharray={data.strokeDasharray}
                           strokeDashoffset={data.strokeDashoffset}
-                          transform="rotate(-90 60 60)"
+                          transform="rotate(-90 80 80)"
                         />
                       ))}
                     </svg>
                     <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                      <div style={{ fontSize: '12px', color: '#6a6e73' }}>Device Status</div>
+                      <div style={{ fontSize: '14px', color: '#6a6e73', textAlign: 'center' }}>Device Status</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '12px', textAlign: 'left' }}>
-                    {deviceChartData.map((data) => (
-                      <div key={data.status} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                        <span style={{ width: '8px', height: '8px', backgroundColor: data.color, borderRadius: '50%' }}></span>
-                        <span>{Math.round(data.percentage)}% {data.status}</span>
+
+                  {/* Legend in clean horizontal rows */}
+                  <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '220px', margin: '0 auto' }}>
+                    {Array.from({ length: Math.ceil(deviceChartData.length / 2) }, (_, rowIndex) => (
+                      <div key={rowIndex} style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                        {deviceChartData.slice(rowIndex * 2, rowIndex * 2 + 2).map((data) => (
+                          <div key={data.status} style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                            <span style={{ width: '8px', height: '8px', backgroundColor: data.color, flexShrink: 0 }}></span>
+                            <span style={{ color: data.color, fontWeight: '500' }}>{Math.round(data.percentage)}%</span>
+                            <span>{data.status}</span>
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -182,38 +199,51 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
 
                 {/* System Update Status Chart */}
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
-                    <svg width="120" height="120" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="8"
-                              strokeDasharray="235.6 314.2" strokeDashoffset="0" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" strokeWidth="8"
-                              strokeDasharray="9.4 314.2" strokeDashoffset="-235.6" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#3b82f6" strokeWidth="8"
-                              strokeDasharray="47.1 314.2" strokeDashoffset="-245.0" transform="rotate(-90 60 60)" />
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#9333ea" strokeWidth="8"
-                              strokeDasharray="22.0 314.2" strokeDashoffset="-292.1" transform="rotate(-90 60 60)" />
+                  <div style={{ position: 'relative', display: 'inline-block', marginBottom: '20px' }}>
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#e5e7eb" strokeWidth="10" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#10b981" strokeWidth="10"
+                              strokeDasharray="306.31 408.41" strokeDashoffset="0" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#f59e0b" strokeWidth="10"
+                              strokeDasharray="12.25 408.41" strokeDashoffset="-306.31" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#3b82f6" strokeWidth="10"
+                              strokeDasharray="61.26 408.41" strokeDashoffset="-318.56" transform="rotate(-90 80 80)" />
+                      <circle cx="80" cy="80" r="65" fill="none" stroke="#6b7280" strokeWidth="10"
+                              strokeDasharray="28.59 408.41" strokeDashoffset="-379.82" transform="rotate(-90 80 80)" />
                     </svg>
                     <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
-                      <div style={{ fontSize: '12px', color: '#6a6e73' }}>System Update Status</div>
+                      <div style={{ fontSize: '14px', color: '#6a6e73', textAlign: 'center' }}>
+                        <div>System Update</div>
+                        <div>Status</div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '12px', textAlign: 'left' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                      <span>75% Up to date</span>
+
+                  {/* Legend in clean horizontal rows */}
+                  <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px', margin: '0 auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#10b981', flexShrink: 0 }}></span>
+                        <span style={{ color: '#10b981', fontWeight: '500' }}>75%</span>
+                        <span>Up to date</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', flexShrink: 0 }}></span>
+                        <span style={{ color: '#f59e0b', fontWeight: '500' }}>3%</span>
+                        <span>Out of date</span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span>
-                      <span>3% Out of date</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#3b82f6', borderRadius: '50%' }}></span>
-                      <span>15% Updating</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ width: '8px', height: '8px', backgroundColor: '#9333ea', borderRadius: '50%' }}></span>
-                      <span>7% Unknown</span>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#3b82f6', flexShrink: 0 }}></span>
+                        <span style={{ color: '#3b82f6', fontWeight: '500' }}>15%</span>
+                        <span>Updating</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <span style={{ width: '8px', height: '8px', backgroundColor: '#6b7280', flexShrink: 0 }}></span>
+                        <span style={{ color: '#6b7280', fontWeight: '500' }}>7%</span>
+                        <span>Unknown</span>
+                      </div>
                     </div>
                   </div>
                 </div>
