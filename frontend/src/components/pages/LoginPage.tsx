@@ -109,7 +109,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             borderRadius: '4px'
           }}
         >
-          Back to RHEM
+          Back to Flight Control
         </Button>
       )}
 
@@ -118,7 +118,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
         {/* Logo/Brand header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <Title headingLevel="h1" size="2xl" style={{ marginBottom: '8px' }}>
-            RHEM
+            Flight Control
           </Title>
           <p style={{ color: '#6b7280', fontSize: '16px', margin: 0 }}>
             CLI Authentication Portal
@@ -131,7 +131,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
             {!showLoginCommand ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p>
-                  Enter your credentials to generate a CLI login command for RHEM.
+                  Enter your credentials to generate a CLI login command for Flight Control.
                 </p>
 
                 <Form>
@@ -182,7 +182,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
 
                 <div>
                   <p>
-                    Copy and run this command in your terminal to authenticate with RHEM:
+                    Copy and run this command in your terminal to authenticate with Flight Control:
                   </p>
                 </div>
 
@@ -248,7 +248,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack }) => {
                   title="Next steps"
                   isInline
                 >
-                  After running this command, you'll be authenticated and can use the RHEM CLI
+                  After running this command, you'll be authenticated and can use the Flight Control CLI
                   to manage your edge devices from your terminal.
                 </Alert>
               </div>
