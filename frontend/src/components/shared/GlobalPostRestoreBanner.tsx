@@ -22,7 +22,7 @@ const GlobalPostRestoreBanner: React.FC<GlobalPostRestoreBannerProps> = ({
       title="System recovery complete"
       isInline
     >
-      Flight Control is waiting for devices to connect and report their status. Some devices may require manual action to resume operation.
+      RHEM is waiting for devices to connect and report their status. Some devices may require manual action to resume operation.
     </Alert>
   );
 };

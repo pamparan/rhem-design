@@ -64,10 +64,10 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
         </MastheadToggle>
         <MastheadBrand>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '18px', color: 'white' }}>Flight Control</span>
+            <span style={{ fontWeight: 'bold', fontSize: '18px', color: 'white' }}>RHEM</span>
             <img
               src={`${(import.meta as any).env?.BASE_URL || '/'}logo.png`}
-              alt="Flight Control Logo"
+              alt="RHEM Logo"
               style={{ width: '32px', height: '24px', flexShrink: 0 }}
               onError={(e) => {
                 // Fallback to simple icon if image doesn't load

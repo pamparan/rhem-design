@@ -65,7 +65,7 @@ const DeviceModal: React.FC<DeviceModalProps> = ({
             <h4 style={{ marginBottom: '12px', fontWeight: '600' }}>3. Boot and verify</h4>
             <p style={{ color: '#6a6e73' }}>
               Restart your device to apply the configuration. The device should appear in the device list within a few minutes
-              and report a "Pending sync" status until it successfully connects to Flight Control.
+              and report a "Pending sync" status until it successfully connects to RHEM.
             </p>
           </div>
 
