@@ -12,6 +12,7 @@ import {
 import {
   ExternalLinkAltIcon,
 } from '@patternfly/react-icons';
+import OrganizationSelectorModal from '../shared/OrganizationSelectorModal';
 
 interface SubNavProps {
   activeItem?: string;
@@ -23,6 +24,19 @@ interface SubNavProps {
 
 const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [currentOrganization, setCurrentOrganization] = useState('charlie');
+
+  const organizationNames = {
+    'alpha': 'Alpha Corp',
+    'bravo': 'Bravo Industries',
+    'charlie': 'Charlie Services'
+  };
+
+  const handleOrganizationSelect = (orgId: string) => {
+    setCurrentOrganization(orgId);
+    console.log('Organization switched to:', orgId);
+  };
 
   // Simple subnav with organization switch and CLI login button - appears on all pages
   return (
@@ -56,8 +70,13 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
         <FlexItem>
           <Select
             isOpen={isServiceSelectorOpen}
-            selected="Charlie Services"
-            onSelect={() => setIsServiceSelectorOpen(false)}
+            selected={organizationNames[currentOrganization as keyof typeof organizationNames]}
+            onSelect={(event, value) => {
+              setIsServiceSelectorOpen(false);
+              if (value === 'change-org') {
+                setIsOrgModalOpen(true);
+              }
+            }}
             onOpenChange={setIsServiceSelectorOpen}
             toggle={(toggleRef) => (
               <MenuToggle
@@ -66,18 +85,24 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
                 style={{ fontSize: '14px' }}
                 onClick={() => setIsServiceSelectorOpen(!isServiceSelectorOpen)}
               >
-                Charlie Services
+                {organizationNames[currentOrganization as keyof typeof organizationNames]}
               </MenuToggle>
             )}
           >
             <SelectList>
-              <SelectOption value="charlie">Charlie Services</SelectOption>
-              <SelectOption value="bravo">Bravo Services</SelectOption>
-              <SelectOption value="alpha">Alpha Services</SelectOption>
+              <SelectOption value="change-org">Change Organization</SelectOption>
             </SelectList>
           </Select>
         </FlexItem>
       </Flex>
+
+      {/* Organization Selector Modal */}
+      <OrganizationSelectorModal
+        isOpen={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+        onOrganizationSelect={handleOrganizationSelect}
+        currentOrganization={currentOrganization}
+      />
     </div>
   );
 };

@@ -12,6 +12,8 @@ import {
   DropdownItem,
   MenuToggle,
 } from '@patternfly/react-core';
+import { CaretDownIcon } from '@patternfly/react-icons';
+import OrganizationSelectorModal from '../shared/OrganizationSelectorModal';
 
 interface AppMastheadProps {
   isSidebarOpen: boolean;
@@ -23,8 +25,24 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
   onSidebarToggle,
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [currentOrganization, setCurrentOrganization] = useState('charlie');
+
+  const organizationNames = {
+    'alpha': 'Alpha Corp',
+    'bravo': 'Bravo Industries',
+    'charlie': 'Charlie Services'
+  };
+
+  const handleOrganizationSelect = (orgId: string) => {
+    setCurrentOrganization(orgId);
+    // Here you would typically refresh the application data
+    console.log('Organization switched to:', orgId);
+  };
 
   return (
+    // Organization Selector with Change Organization option
     <Masthead style={{ backgroundColor: '#151515' }}>
       <MastheadMain>
         <MastheadToggle>
@@ -71,59 +89,121 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
           </div>
         </MastheadBrand>
       </MastheadMain>
-      <MastheadContent style={{ marginLeft: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Button variant="plain" style={{ color: 'white', fontSize: '16px', padding: '8px' }}>
-            ?
-          </Button>
-          <span style={{ fontSize: '14px', color: 'white' }}>Demo User</span>
-          <Dropdown
-            isOpen={isUserDropdownOpen}
-            onOpenChange={(isOpen: boolean) => setIsUserDropdownOpen(isOpen)}
-            popperProps={{
-              placement: 'bottom-end',
-              modifiers: [
-                {
-                  name: 'offset',
-                  options: {
-                    offset: [-8, 8]
+      <MastheadContent>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+          {/* Organization Switcher */}
+          <div style={{ marginLeft: '32px' }}>
+            <Dropdown
+              isOpen={isOrgDropdownOpen}
+              onOpenChange={(isOpen: boolean) => setIsOrgDropdownOpen(isOpen)}
+              popperProps={{
+                placement: 'bottom-start',
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 8]
+                    }
                   }
-                }
-              ]
-            } as any}
-            toggle={(toggleRef) => (
-              <MenuToggle
-                ref={toggleRef}
-                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                variant="plain"
-                isExpanded={isUserDropdownOpen}
-                style={{ padding: '4px' }}
-              >
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#333'
-                }}>
-                  DU
-                </div>
-              </MenuToggle>
-            )}
-          >
-            <DropdownList>
-              <DropdownItem value="profile" key="profile">Profile</DropdownItem>
-              <DropdownItem value="settings" key="settings">Settings</DropdownItem>
-              <DropdownItem value="logout" key="logout">Logout</DropdownItem>
-            </DropdownList>
-          </Dropdown>
+                ]
+              } as any}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
+                  variant="plain"
+                  isExpanded={isOrgDropdownOpen}
+                  style={{
+                    color: 'white',
+                    fontSize: '16px',
+                    padding: '8px 12px',
+                    backgroundColor: 'transparent',
+                    border: 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{organizationNames[currentOrganization as keyof typeof organizationNames]}</span>
+                    <CaretDownIcon size="sm" style={{ color: 'white' }} />
+                  </div>
+                </MenuToggle>
+              )}
+            >
+              <DropdownList>
+                <DropdownItem
+                  key="change-org"
+                  onClick={() => {
+                    setIsOrgDropdownOpen(false);
+                    setIsOrgModalOpen(true);
+                  }}
+                >
+                  Change Organization
+                </DropdownItem>
+              </DropdownList>
+            </Dropdown>
+          </div>
+
+          {/* User area - pushed to the right */}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Button variant="plain" style={{ color: 'white', fontSize: '16px', padding: '8px' }}>
+              ?
+            </Button>
+            <span style={{ fontSize: '14px', color: 'white' }}>Demo User</span>
+            <Dropdown
+              isOpen={isUserDropdownOpen}
+              onOpenChange={(isOpen: boolean) => setIsUserDropdownOpen(isOpen)}
+              popperProps={{
+                placement: 'bottom-end',
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [-8, 8]
+                    }
+                  }
+                ]
+              } as any}
+              toggle={(toggleRef) => (
+                <MenuToggle
+                  ref={toggleRef}
+                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  variant="plain"
+                  isExpanded={isUserDropdownOpen}
+                  style={{ padding: '4px' }}
+                >
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#333'
+                  }}>
+                    DU
+                  </div>
+                </MenuToggle>
+              )}
+            >
+              <DropdownList>
+                <DropdownItem value="profile" key="profile">Profile</DropdownItem>
+                <DropdownItem value="settings" key="settings">Settings</DropdownItem>
+                <DropdownItem value="logout" key="logout">Logout</DropdownItem>
+              </DropdownList>
+            </Dropdown>
+          </div>
         </div>
       </MastheadContent>
+
+      {/* Organization Selector Modal */}
+      <OrganizationSelectorModal
+        isOpen={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+        onOrganizationSelect={handleOrganizationSelect}
+        currentOrganization={currentOrganization}
+      />
     </Masthead>
   );
 };
