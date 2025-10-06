@@ -13,7 +13,6 @@ import {
   MenuToggle,
 } from '@patternfly/react-core';
 import { CaretDownIcon } from '@patternfly/react-icons';
-import OrganizationSelectorModal from '../shared/OrganizationSelectorModal';
 
 interface AppMastheadProps {
   isSidebarOpen: boolean;
@@ -25,21 +24,6 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
   onSidebarToggle,
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
-  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
-  const [currentOrganization, setCurrentOrganization] = useState('charlie');
-
-  const organizationNames = {
-    'alpha': 'Alpha Corp',
-    'bravo': 'Bravo Industries',
-    'charlie': 'Charlie Services'
-  };
-
-  const handleOrganizationSelect = (orgId: string) => {
-    setCurrentOrganization(orgId);
-    // Here you would typically refresh the application data
-    console.log('Organization switched to:', orgId);
-  };
 
   return (
     // Organization Selector with Change Organization option
@@ -91,56 +75,6 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
       </MastheadMain>
       <MastheadContent>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-          {/* Organization Switcher */}
-          <div style={{ marginLeft: '32px' }}>
-            <Dropdown
-              isOpen={isOrgDropdownOpen}
-              onOpenChange={(isOpen: boolean) => setIsOrgDropdownOpen(isOpen)}
-              popperProps={{
-                placement: 'bottom-start',
-                modifiers: [
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, 8]
-                    }
-                  }
-                ]
-              } as any}
-              toggle={(toggleRef) => (
-                <MenuToggle
-                  ref={toggleRef}
-                  onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                  variant="plain"
-                  isExpanded={isOrgDropdownOpen}
-                  style={{
-                    color: 'white',
-                    fontSize: '16px',
-                    padding: '8px 12px',
-                    backgroundColor: 'transparent',
-                    border: 'none'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{organizationNames[currentOrganization as keyof typeof organizationNames]}</span>
-                    <CaretDownIcon size="sm" style={{ color: 'white' }} />
-                  </div>
-                </MenuToggle>
-              )}
-            >
-              <DropdownList>
-                <DropdownItem
-                  key="change-org"
-                  onClick={() => {
-                    setIsOrgDropdownOpen(false);
-                    setIsOrgModalOpen(true);
-                  }}
-                >
-                  Change Organization
-                </DropdownItem>
-              </DropdownList>
-            </Dropdown>
-          </div>
 
           {/* User area - pushed to the right */}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -197,13 +131,6 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
         </div>
       </MastheadContent>
 
-      {/* Organization Selector Modal */}
-      <OrganizationSelectorModal
-        isOpen={isOrgModalOpen}
-        onClose={() => setIsOrgModalOpen(false)}
-        onOrganizationSelect={handleOrganizationSelect}
-        currentOrganization={currentOrganization}
-      />
     </Masthead>
   );
 };
