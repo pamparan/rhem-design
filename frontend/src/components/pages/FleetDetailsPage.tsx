@@ -34,11 +34,17 @@ import {
   InProgressIcon,
   WarningTriangleIcon,
 } from '@patternfly/react-icons';
+import SuspendedDevicesAlert from '../shared/SuspendedDevicesAlert';
+import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
 import { mockDevices } from '../../data/mockData';
+import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
 
 interface FleetDetailsPageProps {
   fleetId: string;
   onBack: () => void;
+  showPostRestoreBanner?: boolean;
+  onDismissPostRestoreBanner?: () => void;
+  onNavigateToDevices?: () => void;
 }
 
 // Mock fleet data - in real app would come from props or API
@@ -130,12 +136,21 @@ const mockEvents = [
   },
 ];
 
-const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({ fleetId, onBack }) => {
+const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
+  fleetId,
+  onBack,
+  showPostRestoreBanner,
+  onDismissPostRestoreBanner,
+  onNavigateToDevices
+}) => {
   const [activeTabKey, setActiveTabKey] = useState<string | number>('details');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   // Filter devices for this fleet
   const fleetDevices = mockDevices.filter(device => device.fleet === mockFleetDetails.name);
+
+  // Calculate suspended devices count for this fleet
+  const suspendedCount = getSuspendedDevicesCount(fleetDevices);
 
   // Calculate device status counts
   const deviceStatusCounts = {
@@ -257,6 +272,31 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({ fleetId, onBack }) 
           </FlexItem>
         </Flex>
       </PageSection>
+
+      {/* Global Post-Restore Banner */}
+      {showPostRestoreBanner && (
+        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
+          <GlobalPostRestoreBanner
+            isVisible={showPostRestoreBanner}
+            onDismiss={onDismissPostRestoreBanner}
+          />
+        </PageSection>
+      )}
+
+      {/* Suspended Devices Alert */}
+      {suspendedCount > 0 && (
+        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
+          <SuspendedDevicesAlert
+            suspendedCount={suspendedCount}
+            onViewSuspendedDevices={() => {
+              // Navigate to suspended devices filtered for this fleet
+              if (onNavigateToDevices) {
+                onNavigateToDevices();
+              }
+            }}
+          />
+        </PageSection>
+      )}
 
       {/* Tabs */}
       <PageSection style={{ paddingTop: 0 }}>
