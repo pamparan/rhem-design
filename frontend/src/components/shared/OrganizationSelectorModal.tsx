@@ -34,20 +34,23 @@ const OrganizationSelectorModal: React.FC<OrganizationSelectorModalProps> = ({
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Initialize selectedOrg with currentOrganization when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      setSelectedOrg(currentOrganization);
+    }
+  }, [isOpen, currentOrganization]);
+
   const handleContinue = async () => {
     if (selectedOrg) {
       setIsLoading(true);
 
-      // Simulate application refresh/reload
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate brief loading time for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       onOrganizationSelect(selectedOrg);
+      setIsLoading(false);
       onClose();
-
-      // Simulate page refresh by briefly hiding and showing content
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
     }
   };
 
@@ -203,7 +206,7 @@ const OrganizationSelectorModal: React.FC<OrganizationSelectorModalProps> = ({
           {isLoading ? (
             <>
               <Spinner size="sm" style={{ marginRight: '8px' }} />
-              Refreshing application...
+              Switching organization...
             </>
           ) : (
             'Continue'
