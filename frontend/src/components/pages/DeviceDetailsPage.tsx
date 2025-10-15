@@ -163,9 +163,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                 <DropdownItem onClick={() => console.log('Edit configurations')}>
                   Edit configurations
                 </DropdownItem>
-                <DropdownItem onClick={() => console.log('View device details')}>
-                  View device details
-                </DropdownItem>
                 <DropdownItem onClick={() => console.log('Decommission device')}>
                   Decommission device
                 </DropdownItem>
