@@ -222,7 +222,6 @@ const ResumeSuspendedDevicesPage: React.FC<ResumeSuspendedDevicesPageProps> = ({
                   <Th>Location</Th>
                   <Th>Status</Th>
                   <Th>Config Version</Th>
-                  <Th>Last Seen</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -267,7 +266,6 @@ const ResumeSuspendedDevicesPage: React.FC<ResumeSuspendedDevicesPageProps> = ({
                       </div>
                     </Td>
                     <Td>{device.configVersion || '--'}</Td>
-                    <Td>{device.lastSeen}</Td>
                   </Tr>
                 ))}
               </Tbody>

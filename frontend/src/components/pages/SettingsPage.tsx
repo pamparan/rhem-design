@@ -3,19 +3,11 @@ import {
   PageSection,
   Title,
 } from '@patternfly/react-core';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 
-interface SettingsPageProps {
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
-}
+interface SettingsPageProps {}
 
-const SettingsPage: React.FC<SettingsPageProps> = ({
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices')
-}) => {
+const SettingsPage: React.FC<SettingsPageProps> = () => {
   return (
     <>
       {/* Header */}
@@ -26,16 +18,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         <p>Settings content coming soon...</p>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-            onViewDevices={onNavigateToDevices}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners />
     </>
   );
 };

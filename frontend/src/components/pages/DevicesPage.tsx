@@ -4,19 +4,13 @@ import {
   Title,
   Card,
   CardBody,
-  Label,
   Button,
   Toolbar,
   ToolbarContent,
   ToolbarItem,
   ToolbarGroup,
   SearchInput,
-  Select,
-  SelectOption,
-  SelectList,
   MenuToggle,
-  MenuToggleElement,
-  Alert,
   Dropdown,
   DropdownList,
   DropdownItem,
@@ -36,42 +30,29 @@ import {
   CheckCircleIcon,
   ClockIcon,
   PauseCircleIcon,
-  ExclamationCircleIcon,
   ExclamationTriangleIcon,
-  QuestionCircleIcon,
   PowerOffIcon,
-  RedoIcon,
-  ArrowCircleUpIcon,
-  DownloadIcon,
   InProgressIcon,
   TimesCircleIcon
 } from '@patternfly/react-icons';
-import SuspendedDevicesAlert from '../shared/SuspendedDevicesAlert';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import { mockDevices } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
-import { getStatusColor, getStatusLabel, getStatusIcon, getSuspendedDevicesCount, countDevicesByStatus, getFilteredDevices, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
+import { getStatusLabel, getStatusIcon, countDevicesByStatus, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
 
 interface DevicesPageProps {
   onAddDeviceClick: () => void;
   onDeviceSelect: (deviceId: string) => void;
   onNavigateToSuspendedDevices?: () => void;
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
 }
 
 const DevicesPage: React.FC<DevicesPageProps> = ({
   onAddDeviceClick,
   onDeviceSelect,
   onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices')
 }) => {
   const [searchValue, setSearchValue] = useState('');
-  const [statusFilter, setStatusFilter] = useState<DeviceStatus | ''>('');
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
@@ -95,17 +76,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
     return acc;
   }, {} as Record<DeviceStatus, number>);
 
-  const statusOptions = [
-    { value: '' as const, label: `All (${mockDevices.length})` },
-    { value: 'ONLINE' as const, label: `Online (${statusCountsMap.ONLINE || 0})` },
-    { value: 'SUSPENDED' as const, label: `Suspended (${statusCountsMap.SUSPENDED || 0})` },
-    { value: 'PENDING_SYNC' as const, label: `Pending Sync (${statusCountsMap.PENDING_SYNC || 0})` },
-    { value: 'OFFLINE' as const, label: `Offline (${statusCountsMap.OFFLINE || 0})` },
-    { value: 'ERROR' as const, label: `Error (${statusCountsMap.ERROR || 0})` },
-    { value: 'DEGRADED' as const, label: `Degraded (${statusCountsMap.DEGRADED || 0})` },
-    { value: 'REBOOTING' as const, label: `Rebooting (${statusCountsMap.REBOOTING || 0})` },
-  ].filter(option => option.value === '' || statusCountsMap[option.value] > 0);
-
   // Enhanced filtering logic with multi-select
   const filteredDevices = mockDevices.filter(device => {
     const matchesSearch = device.name.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -123,8 +93,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
 
     return matchesSearch && matchesDeviceStatus && matchesApplicationStatus && matchesSystemUpdateStatus;
   });
-
-  const suspendedCount = getSuspendedDevicesCount(mockDevices);
 
   // Filter options with counts and PatternFly icons matching the exact design image colors
   const filterOptions = {
@@ -205,26 +173,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
         </Title>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-            onViewDevices={onNavigateToDevices}
-          />
-        </PageSection>
-      )}
-
-      {/* Suspended Devices Alert */}
-      {suspendedCount > 0 && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <SuspendedDevicesAlert
-            suspendedCount={suspendedCount}
-            onViewSuspendedDevices={onNavigateToSuspendedDevices}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
 
       {/* Main Content */}
       <PageSection>
@@ -259,7 +208,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                                 <Checkbox
                                   id={`device-${option.value}`}
                                   isChecked={selectedFilters.deviceStatus.has(option.value as DeviceStatus)}
-                                  onChange={(checked) => handleFilterChange('deviceStatus', option.value, checked)}
+                                  onChange={(_event, checked) => handleFilterChange('deviceStatus', option.value, checked)}
                                   label={
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                       <option.icon style={{ color: option.color, fontSize: '14px' }} />
@@ -279,7 +228,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                                 <Checkbox
                                   id={`app-${option.value}`}
                                   isChecked={selectedFilters.applicationStatus.has(option.value)}
-                                  onChange={(checked) => handleFilterChange('applicationStatus', option.value, checked)}
+                                  onChange={(_event, checked) => handleFilterChange('applicationStatus', option.value, checked)}
                                   label={
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                       <option.icon style={{ color: option.color, fontSize: '14px' }} />
@@ -299,7 +248,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                                 <Checkbox
                                   id={`system-${option.value}`}
                                   isChecked={selectedFilters.systemUpdateStatus.has(option.value)}
-                                  onChange={(checked) => handleFilterChange('systemUpdateStatus', option.value, checked)}
+                                  onChange={(_event, checked) => handleFilterChange('systemUpdateStatus', option.value, checked)}
                                   label={
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                       <option.icon style={{ color: option.color, fontSize: '14px' }} />
@@ -371,7 +320,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                   <Th>Application status</Th>
                   <Th>Device status</Th>
                   <Th>System update status</Th>
-                  <Th>Last seen</Th>
                   <Th width={10}></Th>
                 </Tr>
               </Thead>
@@ -466,7 +414,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                         {getStatusLabel(device.systemUpdateStatus)}
                       </div>
                     </Td>
-                    <Td>{device.lastSeen}</Td>
                     <Td>
                       <Dropdown
                         isOpen={kebabOpenStates[device.id] || false}

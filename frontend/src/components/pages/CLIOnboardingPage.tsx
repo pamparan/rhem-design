@@ -31,13 +31,9 @@ import {
   InfoCircleIcon,
   TerminalIcon,
 } from '@patternfly/react-icons';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 
-interface CLIOnboardingPageProps {
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
-}
+interface CLIOnboardingPageProps {}
 
 // Mock auth config and service info
 const mockAuthConfig = {
@@ -49,11 +45,7 @@ const mockAuthConfig = {
 // Mock token (in real implementation, this would come from session/cookies)
 const mockUserToken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZmxpZ2h0Y3RsOnVzZXItdG9rZW4iLCJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50IiwiYXVkIjpbImZsaWdodGN0bCJdLCJleHAiOjE3MzU4MjQwMDB9';
 
-const CLIOnboardingPage: React.FC<CLIOnboardingPageProps> = ({
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices')
-}) => {
+const CLIOnboardingPage: React.FC<CLIOnboardingPageProps> = () => {
   const [activeTabKey, setActiveTabKey] = useState<string | number>('quickstart');
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
   const [authConfig, setAuthConfig] = useState(mockAuthConfig);
@@ -172,15 +164,7 @@ const CLIOnboardingPage: React.FC<CLIOnboardingPageProps> = ({
         </TextContent>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners />
 
       {/* Main Content */}
       <PageSection>
@@ -193,7 +177,7 @@ const CLIOnboardingPage: React.FC<CLIOnboardingPageProps> = ({
           <Tab eventKey="advanced" title={<TabTitleText>Advanced</TabTitleText>} />
         </Tabs>
 
-        <TabContent eventKey="quickstart" activeKey={activeTabKey} hidden={activeTabKey !== 'quickstart'}>
+        <TabContent id="quickstart" eventKey="quickstart" activeKey={activeTabKey} hidden={activeTabKey !== 'quickstart'}>
           <Grid hasGutter style={{ marginTop: '24px' }}>
             <GridItem span={8}>
               {/* Environment Info */}
