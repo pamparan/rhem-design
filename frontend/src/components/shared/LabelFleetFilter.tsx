@@ -17,7 +17,6 @@
 import React, { useState, useRef } from "react";
 import {
   Button,
-  Icon,
   MenuToggle,
   MenuToggleElement,
   Select,
@@ -129,6 +128,7 @@ const LabelFleetFilter: React.FC<LabelFleetFilterProps> = ({
           autoComplete="off"
           innerRef={textInputRef}
           placeholder="Filter by labels and fleets"
+          icon={<SearchIcon />}
         />
         {searchText && (
           <TextInputGroupUtilities>
@@ -150,11 +150,6 @@ const LabelFleetFilter: React.FC<LabelFleetFilterProps> = ({
       gap={{ default: "gapSm" }}
       alignItems={{ default: "alignItemsFlexStart" }}
     >
-      <FlexItem alignSelf={{ default: "alignSelfCenter" }}>
-        <Icon size="md">
-          <SearchIcon />
-        </Icon>
-      </FlexItem>
       <FlexItem>
         <Select
           id="filter-select"
