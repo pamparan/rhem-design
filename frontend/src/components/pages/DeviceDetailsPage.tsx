@@ -6,7 +6,6 @@ import {
   CardBody,
   Label,
   Button,
-  Alert,
   Dropdown,
   DropdownList,
   DropdownItem,
@@ -20,19 +19,12 @@ import {
   TabContentBody,
   Grid,
   GridItem,
-  DataList,
-  DataListItem,
-  DataListItemRow,
-  DataListItemCells,
-  DataListCell,
   DescriptionList,
   DescriptionListTerm,
   DescriptionListGroup,
   DescriptionListDescription,
   Flex,
   FlexItem,
-  Icon,
-  Divider,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -43,18 +35,17 @@ import {
   Td,
 } from '@patternfly/react-table';
 import {
-  EllipsisVIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   TimesCircleIcon,
   InfoCircleIcon,
   CopyIcon,
-  ExternalLinkAltIcon,
   ChevronDownIcon,
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
+import DeviceSuspendedBanner from '../shared/DeviceSuspendedBanner';
 import { Device } from '../../types/device';
-import { getStatusLabelStyle, getStatusLabel, getStatusIcon, isDeviceResumable } from '../../utils/deviceUtils';
+import { getStatusLabelStyle, getStatusLabel, getStatusIcon } from '../../utils/deviceUtils';
 
 interface DeviceDetailsPageProps {
   device: Device;
@@ -83,8 +74,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
     setIsResuming(false);
     setIsResumeModalOpen(false);
   };
-
-  const isSuspended = device.status === 'SUSPENDED';
 
   // Mock data for applications table
   const mockApplications = [
@@ -136,7 +125,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   return (
     <>
       {/* Breadcrumb */}
-      <PageSection variant="light" style={{ paddingBottom: '8px' }}>
+      <PageSection style={{ paddingBottom: '8px' }}>
         <Breadcrumb>
           <BreadcrumbItem>
             <Button variant="link" onClick={onBack} style={{ padding: 0, color: '#06c' }}>
@@ -181,7 +170,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                   Decommission device
                 </DropdownItem>
                 <DropdownItem
-                  isDisabled={!isDeviceResumable(device)}
+                  isDisabled={device.status !== 'SUSPENDED'}
                   onClick={handleResumeDevice}
                 >
                   Resume suspended device
@@ -193,39 +182,17 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       </PageSection>
 
       {/* Suspended Device Alert */}
-      {isSuspended && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <Alert
-            variant="danger"
-            title="Device suspended"
-            actionLinks={
-              <>
-                <Button variant="link" onClick={handleResumeDevice}>
-                  Resume Device
-                </Button>
-                <Button variant="link" onClick={onNavigateToSuspendedDevices}>
-                  View Suspended Devices
-                </Button>
-              </>
-            }
-          >
-            <p>
-              This device's configuration is newer than the server's record, likely due to a recent system restore.
-              It is protected from receiving outdated updates but will remain suspended until you resume it.
-            </p>
-            <p style={{ marginTop: '8px', fontWeight: 'bold' }}>
-              Warning: Please review this device's configuration before taking action. Resuming a device will cause
-              it to apply the current specification, which may be older than what is on the device.
-            </p>
-          </Alert>
-        </PageSection>
-      )}
+      <DeviceSuspendedBanner
+        device={device}
+        onResumeDevice={handleResumeDevice}
+        onViewSuspendedDevices={onNavigateToSuspendedDevices}
+      />
 
       {/* Tabs */}
       <PageSection style={{ paddingTop: 0 }}>
         <Tabs
           activeKey={activeTab}
-          onSelect={(event, tabIndex) => setActiveTab(tabIndex)}
+          onSelect={(_event, tabIndex) => setActiveTab(tabIndex)}
           aria-label="Device details tabs"
           role="region"
         >
@@ -235,7 +202,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           <Tab eventKey="events" title={<TabTitleText>Events</TabTitleText>} />
         </Tabs>
 
-        <TabContent eventKey="details" activeKey={activeTab}>
+        <TabContent id="details" eventKey="details" activeKey={activeTab}>
           <TabContentBody>
             {/* Basic Device Info */}
             <Card style={{ marginBottom: '24px' }}>
@@ -522,7 +489,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent eventKey="metrics" activeKey={activeTab}>
+        <TabContent id="metrics" eventKey="metrics" activeKey={activeTab}>
           <TabContentBody>
             <Card>
               <CardBody>
@@ -533,7 +500,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent eventKey="terminal" activeKey={activeTab}>
+        <TabContent id="terminal" eventKey="terminal" activeKey={activeTab}>
           <TabContentBody>
             <Card>
               <CardBody>
@@ -544,7 +511,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent eventKey="events" activeKey={activeTab}>
+        <TabContent id="events" eventKey="events" activeKey={activeTab}>
           <TabContentBody>
             <Card>
               <CardBody>

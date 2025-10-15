@@ -25,7 +25,7 @@ import {
   EllipsisVIcon
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 import { mockDevices } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
 
@@ -39,17 +39,11 @@ const mockFleets = [
 
 interface FleetsPageProps {
   onNavigateToSuspendedDevices?: () => void;
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
   onFleetClick?: (fleetId: string) => void;
 }
 
 const FleetsPage: React.FC<FleetsPageProps> = ({
   onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices'),
   onFleetClick = () => console.log('Navigate to fleet details')
 }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -83,44 +77,7 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
         </Title>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-            onViewDevices={onNavigateToDevices}
-          />
-        </PageSection>
-      )}
-
-      {/* Suspended Devices Alert */}
-      {suspendedCount > 0 && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <Alert
-            variant="danger"
-            title="Suspended Devices Detected"
-            isInline
-            actionLinks={
-              <>
-                <Button variant="link" onClick={handleResumeAll}>
-                  Resume All
-                </Button>
-                <Button variant="link" onClick={onNavigateToSuspendedDevices}>
-                  View All Suspended Devices
-                </Button>
-              </>
-            }
-          >
-            <p>
-              <strong>{suspendedCount} devices in this fleet</strong> are suspended because their local configuration is newer than the server's record. They are currently protected from receiving this fleet's updates.
-            </p>
-            <p style={{ marginTop: '8px', fontWeight: 'bold' }}>
-              Warning: Please review this fleet's configuration before taking action. Resuming a device will cause it to apply the current specification, which may be older than what is on the device.
-            </p>
-          </Alert>
-        </PageSection>
-      )}
+      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
 
       {/* Main Content */}
       <PageSection>

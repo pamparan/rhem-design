@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
 } from '@patternfly/react-core';
+import { useDesignControls } from "../../hooks/useDesignControls";
 
 interface SuspendedDevicesAlertProps {
   suspendedCount: number;
@@ -13,7 +14,11 @@ const SuspendedDevicesAlert: React.FC<SuspendedDevicesAlertProps> = ({
   suspendedCount,
   onViewSuspendedDevices
 }) => {
-  if (suspendedCount === 0) {
+  const { getSetting } = useDesignControls();
+  const showPostRestoreBanner = getSetting("showPostRestoreBanner");
+
+  // Don't show if count is 0 OR if the design control toggle is off
+  if (suspendedCount === 0 || !showPostRestoreBanner) {
     return null;
   }
 

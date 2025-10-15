@@ -9,29 +9,21 @@ import {
   StackItem,
   CardHeader,
 } from "@patternfly/react-core";
-import SuspendedDevicesAlert from "../shared/SuspendedDevicesAlert";
-import GlobalPostRestoreBanner from "../shared/GlobalPostRestoreBanner";
+import PostRestoreBanners from "../shared/PostRestoreBanners";
 import LabelFleetFilter from "../shared/LabelFleetFilter";
 import { mockDevices } from "../../data/mockData";
 import {
   generateChartData,
-  getSuspendedDevicesCount,
 } from "../../utils/deviceUtils";
 
 interface OverviewPageProps {
   onNavigateToSuspendedDevices?: () => void;
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
 }
 
 const OverviewPage: React.FC<OverviewPageProps> = ({
   onNavigateToSuspendedDevices = () =>
     console.log("Navigate to suspended devices"),
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log("Dismiss banner"),
 }) => {
-  const suspendedCount = getSuspendedDevicesCount(mockDevices);
   const deviceChartData = generateChartData(mockDevices);
 
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -59,25 +51,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
         </Title>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: "16px" }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-          />
-        </PageSection>
-      )}
-
-      {/* Suspended Devices Alert */}
-      {suspendedCount > 0 && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: "16px" }}>
-          <SuspendedDevicesAlert
-            suspendedCount={suspendedCount}
-            onViewSuspendedDevices={onNavigateToSuspendedDevices}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
 
       {/* Main Overview Content */}
       <PageSection>

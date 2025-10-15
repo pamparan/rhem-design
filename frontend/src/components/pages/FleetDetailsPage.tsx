@@ -15,36 +15,20 @@ import {
   DropdownList,
   DropdownItem,
   MenuToggle,
-  Progress,
-  ProgressVariant,
   Grid,
   GridItem,
-  Alert,
-  Label,
   Flex,
   FlexItem,
 } from '@patternfly/react-core';
 import {
-  EllipsisVIcon,
-  CheckCircleIcon,
   ExclamationTriangleIcon,
-  TimesCircleIcon,
-  ClockIcon,
-  ExclamationCircleIcon,
-  InProgressIcon,
-  WarningTriangleIcon,
 } from '@patternfly/react-icons';
-import SuspendedDevicesAlert from '../shared/SuspendedDevicesAlert';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 import { mockDevices } from '../../data/mockData';
-import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
 
 interface FleetDetailsPageProps {
   fleetId: string;
   onBack: () => void;
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
 }
 
 // Mock fleet data - in real app would come from props or API
@@ -139,18 +123,12 @@ const mockEvents = [
 const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   fleetId,
   onBack,
-  showPostRestoreBanner,
-  onDismissPostRestoreBanner,
-  onNavigateToDevices
 }) => {
   const [activeTabKey, setActiveTabKey] = useState<string | number>('details');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
 
   // Filter devices for this fleet
   const fleetDevices = mockDevices.filter(device => device.fleet === mockFleetDetails.name);
-
-  // Calculate suspended devices count for this fleet
-  const suspendedCount = getSuspendedDevicesCount(fleetDevices);
 
   // Calculate device status counts
   const deviceStatusCounts = {
@@ -276,43 +254,20 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
         </Flex>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-          />
-        </PageSection>
-      )}
-
-      {/* Suspended Devices Alert */}
-      {suspendedCount > 0 && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <SuspendedDevicesAlert
-            suspendedCount={suspendedCount}
-            onViewSuspendedDevices={() => {
-              // Navigate to suspended devices filtered for this fleet
-              if (onNavigateToDevices) {
-                onNavigateToDevices();
-              }
-            }}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners />
 
       {/* Tabs */}
       <PageSection style={{ paddingTop: 0 }}>
         <Tabs
           activeKey={activeTabKey}
-          onSelect={(event, tabIndex) => setActiveTabKey(tabIndex)}
+          onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
           style={{ borderBottom: '1px solid #d2d2d2' }}
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} />
         </Tabs>
 
-        <TabContent eventKey="details" activeKey={activeTabKey} hidden={activeTabKey !== 'details'}>
+        <TabContent id="details" eventKey="details" activeKey={activeTabKey} hidden={activeTabKey !== 'details'}>
           <Grid hasGutter style={{ marginTop: '24px' }}>
             {/* Left Column - Details and Fleet Devices */}
             <GridItem span={8}>
@@ -645,7 +600,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
           </Grid>
         </TabContent>
 
-        <TabContent eventKey="yaml" activeKey={activeTabKey} hidden={activeTabKey !== 'yaml'}>
+        <TabContent id="yaml" eventKey="yaml" activeKey={activeTabKey} hidden={activeTabKey !== 'yaml'}>
           <Card style={{ marginTop: '24px' }}>
             <CardBody>
               <div style={{

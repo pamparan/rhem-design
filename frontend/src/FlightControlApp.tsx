@@ -5,6 +5,7 @@ import { Page, Alert } from '@patternfly/react-core';
 import AppMasthead from './components/layout/Masthead';
 import AppSidebar from './components/layout/Sidebar';
 import SubNav from './components/layout/SubNav';
+import DesignControls from './components/shared/DesignControls';
 
 // Import page components
 import OverviewPage from './components/pages/OverviewPage';
@@ -21,14 +22,13 @@ import DeviceModal from './components/shared/DeviceModal';
 // import LoginCommandModal from './components/shared/LoginCommandModal';
 
 // Import data
-import { mockDevices, mockSystemState } from './data/mockData';
+import { mockDevices } from './data/mockData';
 
 
 const FlightControlApp: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeItem, setActiveItem] = useState('overview');
   const [currentView, setCurrentView] = useState<'main' | 'suspended-devices' | 'device-details' | 'fleet-details' | 'login'>('main');
-  const [showPostRestoreBanner, setShowPostRestoreBanner] = useState(mockSystemState.isPostRestore);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [selectedDeviceDetails, setSelectedDeviceDetails] = useState<any>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
@@ -82,11 +82,6 @@ const FlightControlApp: React.FC = () => {
     setSelectedFleetId(null);
   };
 
-  const navigateToDevices = () => {
-    setActiveItem('devices');
-    setCurrentView('main');
-  };
-
   const masthead = (
     <AppMasthead
       isSidebarOpen={isSidebarOpen}
@@ -103,7 +98,7 @@ const FlightControlApp: React.FC = () => {
   );
 
   return (
-    <>
+    <DesignControls>
       {/* Main Application - hidden when login is active */}
       {currentView !== 'login' && (
         <Page masthead={masthead} sidebar={sidebar}>
@@ -147,9 +142,6 @@ const FlightControlApp: React.FC = () => {
               {activeItem === 'overview' && (
                 <OverviewPage
                   onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                  showPostRestoreBanner={showPostRestoreBanner}
-                  onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-                  onNavigateToDevices={navigateToDevices}
                 />
               )}
 
@@ -158,36 +150,22 @@ const FlightControlApp: React.FC = () => {
                   onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
                   onDeviceSelect={handleDeviceClick}
                   onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                  showPostRestoreBanner={showPostRestoreBanner}
-                  onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-                  onNavigateToDevices={navigateToDevices}
                 />
               )}
 
               {activeItem === 'fleets' && (
                 <FleetsPage
                   onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                  showPostRestoreBanner={showPostRestoreBanner}
-                  onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-                  onNavigateToDevices={navigateToDevices}
                   onFleetClick={handleFleetClick}
                 />
               )}
 
               {activeItem === 'repositories' && (
-                <RepositoriesPage
-                  showPostRestoreBanner={showPostRestoreBanner}
-                  onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-                  onNavigateToDevices={navigateToDevices}
-                />
+                <RepositoriesPage />
               )}
 
               {activeItem === 'settings' && (
-                <SettingsPage
-                  showPostRestoreBanner={showPostRestoreBanner}
-                  onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-                  onNavigateToDevices={navigateToDevices}
-                />
+                <SettingsPage />
               )}
             </>
           )}
@@ -211,9 +189,6 @@ const FlightControlApp: React.FC = () => {
             <FleetDetailsPage
               fleetId={selectedFleetId}
               onBack={navigateToMain}
-              showPostRestoreBanner={showPostRestoreBanner}
-              onDismissPostRestoreBanner={() => setShowPostRestoreBanner(false)}
-              onNavigateToDevices={navigateToDevices}
             />
           )}
         </Page>
@@ -223,7 +198,7 @@ const FlightControlApp: React.FC = () => {
       {currentView === 'login' && (
         <LoginPage onBack={navigateToMain} />
       )}
-    </>
+    </DesignControls>
   );
 };
 

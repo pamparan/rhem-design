@@ -23,7 +23,7 @@ import {
 import {
   EllipsisVIcon
 } from '@patternfly/react-icons';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 
 // Mock repositories data for prototype
 const mockRepositories = [
@@ -31,17 +31,9 @@ const mockRepositories = [
   { id: '2', name: 'HTTP-nginx-demo', type: 'HTTP service', url: 'https://nowhere.com/flightctl/flightctl-demos', syncStatus: 'No access', lastTransition: '17 hours ago' },
 ];
 
-interface RepositoriesPageProps {
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
-}
+interface RepositoriesPageProps {}
 
-const RepositoriesPage: React.FC<RepositoriesPageProps> = ({
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices')
-}) => {
+const RepositoriesPage: React.FC<RepositoriesPageProps> = () => {
   const [searchValue, setSearchValue] = useState('');
 
   return (
@@ -53,16 +45,7 @@ const RepositoriesPage: React.FC<RepositoriesPageProps> = ({
         </Title>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-            onViewDevices={onNavigateToDevices}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners />
 
       {/* Main Content */}
       <PageSection>

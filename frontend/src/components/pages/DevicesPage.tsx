@@ -46,29 +46,22 @@ import {
   InProgressIcon,
   TimesCircleIcon
 } from '@patternfly/react-icons';
-import SuspendedDevicesAlert from '../shared/SuspendedDevicesAlert';
-import GlobalPostRestoreBanner from '../shared/GlobalPostRestoreBanner';
+import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import { mockDevices } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
-import { getStatusColor, getStatusLabel, getStatusIcon, getSuspendedDevicesCount, countDevicesByStatus, getFilteredDevices, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
+import { getStatusColor, getStatusLabel, getStatusIcon, countDevicesByStatus, getFilteredDevices, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
 
 interface DevicesPageProps {
   onAddDeviceClick: () => void;
   onDeviceSelect: (deviceId: string) => void;
   onNavigateToSuspendedDevices?: () => void;
-  showPostRestoreBanner?: boolean;
-  onDismissPostRestoreBanner?: () => void;
-  onNavigateToDevices?: () => void;
 }
 
 const DevicesPage: React.FC<DevicesPageProps> = ({
   onAddDeviceClick,
   onDeviceSelect,
   onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
-  showPostRestoreBanner = false,
-  onDismissPostRestoreBanner = () => console.log('Dismiss banner'),
-  onNavigateToDevices = () => console.log('Navigate to devices')
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [statusFilter, setStatusFilter] = useState<DeviceStatus | ''>('');
@@ -123,8 +116,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
 
     return matchesSearch && matchesDeviceStatus && matchesApplicationStatus && matchesSystemUpdateStatus;
   });
-
-  const suspendedCount = getSuspendedDevicesCount(mockDevices);
 
   // Filter options with counts and PatternFly icons matching the exact design image colors
   const filterOptions = {
@@ -205,26 +196,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
         </Title>
       </PageSection>
 
-      {/* Global Post-Restore Banner */}
-      {showPostRestoreBanner && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <GlobalPostRestoreBanner
-            isVisible={showPostRestoreBanner}
-            onDismiss={onDismissPostRestoreBanner}
-            onViewDevices={onNavigateToDevices}
-          />
-        </PageSection>
-      )}
-
-      {/* Suspended Devices Alert */}
-      {suspendedCount > 0 && (
-        <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
-          <SuspendedDevicesAlert
-            suspendedCount={suspendedCount}
-            onViewSuspendedDevices={onNavigateToSuspendedDevices}
-          />
-        </PageSection>
-      )}
+      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
 
       {/* Main Content */}
       <PageSection>
