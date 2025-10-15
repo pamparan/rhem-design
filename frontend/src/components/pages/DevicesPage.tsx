@@ -343,7 +343,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                   <Th>Application status</Th>
                   <Th>Device status</Th>
                   <Th>System update status</Th>
-                  <Th>Last seen</Th>
                   <Th width={10}></Th>
                 </Tr>
               </Thead>
@@ -438,7 +437,6 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                         {getStatusLabel(device.systemUpdateStatus)}
                       </div>
                     </Td>
-                    <Td>{device.lastSeen}</Td>
                     <Td>
                       <Dropdown
                         isOpen={kebabOpenStates[device.id] || false}
