@@ -9,13 +9,14 @@ import {
 import { useDesignControls } from "../../hooks/useDesignControls";
 import { mockDevices } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface PostRestoreBannersProps {
-  onNavigateToSuspendedDevices?: () => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const PostRestoreBanners: React.FC<PostRestoreBannersProps> = ({
-  onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
+  onNavigate,
 }) => {
   const { getSetting } = useDesignControls();
   const showPostRestoreBanner = getSetting("showPostRestoreBanner");
@@ -50,7 +51,7 @@ const PostRestoreBanners: React.FC<PostRestoreBannersProps> = ({
               title="Suspended Devices Detected"
               isInline
               actionLinks={
-                <Button variant="link" onClick={onNavigateToSuspendedDevices}>
+                <Button variant="link" onClick={() => onNavigate('suspended-devices')}>
                   View Suspended Devices
                 </Button>
               }

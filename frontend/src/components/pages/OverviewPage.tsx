@@ -8,24 +8,32 @@ import {
   Stack,
   StackItem,
   CardHeader,
+  Grid,
+  GridItem,
+  List,
+  ListItem,
+  Flex,
+  FlexItem,
 } from "@patternfly/react-core";
 import PostRestoreBanners from "../shared/PostRestoreBanners";
 import LabelFleetFilter from "../shared/LabelFleetFilter";
-import { mockDevices } from "../../data/mockData";
-import {
-  generateChartData,
-} from "../../utils/deviceUtils";
+import { mockDevices, mockDevicesPendingApproval } from "../../data/mockData";
+import { generateChartData } from "../../utils/deviceUtils";
+import { useDesignControls } from "../../hooks/useDesignControls";
+import { NavigationItemId, NavigationParams, ViewType } from "../../types/app";
 
 interface OverviewPageProps {
-  onNavigateToSuspendedDevices?: () => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const OverviewPage: React.FC<OverviewPageProps> = ({
-  onNavigateToSuspendedDevices = () =>
-    console.log("Navigate to suspended devices"),
+  onNavigate,
 }) => {
+  const { getSetting } = useDesignControls();
+  const showDevicesPendingApproval = getSetting("showDevicesPendingApproval");
+  const pendingDevicesCount = showDevicesPendingApproval ? mockDevicesPendingApproval.length : 0;
+  
   const deviceChartData = generateChartData(mockDevices);
-
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const handleAddFilter = (filter: string) => {
@@ -51,19 +59,18 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
         </Title>
       </PageSection>
 
-      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
+      <PostRestoreBanners
+        onNavigate={onNavigate}
+      />
 
       {/* Main Overview Content */}
       <PageSection>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr",
-            gap: "24px",
-          }}
-        >
-          {/* Status Section */}
-          <Card>
+        <Grid hasGutter>
+          <GridItem md={9}>
+            <Grid hasGutter>
+              <GridItem>
+                {/* Status Section */}
+                <Card>
             <CardHeader>
               <Title headingLevel="h3" size="lg">
                 Status
@@ -629,78 +636,119 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
 
               {/* Charts Row */}
             </CardBody>
-          </Card>
+            </Card>
+            </GridItem>
+              
+              {/* Tasks Section */}
+              <GridItem md={9} lg={6}>
+                <Card>
+                  <CardBody>
+                    <Title
+                      headingLevel="h3"
+                      size="lg"
+                      style={{ marginBottom: "24px" }}
+                    >
+                      Tasks
+                    </Title>
 
+                    {pendingDevicesCount > 0 ? (
+                      <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
+                        <FlexItem>
+                          <span>● {pendingDevicesCount} devices pending approval</span>
+                        </FlexItem>
+                        <FlexItem>
+                          <Button
+                            variant="link"
+                            isInline
+                            onClick={() => onNavigate('main', 'devices')}
+                          >
+                            Review pending devices
+                          </Button>
+                        </FlexItem>
+                      </Flex>
+                    ) : (
+                      <div style={{ fontSize: "14px" }}>
+                        All good!
+                      </div>
+                    )}
+                  </CardBody>
+                </Card>
+              </GridItem>
+            </Grid>
+          </GridItem>
+          
           {/* Alerts Section */}
-          <Card>
-            <CardBody>
-              <Title
-                headingLevel="h3"
-                size="lg"
-                style={{ marginBottom: "24px" }}
-              >
-                Alerts
-              </Title>
-
-              <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                <div style={{ marginBottom: "24px" }}>
-                  <svg
-                    width="80"
-                    height="80"
-                    viewBox="0 0 80 80"
-                    style={{ color: "#9ca3af" }}
-                  >
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    />
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="8"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    />
-                    <path
-                      d="M65 65 L72 72"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-
+          <GridItem md={3}>
+            <Card>
+              <CardBody>
                 <Title
-                  headingLevel="h4"
-                  size="md"
-                  style={{ marginBottom: "16px" }}
+                  headingLevel="h3"
+                  size="lg"
+                  style={{ marginBottom: "24px" }}
                 >
-                  There are no active Alerts at this time
+                  Alerts
                 </Title>
 
-                <p
-                  style={{
-                    color: "#6a6e73",
-                    fontSize: "14px",
-                    marginBottom: "24px",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  This area displays current notifications about your monitored
-                  devices and fleets. Alerts will appear here if an issue is
-                  detected.
-                </p>
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ marginBottom: "24px" }}>
+                    <svg
+                      width="80"
+                      height="80"
+                      viewBox="0 0 80 80"
+                      style={{ color: "#9ca3af" }}
+                    >
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="32"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M65 65 L72 72"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
 
-                <Button variant="link">View Devices</Button>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
+                  <Title
+                    headingLevel="h4"
+                    size="md"
+                    style={{ marginBottom: "16px" }}
+                  >
+                    There are no active Alerts at this time
+                  </Title>
+
+                  <p
+                    style={{
+                      color: "#6a6e73",
+                      fontSize: "14px",
+                      marginBottom: "24px",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    This area displays current notifications about your monitored
+                    devices and fleets. Alerts will appear here if an issue is
+                    detected.
+                  </p>
+
+                  <Button variant="link">View Devices</Button>
+                </div>
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
       </PageSection>
     </>
   );

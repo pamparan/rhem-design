@@ -19,10 +19,12 @@ const SETTINGS_CHANGE_EVENT = "rhem-design-controls-change";
 
 interface DesignControlsSettings {
   showPostRestoreBanner: boolean;
+  showDevicesPendingApproval: boolean;
 }
 
 const DEFAULT_SETTINGS: DesignControlsSettings = {
   showPostRestoreBanner: false,
+  showDevicesPendingApproval: false,
 };
 
 type SettingKey = keyof DesignControlsSettings;
@@ -42,7 +44,8 @@ const loadSettings = (): DesignControlsSettings => {
 
 export const useDesignControls = () => {
   // Load settings from localStorage on mount
-  const [settings, setSettings] = useState<DesignControlsSettings>(loadSettings);
+  const [settings, setSettings] =
+    useState<DesignControlsSettings>(loadSettings);
 
   // Listen for settings changes from other components
   useEffect(() => {

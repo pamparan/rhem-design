@@ -18,68 +18,61 @@ import ResumeSuspendedDevicesPage from './components/pages/ResumeSuspendedDevice
 import DeviceDetailsPage from './components/pages/DeviceDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import DeviceModal from './components/shared/DeviceModal';
-// import CLILoginModal from './components/shared/CLILoginModal';
-// import LoginCommandModal from './components/shared/LoginCommandModal';
 
-// Import data
-import { mockDevices } from './data/mockData';
-
+import { mockDevicesPendingApproval } from './data/mockData';
+import { useDesignControls } from './hooks/useDesignControls';
+import { ViewType, NavigationItemId, NavigationParams } from './types/app';
 
 const FlightControlApp: React.FC = () => {
+  const { getSetting } = useDesignControls();
+  const showDevicesPendingApproval = getSetting('showDevicesPendingApproval');
+  const pendingDevicesCount = showDevicesPendingApproval ? mockDevicesPendingApproval.length : 0;
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeItem, setActiveItem] = useState('overview');
-  const [currentView, setCurrentView] = useState<'main' | 'suspended-devices' | 'device-details' | 'fleet-details' | 'login'>('main');
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [selectedDeviceDetails, setSelectedDeviceDetails] = useState<any>(null);
+  const [activeItem, setActiveItem] = useState<NavigationItemId>('overview');
+  const [currentView, setCurrentView] = useState<ViewType>('main');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
-  const [showAlert, setShowAlert] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
-  // const [isCLILoginModalOpen, setIsCLILoginModalOpen] = useState(false);
-  // const [isLoginCommandModalOpen, setIsLoginCommandModalOpen] = useState(false);
-  // const [generatedToken, setGeneratedToken] = useState<string>('');
 
   const onSidebarToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleSidebarNavigation = (itemId: string) => {
+  const handleSidebarNavigation = (itemId: NavigationItemId) => {
     setActiveItem(itemId);
     setCurrentView('main');
-    setSelectedDeviceDetails(null);
+    setSelectedDeviceId(null);
     setSelectedFleetId(null);
+    setIsSidebarOpen(false); // Close sidebar when navigating
   };
 
-  const handleCopyLoginCommand = () => {
-    console.log('Get login command clicked!');
-    setCurrentView('login');
+  const handlePageBodyClick = () => {
+    // Close sidebar when clicking on page body
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleNavigate = (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => {
+    setCurrentView(view);
+    if (activeItem) {
+      setActiveItem(activeItem);
+    }
+
+    // Handle navigation parameters
+    setSelectedFleetId(params?.fleetId || null);
+    setSelectedDeviceId(params?.deviceId || null);
   };
 
   const handleDeviceClick = (deviceId: string) => {
-    setSelectedDevice(deviceId);
-    const device = mockDevices.find(d => d.id === deviceId);
-    if (device) {
-      setSelectedDeviceDetails(device);
-      setCurrentView('device-details');
-    } else {
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
-    }
+    setSelectedDeviceId(deviceId);
+    setCurrentView('device-details');    
   };
 
   const handleFleetClick = (fleetId: string) => {
     setSelectedFleetId(fleetId);
     setCurrentView('fleet-details');
-  };
-
-  const navigateToSuspendedDevices = () => {
-    setCurrentView('suspended-devices');
-    setActiveItem('devices'); // Keep devices active in sidebar
-  };
-
-  const navigateToMain = () => {
-    setCurrentView('main');
-    setSelectedDeviceDetails(null);
-    setSelectedFleetId(null);
   };
 
   const masthead = (
@@ -94,6 +87,7 @@ const FlightControlApp: React.FC = () => {
       isSidebarOpen={isSidebarOpen}
       activeItem={activeItem}
       setActiveItem={handleSidebarNavigation}
+      pendingDevicesCount={pendingDevicesCount}
     />
   );
 
@@ -102,101 +96,89 @@ const FlightControlApp: React.FC = () => {
       {/* Main Application - hidden when login is active */}
       {currentView !== 'login' && (
         <Page masthead={masthead} sidebar={sidebar}>
-          {/* Alert for device interactions */}
-          {showAlert && (
-            <Alert
-              variant="info"
-              title={`Device ${selectedDevice} selected`}
-              isInline
-              timeout={3000}
-              onTimeout={() => setShowAlert(false)}
+          <div onClick={handlePageBodyClick} style={{ minHeight: '100%' }}>
+            {/* Add Device Modal */}
+            <DeviceModal
+              isOpen={isAddDeviceModalOpen}
+              onClose={() => setIsAddDeviceModalOpen(false)}
             />
-          )}
 
-          {/* Add Device Modal */}
-          <DeviceModal
-            isOpen={isAddDeviceModalOpen}
-            onClose={() => setIsAddDeviceModalOpen(false)}
-          />
+            {/* CLI Login Modal */}
+            {/* <CLILoginModal
+              isOpen={isCLILoginModalOpen}
+              onClose={() => setIsCLILoginModalOpen(false)}
+              onSuccess={handleLoginSuccess}
+            /> */}
 
-          {/* CLI Login Modal */}
-          {/* <CLILoginModal
-            isOpen={isCLILoginModalOpen}
-            onClose={() => setIsCLILoginModalOpen(false)}
-            onSuccess={handleLoginSuccess}
-          /> */}
+            {/* Login Command Modal */}
+            {/* <LoginCommandModal
+              isOpen={isLoginCommandModalOpen}
+              onClose={() => setIsLoginCommandModalOpen(false)}
+              token="sample_token_12345"
+            /> */}
 
-          {/* Login Command Modal */}
-          {/* <LoginCommandModal
-            isOpen={isLoginCommandModalOpen}
-            onClose={() => setIsLoginCommandModalOpen(false)}
-            token="sample_token_12345"
-          /> */}
+            {/* SubNav with Get login command button */}
+            <SubNav onCopyLoginCommand={() => handleNavigate('login')} />
 
-          {/* SubNav with Get login command button */}
-          <SubNav onCopyLoginCommand={handleCopyLoginCommand} />
+            {/* Content based on current view and active navigation item */}
+            {currentView === 'main' && (
+              <>
+                {activeItem === 'overview' && (
+                  <OverviewPage
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-          {/* Content based on current view and active navigation item */}
-          {currentView === 'main' && (
-            <>
-              {activeItem === 'overview' && (
-                <OverviewPage
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                />
-              )}
+                {activeItem === 'devices' && (
+                  <DevicesPage
+                    onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-              {activeItem === 'devices' && (
-                <DevicesPage
-                  onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
-                  onDeviceSelect={handleDeviceClick}
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                />
-              )}
+                {activeItem === 'fleets' && (
+                  <FleetsPage
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-              {activeItem === 'fleets' && (
-                <FleetsPage
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-                  onFleetClick={handleFleetClick}
-                />
-              )}
+                {activeItem === 'repositories' && (
+                  <RepositoriesPage onNavigate={handleNavigate} />
+                )}
 
-              {activeItem === 'repositories' && (
-                <RepositoriesPage />
-              )}
+                {activeItem === 'settings' && (
+                  <SettingsPage onNavigate={handleNavigate} />
+                )}
+              </>
+            )}
 
-              {activeItem === 'settings' && (
-                <SettingsPage />
-              )}
-            </>
-          )}
+            {/* Resume Suspended Devices Page */}
+            {currentView === 'suspended-devices' && (
+              <ResumeSuspendedDevicesPage onBack={() => handleNavigate('main')} />
+            )}
 
-          {/* Resume Suspended Devices Page */}
-          {currentView === 'suspended-devices' && (
-            <ResumeSuspendedDevicesPage onBack={navigateToMain} />
-          )}
+            {/* Device Details Page */}
+            {currentView === 'device-details' && selectedDeviceId && (
+              <DeviceDetailsPage
+                deviceId={selectedDeviceId}
+                onNavigate={handleNavigate}
+              />
+            )}
 
-          {/* Device Details Page */}
-          {currentView === 'device-details' && selectedDeviceDetails && (
-            <DeviceDetailsPage
-              device={selectedDeviceDetails}
-              onNavigateToSuspendedDevices={navigateToSuspendedDevices}
-              onBack={navigateToMain}
-            />
-          )}
-
-          {/* Fleet Details Page */}
-          {currentView === 'fleet-details' && selectedFleetId && (
-            <FleetDetailsPage
-              fleetId={selectedFleetId}
-              onBack={navigateToMain}
-            />
-          )}
+            {/* Fleet Details Page */}
+            {currentView === 'fleet-details' && selectedFleetId && (
+              <FleetDetailsPage
+                fleetId={selectedFleetId}
+                onNavigate={handleNavigate}
+              />
+            )}
+          </div>
         </Page>
       )}
 
       {/* Full-screen Login Overlay - renders outside of Page component */}
       {currentView === 'login' && (
-        <LoginPage onBack={navigateToMain} />
+        <LoginPage onBack={() => handleNavigate('main')} />
       )}
     </DesignControls>
   );
