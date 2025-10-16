@@ -38,12 +38,12 @@ const mockFleets = [
 ];
 
 interface FleetsPageProps {
-  onNavigateToSuspendedDevices?: () => void;
+  onNavigate: (view: string) => void;
   onFleetClick?: (fleetId: string) => void;
 }
 
 const FleetsPage: React.FC<FleetsPageProps> = ({
-  onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
+  onNavigate,
   onFleetClick = () => console.log('Navigate to fleet details')
 }) => {
   const [searchValue, setSearchValue] = useState('');
@@ -77,7 +77,7 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
         </Title>
       </PageSection>
 
-      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
+      <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Main Content */}
       <PageSection>

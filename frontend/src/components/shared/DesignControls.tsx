@@ -101,8 +101,31 @@ const DesignControls: React.FC<DesignControlsProps> = ({ children }) => {
               }
             />
             <HelperText>
-              <HelperTextItem variant="indeterminate" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
-               Puts the system in the post-restore state, with devices both in Pending sync and Suspended states.
+              <HelperTextItem
+                variant="indeterminate"
+                style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+              >
+                Puts the system in the post-restore state, with devices both in
+                Pending sync and Suspended states.
+              </HelperTextItem>
+            </HelperText>
+          </StackItem>
+
+          <StackItem>
+            <Switch
+              id="devices-pending-approval-switch"
+              label="Devices Pending Approval"
+              isChecked={getSetting("showDevicesPendingApproval")}
+              onChange={(_event, checked) =>
+                setSetting("showDevicesPendingApproval", checked)
+              }
+            />
+            <HelperText>
+              <HelperTextItem
+                variant="indeterminate"
+                style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+              >
+                Adds Devices pending approval to the system.
               </HelperTextItem>
             </HelperText>
           </StackItem>

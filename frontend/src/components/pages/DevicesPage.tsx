@@ -37,21 +37,26 @@ import {
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
-import { mockDevices } from '../../data/mockData';
+import { mockDevices, mockDevicesPendingApproval } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
 import { getStatusLabel, getStatusIcon, countDevicesByStatus, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
+import { useDesignControls } from '../../hooks/useDesignControls';
 
 interface DevicesPageProps {
   onAddDeviceClick: () => void;
   onDeviceSelect: (deviceId: string) => void;
-  onNavigateToSuspendedDevices?: () => void;
+  onNavigate: (view: string) => void;
 }
 
 const DevicesPage: React.FC<DevicesPageProps> = ({
   onAddDeviceClick,
   onDeviceSelect,
-  onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
+  onNavigate,
 }) => {
+  const { getSetting } = useDesignControls();
+  const showDevicesPendingApproval = getSetting('showDevicesPendingApproval');
+  const pendingDevices = showDevicesPendingApproval ? mockDevicesPendingApproval : [];
+  
   const [searchValue, setSearchValue] = useState('');
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
@@ -166,19 +171,71 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
 
   return (
     <>
-      {/* Header */}
-      <PageSection>
-        <Title headingLevel="h1" size="2xl">
-          Devices
-        </Title>
-      </PageSection>
+      <PostRestoreBanners onNavigate={onNavigate} />
 
-      <PostRestoreBanners onNavigateToSuspendedDevices={onNavigateToSuspendedDevices} />
+      {/* Devices Pending Approval Card */}
+      {pendingDevices.length > 0 && (
+        <PageSection>
+          <Card>
+            <CardBody>
+              <div style={{ marginBottom: '16px' }}>
+                <Title headingLevel="h3" size="lg">
+                  Devices pending approval
+                </Title>
+                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
+                  {pendingDevices.length} {pendingDevices.length === 1 ? 'device' : 'devices'} waiting for approval
+                </div>
+              </div>
+              <Table aria-label="Devices pending approval" variant="compact">
+                <Thead>
+                  <Tr>
+                    <Th>Alias</Th>
+                    <Th>Name</Th>
+                    <Th>Created</Th>
+                    <Th></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {pendingDevices.map((device: { id: string; name: string; alias?: string; requestedAt: string }) => (
+                    <Tr key={device.id}>
+                      <Td>
+                        <Button variant="link" style={{ padding: 0 }}>
+                          {device.alias || 'Untitled'}
+                        </Button>
+                      </Td>
+                      <Td style={{ fontFamily: 'monospace' }}>
+                        {device.name}
+                      </Td>
+                      <Td>
+                        {device.requestedAt}
+                      </Td>
+                      <Td>
+                        <Button 
+                          variant="link" 
+                            style={{ padding: 0 }}
+                          onClick={() => console.log(`Approve device ${device.name}`)}
+                        >
+                          Approve
+                        </Button>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </CardBody>
+          </Card>
+        </PageSection>
+      )}
 
-      {/* Main Content */}
+      {/* Approved Devices Card */}
       <PageSection>
         <Card>
           <CardBody>
+            <div style={{ marginBottom: '16px' }}>
+              <Title headingLevel="h3" size="lg">
+                Devices
+              </Title>
+            </div>
             {/* Filters Toolbar */}
             <Toolbar>
               <ToolbarContent>
@@ -337,8 +394,8 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                       <input type="checkbox" />
                     </Td>
                     <Td>
-                      <Button variant="link" style={{ color: '#06c', padding: 0 }}>
-                        {device.alias || 'Device alias'}
+                      <Button variant="link" style={{ padding: 0 }}>
+                        {device.alias || 'Untitled'}
                       </Button>
                     </Td>
                     <Td style={{ fontFamily: 'monospace' }}>
@@ -346,7 +403,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                     </Td>
                     <Td>
                       {device.fleet ? (
-                        <Button variant="link" style={{ color: '#06c', padding: 0 }}>
+                        <Button variant="link" style={{ padding: 0 }}>
                           {device.fleet}
                         </Button>
                       ) : '--'}

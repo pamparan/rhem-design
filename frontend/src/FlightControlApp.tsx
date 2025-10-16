@@ -22,10 +22,17 @@ import DeviceModal from './components/shared/DeviceModal';
 // import LoginCommandModal from './components/shared/LoginCommandModal';
 
 // Import data
-import { mockDevices } from './data/mockData';
+import { mockDevices, mockDevicesPendingApproval } from './data/mockData';
+
+// Import hooks
+import { useDesignControls } from './hooks/useDesignControls';
 
 
 const FlightControlApp: React.FC = () => {
+  const { getSetting } = useDesignControls();
+  const showDevicesPendingApproval = getSetting('showDevicesPendingApproval');
+  const pendingDevicesCount = showDevicesPendingApproval ? mockDevicesPendingApproval.length : 0;
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeItem, setActiveItem] = useState('overview');
   const [currentView, setCurrentView] = useState<'main' | 'suspended-devices' | 'device-details' | 'fleet-details' | 'login'>('main');
@@ -47,6 +54,22 @@ const FlightControlApp: React.FC = () => {
     setCurrentView('main');
     setSelectedDeviceDetails(null);
     setSelectedFleetId(null);
+  };
+
+  const handleNavigate = (view: string) => {
+    // Handle special views
+    if (view === 'suspended-devices') {
+      setCurrentView('suspended-devices');
+      setActiveItem('devices'); // Keep devices active in sidebar
+      setSelectedDeviceDetails(null);
+      setSelectedFleetId(null);
+    } else {
+      // Handle standard navigation items
+      setActiveItem(view);
+      setCurrentView('main');
+      setSelectedDeviceDetails(null);
+      setSelectedFleetId(null);
+    }
   };
 
   const handleCopyLoginCommand = () => {
@@ -71,11 +94,6 @@ const FlightControlApp: React.FC = () => {
     setCurrentView('fleet-details');
   };
 
-  const navigateToSuspendedDevices = () => {
-    setCurrentView('suspended-devices');
-    setActiveItem('devices'); // Keep devices active in sidebar
-  };
-
   const navigateToMain = () => {
     setCurrentView('main');
     setSelectedDeviceDetails(null);
@@ -94,6 +112,7 @@ const FlightControlApp: React.FC = () => {
       isSidebarOpen={isSidebarOpen}
       activeItem={activeItem}
       setActiveItem={handleSidebarNavigation}
+      pendingDevicesCount={pendingDevicesCount}
     />
   );
 
@@ -141,7 +160,7 @@ const FlightControlApp: React.FC = () => {
             <>
               {activeItem === 'overview' && (
                 <OverviewPage
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
+                  onNavigate={handleNavigate}
                 />
               )}
 
@@ -149,13 +168,13 @@ const FlightControlApp: React.FC = () => {
                 <DevicesPage
                   onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
                   onDeviceSelect={handleDeviceClick}
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
+                  onNavigate={handleNavigate}
                 />
               )}
 
               {activeItem === 'fleets' && (
                 <FleetsPage
-                  onNavigateToSuspendedDevices={navigateToSuspendedDevices}
+                  onNavigate={handleNavigate}
                   onFleetClick={handleFleetClick}
                 />
               )}
@@ -179,7 +198,7 @@ const FlightControlApp: React.FC = () => {
           {currentView === 'device-details' && selectedDeviceDetails && (
             <DeviceDetailsPage
               device={selectedDeviceDetails}
-              onNavigateToSuspendedDevices={navigateToSuspendedDevices}
+              onNavigate={handleNavigate}
               onBack={navigateToMain}
             />
           )}

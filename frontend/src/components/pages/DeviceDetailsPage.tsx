@@ -49,13 +49,13 @@ import { getStatusLabelStyle, getStatusLabel, getStatusIcon } from '../../utils/
 
 interface DeviceDetailsPageProps {
   device: Device;
-  onNavigateToSuspendedDevices?: () => void;
+  onNavigate: (view: string) => void;
   onBack: () => void;
 }
 
 const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   device,
-  onNavigateToSuspendedDevices = () => console.log('Navigate to suspended devices'),
+  onNavigate,
   onBack
 }) => {
   const [isActionsOpen, setIsActionsOpen] = useState(false);
@@ -182,7 +182,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       <DeviceSuspendedBanner
         device={device}
         onResumeDevice={handleResumeDevice}
-        onViewSuspendedDevices={onNavigateToSuspendedDevices}
+        onViewSuspendedDevices={() => onNavigate('suspended-devices')}
       />
 
       {/* Tabs */}

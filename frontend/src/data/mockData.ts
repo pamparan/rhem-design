@@ -1,4 +1,4 @@
-import { Device, SystemState } from "../types/device";
+import { Device, SystemState, DevicePendingApproval } from "../types/device";
 
 export const mockDevices: Device[] = [
   {
@@ -34,7 +34,6 @@ export const mockDevices: Device[] = [
   {
     id: "3",
     name: "0A83BC2347AFE7F4",
-    alias: "Just a friendly name here",
     status: "PENDING_SYNC",
     applicationStatus: "DEGRADED",
     systemUpdateStatus: "OUT_OF_DATE",
@@ -92,7 +91,7 @@ export const mockDevices: Device[] = [
   ...Array.from({ length: 35 }, (_, i) => ({
     id: `${i + 7}`,
     name: `0A83BC2347AFE7F${(i + 8).toString(16).toUpperCase()}`,
-    alias: "Device alias here",
+    alias: i % 5 === 0 ? 'my-device-alias' : undefined,
     status:
       i % 8 === 0
         ? ("SUSPENDED" as const)
@@ -152,5 +151,24 @@ export const mockSystemState: SystemState = {
     .length,
   pendingSyncDeviceCount: mockDevices.filter((d) => d.status === "PENDING_SYNC")
     .length,
-  restoreCompleteTime: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
 };
+
+export const mockDevicesPendingApproval: DevicePendingApproval[] = [
+  {
+    id: "pending-1",
+    name: "B4F9CD3458AFE8A1",
+    requestedAt: "2 minutes ago",
+  },
+  {
+    id: "pending-2",
+    name: "C5A0DE4569BFE9B2",
+    alias: "pos-0104-ny",
+    requestedAt: "15 minutes ago",
+  },
+  {
+    id: "pending-3",
+    name: "D6B1EF5670CFE0C3",
+    alias: "pos-0105-ny",
+    requestedAt: "1 hour ago",
+  },
+];

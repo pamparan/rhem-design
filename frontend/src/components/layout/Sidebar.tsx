@@ -5,18 +5,21 @@ import {
   Nav,
   NavList,
   NavItem,
+  Badge,
 } from '@patternfly/react-core';
 
 interface AppSidebarProps {
   isSidebarOpen: boolean;
   activeItem: string;
   setActiveItem: (item: string) => void;
+  pendingDevicesCount?: number;
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({
   isSidebarOpen,
   activeItem,
   setActiveItem,
+  pendingDevicesCount = 0,
 }) => {
   // Navigation items
   const navigationItems = [
@@ -42,6 +45,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
             onClick={() => handleNavClick(item.id)}
           >
             {item.label}
+            {item.id === 'devices' && pendingDevicesCount > 0 && (
+              <Badge style={{ marginLeft: '8px' }}>
+                {pendingDevicesCount}
+              </Badge>
+            )}
           </NavItem>
         ))}
       </NavList>
