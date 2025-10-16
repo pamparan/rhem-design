@@ -135,7 +135,6 @@ const FlightControlApp: React.FC = () => {
               {activeItem === 'devices' && (
                 <DevicesPage
                   onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
-                  onDeviceSelect={handleDeviceClick}
                   onNavigate={handleNavigate}
                 />
               )}

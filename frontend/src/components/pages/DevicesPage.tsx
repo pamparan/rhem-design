@@ -15,6 +15,8 @@ import {
   DropdownList,
   DropdownItem,
   Checkbox,
+  Tooltip,
+  Popover,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -33,7 +35,9 @@ import {
   ExclamationTriangleIcon,
   PowerOffIcon,
   InProgressIcon,
-  TimesCircleIcon
+  TimesCircleIcon,
+  QuestionCircleIcon,
+  OutlinedQuestionCircleIcon
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
@@ -419,7 +423,19 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                         >
                           {device.fleet}
                         </Button>
-                      ) : '--'}
+                      ) : (
+                        <span>
+                          None{' '}
+                          <Popover bodyContent={<span>Device labels don't match any fleet's selector labels</span>}>
+                            <Button
+                              isInline
+                              variant="plain"
+                              icon={<OutlinedQuestionCircleIcon />}
+                              aria-label="Ownership information"
+                            />
+                          </Popover>
+                        </span>
+                      )}
                     </Td>
                     <Td>
                       <div
