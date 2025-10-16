@@ -19,7 +19,7 @@ import DeviceDetailsPage from './components/pages/DeviceDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import DeviceModal from './components/shared/DeviceModal';
 
-import { mockDevices, mockDevicesPendingApproval } from './data/mockData';
+import { mockDevicesPendingApproval } from './data/mockData';
 import { useDesignControls } from './hooks/useDesignControls';
 import { ViewType, NavigationItemId, NavigationParams } from './types/app';
 
@@ -45,6 +45,14 @@ const FlightControlApp: React.FC = () => {
     setCurrentView('main');
     setSelectedDeviceId(null);
     setSelectedFleetId(null);
+    setIsSidebarOpen(false); // Close sidebar when navigating
+  };
+
+  const handlePageBodyClick = () => {
+    // Close sidebar when clicking on page body
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleNavigate = (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => {
@@ -89,92 +97,94 @@ const FlightControlApp: React.FC = () => {
       {/* Main Application - hidden when login is active */}
       {currentView !== 'login' && (
         <Page masthead={masthead} sidebar={sidebar}>
-          {/* Alert for device interactions */}
-          {showAlert && (
-            <Alert
-              variant="info"
-              title={`Device ${selectedDeviceId || ''} selected`}
-              isInline
-              timeout={3000}
-              onTimeout={() => setShowAlert(false)}
+          <div onClick={handlePageBodyClick} style={{ minHeight: '100%' }}>
+            {/* Alert for device interactions */}
+            {showAlert && (
+              <Alert
+                variant="info"
+                title={`Device ${selectedDeviceId || ''} selected`}
+                isInline
+                timeout={3000}
+                onTimeout={() => setShowAlert(false)}
+              />
+            )}
+
+            {/* Add Device Modal */}
+            <DeviceModal
+              isOpen={isAddDeviceModalOpen}
+              onClose={() => setIsAddDeviceModalOpen(false)}
             />
-          )}
 
-          {/* Add Device Modal */}
-          <DeviceModal
-            isOpen={isAddDeviceModalOpen}
-            onClose={() => setIsAddDeviceModalOpen(false)}
-          />
+            {/* CLI Login Modal */}
+            {/* <CLILoginModal
+              isOpen={isCLILoginModalOpen}
+              onClose={() => setIsCLILoginModalOpen(false)}
+              onSuccess={handleLoginSuccess}
+            /> */}
 
-          {/* CLI Login Modal */}
-          {/* <CLILoginModal
-            isOpen={isCLILoginModalOpen}
-            onClose={() => setIsCLILoginModalOpen(false)}
-            onSuccess={handleLoginSuccess}
-          /> */}
+            {/* Login Command Modal */}
+            {/* <LoginCommandModal
+              isOpen={isLoginCommandModalOpen}
+              onClose={() => setIsLoginCommandModalOpen(false)}
+              token="sample_token_12345"
+            /> */}
 
-          {/* Login Command Modal */}
-          {/* <LoginCommandModal
-            isOpen={isLoginCommandModalOpen}
-            onClose={() => setIsLoginCommandModalOpen(false)}
-            token="sample_token_12345"
-          /> */}
+            {/* SubNav with Get login command button */}
+            <SubNav onCopyLoginCommand={() => handleNavigate('login')} />
 
-          {/* SubNav with Get login command button */}
-          <SubNav onCopyLoginCommand={() => handleNavigate('login')} />
+            {/* Content based on current view and active navigation item */}
+            {currentView === 'main' && (
+              <>
+                {activeItem === 'overview' && (
+                  <OverviewPage
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-          {/* Content based on current view and active navigation item */}
-          {currentView === 'main' && (
-            <>
-              {activeItem === 'overview' && (
-                <OverviewPage
-                  onNavigate={handleNavigate}
-                />
-              )}
+                {activeItem === 'devices' && (
+                  <DevicesPage
+                    onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-              {activeItem === 'devices' && (
-                <DevicesPage
-                  onAddDeviceClick={() => setIsAddDeviceModalOpen(true)}
-                  onNavigate={handleNavigate}
-                />
-              )}
+                {activeItem === 'fleets' && (
+                  <FleetsPage
+                    onNavigate={handleNavigate}
+                  />
+                )}
 
-              {activeItem === 'fleets' && (
-                <FleetsPage
-                  onNavigate={handleNavigate}
-                />
-              )}
+                {activeItem === 'repositories' && (
+                  <RepositoriesPage onNavigate={handleNavigate} />
+                )}
 
-              {activeItem === 'repositories' && (
-                <RepositoriesPage onNavigate={handleNavigate} />
-              )}
+                {activeItem === 'settings' && (
+                  <SettingsPage onNavigate={handleNavigate} />
+                )}
+              </>
+            )}
 
-              {activeItem === 'settings' && (
-                <SettingsPage onNavigate={handleNavigate} />
-              )}
-            </>
-          )}
+            {/* Resume Suspended Devices Page */}
+            {currentView === 'suspended-devices' && (
+              <ResumeSuspendedDevicesPage onBack={() => handleNavigate('main')} />
+            )}
 
-          {/* Resume Suspended Devices Page */}
-          {currentView === 'suspended-devices' && (
-            <ResumeSuspendedDevicesPage onBack={() => handleNavigate('main')} />
-          )}
+            {/* Device Details Page */}
+            {currentView === 'device-details' && selectedDeviceId && (
+              <DeviceDetailsPage
+                deviceId={selectedDeviceId}
+                onNavigate={handleNavigate}
+              />
+            )}
 
-          {/* Device Details Page */}
-          {currentView === 'device-details' && selectedDeviceId && (
-            <DeviceDetailsPage
-              deviceId={selectedDeviceId}
-              onNavigate={handleNavigate}
-            />
-          )}
-
-          {/* Fleet Details Page */}
-          {currentView === 'fleet-details' && selectedFleetId && (
-            <FleetDetailsPage
-              fleetId={selectedFleetId}
-              onNavigate={handleNavigate}
-            />
-          )}
+            {/* Fleet Details Page */}
+            {currentView === 'fleet-details' && selectedFleetId && (
+              <FleetDetailsPage
+                fleetId={selectedFleetId}
+                onNavigate={handleNavigate}
+              />
+            )}
+          </div>
         </Page>
       )}
 
