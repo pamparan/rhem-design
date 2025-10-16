@@ -21,7 +21,7 @@ import DeviceModal from './components/shared/DeviceModal';
 
 import { mockDevices, mockDevicesPendingApproval } from './data/mockData';
 import { useDesignControls } from './hooks/useDesignControls';
-import { ViewType, NavigationItemId } from './types/app';
+import { ViewType, NavigationItemId, NavigationParams } from './types/app';
 
 const FlightControlApp: React.FC = () => {
   const { getSetting } = useDesignControls();
@@ -31,8 +31,7 @@ const FlightControlApp: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeItem, setActiveItem] = useState<NavigationItemId>('overview');
   const [currentView, setCurrentView] = useState<ViewType>('main');
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  const [selectedDeviceDetails, setSelectedDeviceDetails] = useState<any>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
@@ -44,30 +43,24 @@ const FlightControlApp: React.FC = () => {
   const handleSidebarNavigation = (itemId: NavigationItemId) => {
     setActiveItem(itemId);
     setCurrentView('main');
-    setSelectedDeviceDetails(null);
+    setSelectedDeviceId(null);
     setSelectedFleetId(null);
   };
 
-  const handleNavigate = (view: ViewType, activeItem?: NavigationItemId) => {
+  const handleNavigate = (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => {
     setCurrentView(view);
     if (activeItem) {
       setActiveItem(activeItem);
     }
 
-    setSelectedDeviceDetails(null);
-    setSelectedFleetId(null);
+    // Handle navigation parameters
+    setSelectedFleetId(params?.fleetId || null);
+    setSelectedDeviceId(params?.deviceId || null);
   };
 
   const handleDeviceClick = (deviceId: string) => {
-    setSelectedDevice(deviceId);
-    const device = mockDevices.find(d => d.id === deviceId);
-    if (device) {
-      setSelectedDeviceDetails(device);
-      setCurrentView('device-details');
-    } else {
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 3000);
-    }
+    setSelectedDeviceId(deviceId);
+    setCurrentView('device-details');    
   };
 
   const handleFleetClick = (fleetId: string) => {
@@ -100,7 +93,7 @@ const FlightControlApp: React.FC = () => {
           {showAlert && (
             <Alert
               variant="info"
-              title={`Device ${selectedDevice} selected`}
+              title={`Device ${selectedDeviceId || ''} selected`}
               isInline
               timeout={3000}
               onTimeout={() => setShowAlert(false)}
@@ -150,7 +143,6 @@ const FlightControlApp: React.FC = () => {
               {activeItem === 'fleets' && (
                 <FleetsPage
                   onNavigate={handleNavigate}
-                  onFleetClick={handleFleetClick}
                 />
               )}
 
@@ -170,11 +162,10 @@ const FlightControlApp: React.FC = () => {
           )}
 
           {/* Device Details Page */}
-          {currentView === 'device-details' && selectedDeviceDetails && (
+          {currentView === 'device-details' && selectedDeviceId && (
             <DeviceDetailsPage
-              device={selectedDeviceDetails}
+              deviceId={selectedDeviceId}
               onNavigate={handleNavigate}
-              onBack={() => handleNavigate('main')}
             />
           )}
 
@@ -182,7 +173,7 @@ const FlightControlApp: React.FC = () => {
           {currentView === 'fleet-details' && selectedFleetId && (
             <FleetDetailsPage
               fleetId={selectedFleetId}
-              onBack={() => handleNavigate('main')}
+              onNavigate={handleNavigate}
             />
           )}
         </Page>

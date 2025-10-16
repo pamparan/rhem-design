@@ -20,10 +20,10 @@ import LabelFleetFilter from "../shared/LabelFleetFilter";
 import { mockDevices, mockDevicesPendingApproval } from "../../data/mockData";
 import { generateChartData } from "../../utils/deviceUtils";
 import { useDesignControls } from "../../hooks/useDesignControls";
-import { NavigationItemId, ViewType } from "../../types/app";
+import { NavigationItemId, NavigationParams, ViewType } from "../../types/app";
 
 interface OverviewPageProps {
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const OverviewPage: React.FC<OverviewPageProps> = ({

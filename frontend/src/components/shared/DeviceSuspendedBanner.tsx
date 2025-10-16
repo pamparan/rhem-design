@@ -6,12 +6,12 @@ import {
 } from '@patternfly/react-core';
 import { useDesignControls } from "../../hooks/useDesignControls";
 import { Device } from '../../types/device';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface DeviceSuspendedBannerProps {
   device: Device;
   onResumeDevice: () => void;
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const DeviceSuspendedBanner: React.FC<DeviceSuspendedBannerProps> = ({

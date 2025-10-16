@@ -24,26 +24,13 @@ import {
   ExclamationTriangleIcon,
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
-import { mockDevices } from '../../data/mockData';
+import { mockDevices, mockFleets } from '../../data/mockData';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface FleetDetailsPageProps {
   fleetId: string;
-  onBack: () => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
-
-// Mock fleet data - in real app would come from props or API
-const mockFleetDetails = {
-  id: '1',
-  name: 'Fitting Room Devices',
-  status: 'Valid',
-  created: '30 January 2025',
-  systemImage: '-',
-  deviceSelector: 'key=value',
-  managedBy: '-',
-  sources: 0,
-  upToDate: 125,
-  total: 200,
-};
 
 // Mock rollout data
 const mockRollouts = [
@@ -122,10 +109,16 @@ const mockEvents = [
 
 const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   fleetId,
-  onBack,
+  onNavigate,
 }) => {
   const [activeTabKey, setActiveTabKey] = useState<string | number>('details');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
+
+  // Look up fleet details using the fleetId prop
+  const fleetDetails = mockFleets.find(f => f.id === fleetId);
+  
+  // Fallback to first fleet if not found (shouldn't happen in normal usage)
+  const mockFleetDetails = fleetDetails || mockFleets[0];
 
   // Filter devices for this fleet
   const fleetDevices = mockDevices.filter(device => device.fleet === mockFleetDetails.name);
@@ -213,7 +206,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
       <PageSection style={{ paddingBottom: '8px' }}>
         <Breadcrumb>
           <BreadcrumbItem>
-            <Button variant="link" onClick={onBack} style={{ padding: 0, color: '#06c' }}>
+            <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0, color: '#06c' }}>
               Fleets
             </Button>
           </BreadcrumbItem>
@@ -254,7 +247,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
         </Flex>
       </PageSection>
 
-      <PostRestoreBanners />
+      <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Tabs */}
       <PageSection style={{ paddingTop: 0 }}>

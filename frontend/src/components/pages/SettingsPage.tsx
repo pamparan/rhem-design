@@ -4,10 +4,10 @@ import {
   Title,
 } from '@patternfly/react-core';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface SettingsPageProps {
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const SettingsPage: React.FC<SettingsPageProps> = ({

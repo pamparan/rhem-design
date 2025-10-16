@@ -9,10 +9,10 @@ import {
 import { useDesignControls } from "../../hooks/useDesignControls";
 import { mockDevices } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface PostRestoreBannersProps {
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const PostRestoreBanners: React.FC<PostRestoreBannersProps> = ({

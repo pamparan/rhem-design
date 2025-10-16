@@ -11,7 +11,11 @@ import {
   ToolbarItem,
   ToolbarGroup,
   SearchInput,
-  Alert,
+  Dropdown,
+  DropdownList,
+  DropdownItem,
+  MenuToggle,
+  MenuToggleElement,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -28,7 +32,7 @@ import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import { mockDevices } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 // Mock fleet data for prototype
 const mockFleets = [
@@ -39,24 +43,19 @@ const mockFleets = [
 ];
 
 interface FleetsPageProps {
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
-  onFleetClick?: (fleetId: string) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const FleetsPage: React.FC<FleetsPageProps> = ({
   onNavigate,
-  onFleetClick = () => console.log('Navigate to fleet details')
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
+  const [openMenuFleetId, setOpenMenuFleetId] = useState<string | null>(null);
 
   // Calculate suspended devices in current fleet (for demonstration, we'll use all suspended devices)
   const suspendedCount = getSuspendedDevicesCount(mockDevices);
-
-  const handleResumeAll = () => {
-    setIsResumeModalOpen(true);
-  };
 
   const confirmResumeAll = async () => {
     setIsResuming(true);
@@ -67,6 +66,11 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
 
     setIsResuming(false);
     setIsResumeModalOpen(false);
+  };
+
+  const handleViewFleetDetails = (fleetId: string) => {
+    onNavigate('fleet-details', 'fleets', { fleetId });
+    setOpenMenuFleetId(null);
   };
 
   return (
@@ -106,7 +110,7 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                     <Button variant="secondary">Import fleets</Button>
                   </ToolbarItem>
                   <ToolbarItem>
-                    <Button variant="control">Actions</Button>
+                    <Button variant="control">Delete fleets</Button>
                   </ToolbarItem>
                 </ToolbarGroup>
               </ToolbarContent>
@@ -133,8 +137,8 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                     <Td>
                       <Button
                         variant="link"
-                        style={{ color: '#06c', padding: 0 }}
-                        onClick={() => onFleetClick(fleet.id)}
+                        style={{ padding: 0 }}
+                        onClick={() => onNavigate('fleet-details', 'fleets', { fleetId: fleet.id })}
                       >
                         {fleet.name}
                       </Button>
@@ -156,12 +160,40 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                       )}
                     </Td>
                     <Td>
-                      <Button
-                        variant="plain"
-                        onClick={() => alert(`Fleet options for ${fleet.name}`)}
+                      <Dropdown
+                        isOpen={openMenuFleetId === fleet.id}
+                        onSelect={() => setOpenMenuFleetId(null)}
+                        onOpenChange={(isOpen) => setOpenMenuFleetId(isOpen ? fleet.id : null)}
+                        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            variant="plain"
+                            onClick={() => setOpenMenuFleetId(openMenuFleetId === fleet.id ? null : fleet.id)}
+                            isExpanded={openMenuFleetId === fleet.id}
+                          >
+                            <EllipsisVIcon />
+                          </MenuToggle>
+                        )}
                       >
-                        <EllipsisVIcon />
-                      </Button>
+                        <DropdownList>
+                          <DropdownItem
+                            key="view-details"
+                            onClick={() => handleViewFleetDetails(fleet.id)}
+                          >
+                            View fleet details
+                          </DropdownItem>
+                          <DropdownItem
+                            key="edit-config"
+                          >
+                            Edit fleet configuration
+                          </DropdownItem>
+                          <DropdownItem
+                            key="delete"
+                          >
+                            Delete fleet
+                          </DropdownItem>
+                        </DropdownList>
+                      </Dropdown>
                     </Td>
                   </Tr>
                 ))}

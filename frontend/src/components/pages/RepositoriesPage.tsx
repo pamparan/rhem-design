@@ -24,7 +24,7 @@ import {
   EllipsisVIcon
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 // Mock repositories data for prototype
 const mockRepositories = [
@@ -33,7 +33,7 @@ const mockRepositories = [
 ];
 
 interface RepositoriesPageProps {
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const RepositoriesPage: React.FC<RepositoriesPageProps> = ({

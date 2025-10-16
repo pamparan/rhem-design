@@ -37,21 +37,19 @@ import {
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
-import { mockDevices, mockDevicesPendingApproval } from '../../data/mockData';
+import { mockDevices, mockDevicesPendingApproval, mockFleets } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
 import { getStatusLabel, getStatusIcon, countDevicesByStatus, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
 import { useDesignControls } from '../../hooks/useDesignControls';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, ViewType, NavigationParams } from '../../types/app';
 
 interface DevicesPageProps {
   onAddDeviceClick: () => void;
-  onDeviceSelect: (deviceId: string) => void;
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const DevicesPage: React.FC<DevicesPageProps> = ({
   onAddDeviceClick,
-  onDeviceSelect,
   onNavigate,
 }) => {
   const { getSetting } = useDesignControls();
@@ -60,7 +58,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
   
   const [searchValue, setSearchValue] = useState('');
   const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [deviceToResume, setDeviceToResume] = useState<Device | null>(null);
   const [isResuming, setIsResuming] = useState(false);
@@ -139,8 +137,16 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
   };
 
   const handleDeviceClick = (deviceId: string) => {
-    setSelectedDevice(deviceId);
-    onDeviceSelect(deviceId);
+    setSelectedDeviceId(deviceId);
+    onNavigate('device-details', 'devices', { deviceId  });
+  };
+
+  const handleFleetClick = (fleetName: string) => {
+    // Find fleet by name to get its ID
+    const fleet = mockFleets.find(f => f.name === fleetName);
+    if (fleet) {
+      onNavigate('fleet-details', undefined, { fleetId: fleet.id });
+    }
   };
 
   const handleResumeDevice = (device: Device) => {
@@ -386,16 +392,18 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                   <Tr
                     key={device.id}
                     style={{
-                      cursor: 'pointer',
-                      backgroundColor: selectedDevice === device.id ? '#f0f8ff' : undefined
+                      backgroundColor: selectedDeviceId === device.id ? '#f0f8ff' : undefined
                     }}
-                    onClick={() => handleDeviceClick(device.id)}
                   >
                     <Td>
                       <input type="checkbox" />
                     </Td>
                     <Td>
-                      <Button variant="link" style={{ padding: 0 }}>
+                      <Button 
+                        variant="link" 
+                        style={{ padding: 0 }}
+                        onClick={() => handleDeviceClick(device.id)}
+                      >
                         {device.alias || 'Untitled'}
                       </Button>
                     </Td>
@@ -404,7 +412,11 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                     </Td>
                     <Td>
                       {device.fleet ? (
-                        <Button variant="link" style={{ padding: 0 }}>
+                        <Button 
+                          variant="link" 
+                          style={{ padding: 0 }}
+                          onClick={() => handleFleetClick(device.fleet!)}
+                        >
                           {device.fleet}
                         </Button>
                       ) : '--'}
@@ -506,8 +518,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                             key="details"
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log(`View details for ${device.name}`);
-                              toggleKebabMenu(device.id);
+                              onNavigate('device-details', 'devices', { deviceId: device.id });
                             }}
                           >
                             View device details

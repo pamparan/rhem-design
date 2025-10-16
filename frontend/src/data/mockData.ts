@@ -1,5 +1,18 @@
 import { Device, SystemState, DevicePendingApproval } from "../types/device";
 
+export interface Fleet {
+  id: string;
+  name: string;
+  systemImage: string;
+  upToDate: number;
+  total: number;
+  status: string;
+  created?: string;
+  deviceSelector?: string;
+  managedBy?: string;
+  sources?: number;
+}
+
 export const mockDevices: Device[] = [
   {
     id: "1",
@@ -55,7 +68,7 @@ export const mockDevices: Device[] = [
     location: "Chicago",
     ip: "192.168.1.25",
     firmware: "v1.9.5",
-    fleet: "Fitting Room Devices",
+    fleet: "Store Devices",
     lastSeen: "4 days ago",
   },
   {
@@ -69,7 +82,7 @@ export const mockDevices: Device[] = [
     location: "Miami",
     ip: "192.168.1.30",
     firmware: "v2.2.0",
-    fleet: "Fitting Room Devices",
+    fleet: "",
     lastSeen: "4 days ago",
   },
   {
@@ -170,5 +183,56 @@ export const mockDevicesPendingApproval: DevicePendingApproval[] = [
     name: "D6B1EF5670CFE0C3",
     alias: "pos-0105-ny",
     requestedAt: "1 hour ago",
+  },
+];
+
+export const mockFleets: Fleet[] = [
+  { 
+    id: '1', 
+    name: 'Fitting Room Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 125, 
+    total: 200, 
+    status: 'Valid',
+    created: '30 January 2025',
+    deviceSelector: 'key=value',
+    managedBy: '-',
+    sources: 0
+  },
+  { 
+    id: '2', 
+    name: 'Warehouse name', 
+    systemImage: 'Local', 
+    upToDate: 125, 
+    total: 340, 
+    status: 'Selector overlap',
+    created: '15 February 2025',
+    deviceSelector: 'location=warehouse',
+    managedBy: '-',
+    sources: 2
+  },
+  { 
+    id: '3', 
+    name: 'Store Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 217, 
+    total: 217, 
+    status: 'Valid',
+    created: '10 March 2025',
+    deviceSelector: 'type=store',
+    managedBy: '-',
+    sources: 1
+  },
+  { 
+    id: '4', 
+    name: 'Office Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 217, 
+    total: 217, 
+    status: 'Valid',
+    created: '20 March 2025',
+    deviceSelector: 'type=office',
+    managedBy: '-',
+    sources: 0
   },
 ];

@@ -25,6 +25,7 @@ import {
   DescriptionListDescription,
   Flex,
   FlexItem,
+  Icon,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -44,21 +45,21 @@ import {
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import DeviceSuspendedBanner from '../shared/DeviceSuspendedBanner';
-import { Device } from '../../types/device';
 import { getStatusLabelStyle, getStatusLabel, getStatusIcon } from '../../utils/deviceUtils';
-import { NavigationItemId, ViewType } from '../../types/app';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
+import { mockDevices } from '../../data/mockData';
+import { Device } from '../../types/device';
 
 interface DeviceDetailsPageProps {
-  device: Device;
-  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
-  onBack: () => void;
+  deviceId: string;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
-  device,
+  deviceId,
   onNavigate,
-  onBack
 }) => {
+  const device = mockDevices.find(d => d.id === deviceId)  as Device;
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
@@ -129,7 +130,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       <PageSection style={{ paddingBottom: '8px' }}>
         <Breadcrumb>
           <BreadcrumbItem>
-            <Button variant="link" onClick={onBack} style={{ padding: 0, color: '#06c' }}>
+            <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0 }}>
               Devices
             </Button>
           </BreadcrumbItem>
