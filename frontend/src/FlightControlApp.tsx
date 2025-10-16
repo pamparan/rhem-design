@@ -18,15 +18,10 @@ import ResumeSuspendedDevicesPage from './components/pages/ResumeSuspendedDevice
 import DeviceDetailsPage from './components/pages/DeviceDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import DeviceModal from './components/shared/DeviceModal';
-// import CLILoginModal from './components/shared/CLILoginModal';
-// import LoginCommandModal from './components/shared/LoginCommandModal';
 
-// Import data
 import { mockDevices, mockDevicesPendingApproval } from './data/mockData';
-
-// Import hooks
 import { useDesignControls } from './hooks/useDesignControls';
-
+import { ViewType, NavigationItemId } from './types/app';
 
 const FlightControlApp: React.FC = () => {
   const { getSetting } = useDesignControls();
@@ -34,47 +29,33 @@ const FlightControlApp: React.FC = () => {
   const pendingDevicesCount = showDevicesPendingApproval ? mockDevicesPendingApproval.length : 0;
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [activeItem, setActiveItem] = useState('overview');
-  const [currentView, setCurrentView] = useState<'main' | 'suspended-devices' | 'device-details' | 'fleet-details' | 'login'>('main');
+  const [activeItem, setActiveItem] = useState<NavigationItemId>('overview');
+  const [currentView, setCurrentView] = useState<ViewType>('main');
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [selectedDeviceDetails, setSelectedDeviceDetails] = useState<any>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
-  // const [isCLILoginModalOpen, setIsCLILoginModalOpen] = useState(false);
-  // const [isLoginCommandModalOpen, setIsLoginCommandModalOpen] = useState(false);
-  // const [generatedToken, setGeneratedToken] = useState<string>('');
 
   const onSidebarToggle = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleSidebarNavigation = (itemId: string) => {
+  const handleSidebarNavigation = (itemId: NavigationItemId) => {
     setActiveItem(itemId);
     setCurrentView('main');
     setSelectedDeviceDetails(null);
     setSelectedFleetId(null);
   };
 
-  const handleNavigate = (view: string) => {
-    // Handle special views
-    if (view === 'suspended-devices') {
-      setCurrentView('suspended-devices');
-      setActiveItem('devices'); // Keep devices active in sidebar
-      setSelectedDeviceDetails(null);
-      setSelectedFleetId(null);
-    } else {
-      // Handle standard navigation items
-      setActiveItem(view);
-      setCurrentView('main');
-      setSelectedDeviceDetails(null);
-      setSelectedFleetId(null);
+  const handleNavigate = (view: ViewType, activeItem?: NavigationItemId) => {
+    setCurrentView(view);
+    if (activeItem) {
+      setActiveItem(activeItem);
     }
-  };
 
-  const handleCopyLoginCommand = () => {
-    console.log('Get login command clicked!');
-    setCurrentView('login');
+    setSelectedDeviceDetails(null);
+    setSelectedFleetId(null);
   };
 
   const handleDeviceClick = (deviceId: string) => {
@@ -92,12 +73,6 @@ const FlightControlApp: React.FC = () => {
   const handleFleetClick = (fleetId: string) => {
     setSelectedFleetId(fleetId);
     setCurrentView('fleet-details');
-  };
-
-  const navigateToMain = () => {
-    setCurrentView('main');
-    setSelectedDeviceDetails(null);
-    setSelectedFleetId(null);
   };
 
   const masthead = (
@@ -153,7 +128,7 @@ const FlightControlApp: React.FC = () => {
           /> */}
 
           {/* SubNav with Get login command button */}
-          <SubNav onCopyLoginCommand={handleCopyLoginCommand} />
+          <SubNav onCopyLoginCommand={() => handleNavigate('login')} />
 
           {/* Content based on current view and active navigation item */}
           {currentView === 'main' && (
@@ -180,18 +155,18 @@ const FlightControlApp: React.FC = () => {
               )}
 
               {activeItem === 'repositories' && (
-                <RepositoriesPage />
+                <RepositoriesPage onNavigate={handleNavigate} />
               )}
 
               {activeItem === 'settings' && (
-                <SettingsPage />
+                <SettingsPage onNavigate={handleNavigate} />
               )}
             </>
           )}
 
           {/* Resume Suspended Devices Page */}
           {currentView === 'suspended-devices' && (
-            <ResumeSuspendedDevicesPage onBack={navigateToMain} />
+            <ResumeSuspendedDevicesPage onBack={() => handleNavigate('main')} />
           )}
 
           {/* Device Details Page */}
@@ -199,7 +174,7 @@ const FlightControlApp: React.FC = () => {
             <DeviceDetailsPage
               device={selectedDeviceDetails}
               onNavigate={handleNavigate}
-              onBack={navigateToMain}
+              onBack={() => handleNavigate('main')}
             />
           )}
 
@@ -207,7 +182,7 @@ const FlightControlApp: React.FC = () => {
           {currentView === 'fleet-details' && selectedFleetId && (
             <FleetDetailsPage
               fleetId={selectedFleetId}
-              onBack={navigateToMain}
+              onBack={() => handleNavigate('main')}
             />
           )}
         </Page>
@@ -215,7 +190,7 @@ const FlightControlApp: React.FC = () => {
 
       {/* Full-screen Login Overlay - renders outside of Page component */}
       {currentView === 'login' && (
-        <LoginPage onBack={navigateToMain} />
+        <LoginPage onBack={() => handleNavigate('main')} />
       )}
     </DesignControls>
   );

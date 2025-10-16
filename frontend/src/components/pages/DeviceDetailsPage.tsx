@@ -46,10 +46,11 @@ import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import DeviceSuspendedBanner from '../shared/DeviceSuspendedBanner';
 import { Device } from '../../types/device';
 import { getStatusLabelStyle, getStatusLabel, getStatusIcon } from '../../utils/deviceUtils';
+import { NavigationItemId, ViewType } from '../../types/app';
 
 interface DeviceDetailsPageProps {
   device: Device;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
   onBack: () => void;
 }
 
@@ -182,7 +183,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       <DeviceSuspendedBanner
         device={device}
         onResumeDevice={handleResumeDevice}
-        onViewSuspendedDevices={() => onNavigate('suspended-devices')}
+        onNavigate={onNavigate}
       />
 
       {/* Tabs */}

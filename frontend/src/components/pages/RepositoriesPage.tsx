@@ -24,6 +24,7 @@ import {
   EllipsisVIcon
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
+import { NavigationItemId, ViewType } from '../../types/app';
 
 // Mock repositories data for prototype
 const mockRepositories = [
@@ -31,9 +32,13 @@ const mockRepositories = [
   { id: '2', name: 'HTTP-nginx-demo', type: 'HTTP service', url: 'https://nowhere.com/flightctl/flightctl-demos', syncStatus: 'No access', lastTransition: '17 hours ago' },
 ];
 
-interface RepositoriesPageProps {}
+interface RepositoriesPageProps {
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
+}
 
-const RepositoriesPage: React.FC<RepositoriesPageProps> = () => {
+const RepositoriesPage: React.FC<RepositoriesPageProps> = ({
+  onNavigate,
+}) => {
   const [searchValue, setSearchValue] = useState('');
 
   return (
@@ -45,7 +50,7 @@ const RepositoriesPage: React.FC<RepositoriesPageProps> = () => {
         </Title>
       </PageSection>
 
-      <PostRestoreBanners />
+      <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Main Content */}
       <PageSection>

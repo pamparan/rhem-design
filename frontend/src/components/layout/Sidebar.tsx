@@ -7,11 +7,12 @@ import {
   NavItem,
   Badge,
 } from '@patternfly/react-core';
+import { NavigationItemId } from '../../types/app';
 
 interface AppSidebarProps {
   isSidebarOpen: boolean;
-  activeItem: string;
-  setActiveItem: (item: string) => void;
+  activeItem: NavigationItemId;
+  setActiveItem: (item: NavigationItemId) => void;
   pendingDevicesCount?: number;
 }
 
@@ -30,10 +31,6 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     { id: 'settings', label: 'Settings' },
   ];
 
-  const handleNavClick = (itemId: string) => {
-    setActiveItem(itemId);
-  };
-
   const navigation = (
     <Nav>
       <NavList>
@@ -42,7 +39,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
             key={item.id}
             itemId={item.id}
             isActive={activeItem === item.id}
-            onClick={() => handleNavClick(item.id)}
+            onClick={() => setActiveItem(item.id as NavigationItemId)}
           >
             {item.label}
             {item.id === 'devices' && pendingDevicesCount > 0 && (

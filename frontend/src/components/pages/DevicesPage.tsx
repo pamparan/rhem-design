@@ -41,11 +41,12 @@ import { mockDevices, mockDevicesPendingApproval } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
 import { getStatusLabel, getStatusIcon, countDevicesByStatus, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
 import { useDesignControls } from '../../hooks/useDesignControls';
+import { NavigationItemId, ViewType } from '../../types/app';
 
 interface DevicesPageProps {
   onAddDeviceClick: () => void;
   onDeviceSelect: (deviceId: string) => void;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
 }
 
 const DevicesPage: React.FC<DevicesPageProps> = ({

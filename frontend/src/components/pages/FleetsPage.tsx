@@ -28,6 +28,7 @@ import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import { mockDevices } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
+import { NavigationItemId, ViewType } from '../../types/app';
 
 // Mock fleet data for prototype
 const mockFleets = [
@@ -38,7 +39,7 @@ const mockFleets = [
 ];
 
 interface FleetsPageProps {
-  onNavigate: (view: string) => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId) => void;
   onFleetClick?: (fleetId: string) => void;
 }
 
