@@ -30,17 +30,9 @@ import {
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
-import { mockDevices } from '../../data/mockData';
+import { mockDevices, mockFleets } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
 import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
-
-// Mock fleet data for prototype
-const mockFleets = [
-  { id: '1', name: 'Fitting Room Devices', systemImage: 'github.com/flightctl/flightctl-demos @ main', upToDate: 125, total: 200, status: 'Valid' },
-  { id: '2', name: 'Warehouse name', systemImage: 'Local', upToDate: 125, total: 340, status: 'Selector overlap' },
-  { id: '3', name: 'Store Devices', systemImage: 'github.com/flightctl/flightctl-demos @ main', upToDate: 217, total: 217, status: 'Valid' },
-  { id: '4', name: 'Office Devices', systemImage: 'github.com/flightctl/flightctl-demos @ main', upToDate: 217, total: 217, status: 'Valid' },
-];
 
 interface FleetsPageProps {
   onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;

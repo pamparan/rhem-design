@@ -33,7 +33,6 @@ const FlightControlApp: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('main');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
-  const [showAlert, setShowAlert] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
 
   const onSidebarToggle = () => {
@@ -98,17 +97,6 @@ const FlightControlApp: React.FC = () => {
       {currentView !== 'login' && (
         <Page masthead={masthead} sidebar={sidebar}>
           <div onClick={handlePageBodyClick} style={{ minHeight: '100%' }}>
-            {/* Alert for device interactions */}
-            {showAlert && (
-              <Alert
-                variant="info"
-                title={`Device ${selectedDeviceId || ''} selected`}
-                isInline
-                timeout={3000}
-                onTimeout={() => setShowAlert(false)}
-              />
-            )}
-
             {/* Add Device Modal */}
             <DeviceModal
               isOpen={isAddDeviceModalOpen}

@@ -13,6 +13,11 @@ export interface Fleet {
   sources?: number;
 }
 
+const getMockFleet = (index: number): string | undefined => {
+  if (index %   5 === 0) return 'Store Devices';
+  return index % 3 === 0 ? 'Fitting Room Devices' : undefined;
+};
+
 export const mockDevices: Device[] = [
   {
     id: "1",
@@ -152,7 +157,7 @@ export const mockDevices: Device[] = [
     firmware: `v${Math.floor(i / 10) + 1}.${i % 10}.${Math.floor(
       Math.random() * 10
     )}`,
-    fleet: i % 3 === 0 ? undefined : "Fitting Room Devices",
+    fleet: getMockFleet(i),
     lastSeen: `${Math.floor(Math.random() * 7) + 1} days ago`,
     configVersion:
       i % 8 === 0 ? 120 + Math.floor(Math.random() * 20) : undefined,
