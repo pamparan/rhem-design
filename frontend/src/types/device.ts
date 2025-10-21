@@ -14,6 +14,13 @@ export interface Device {
   configVersion?: number;
 }
 
+export interface DevicePendingApproval {
+  id: string;
+  name: string;
+  alias?: string;
+  requestedAt: string;
+}
+
 export type DeviceStatus =
   | 'ONLINE'
   | 'OFFLINE'
@@ -47,10 +54,8 @@ export interface DeviceStatusCount {
 }
 
 export interface SystemState {
-  isPostRestore: boolean;
   suspendedDeviceCount: number;
   pendingSyncDeviceCount: number;
-  restoreCompleteTime?: Date;
 }
 
 export interface ChartData {

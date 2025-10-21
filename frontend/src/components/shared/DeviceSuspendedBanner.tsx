@@ -6,17 +6,18 @@ import {
 } from '@patternfly/react-core';
 import { useDesignControls } from "../../hooks/useDesignControls";
 import { Device } from '../../types/device';
+import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 
 interface DeviceSuspendedBannerProps {
   device: Device;
   onResumeDevice: () => void;
-  onViewSuspendedDevices?: () => void;
+  onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
 }
 
 const DeviceSuspendedBanner: React.FC<DeviceSuspendedBannerProps> = ({
   device,
   onResumeDevice,
-  onViewSuspendedDevices = () => console.log('Navigate to suspended devices'),
+  onNavigate,
 }) => {
   const { getSetting } = useDesignControls();
   const showPostRestoreBanner = getSetting("showPostRestoreBanner");
@@ -41,7 +42,7 @@ const DeviceSuspendedBanner: React.FC<DeviceSuspendedBannerProps> = ({
             <Button variant="link" onClick={onResumeDevice}>
               Resume Device
             </Button>
-            <Button variant="link" onClick={onViewSuspendedDevices}>
+            <Button variant="link" onClick={() => onNavigate('suspended-devices')}>
               View Suspended Devices
             </Button>
           </>

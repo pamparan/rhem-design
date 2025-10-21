@@ -1,4 +1,22 @@
-import { Device, SystemState } from "../types/device";
+import { Device, SystemState, DevicePendingApproval } from "../types/device";
+
+export interface Fleet {
+  id: string;
+  name: string;
+  systemImage: string;
+  upToDate: number;
+  total: number;
+  status: string;
+  created?: string;
+  deviceSelector?: string;
+  managedBy?: string;
+  sources?: number;
+}
+
+const getMockFleet = (index: number): string | undefined => {
+  if (index %   5 === 0) return 'Store Devices';
+  return index % 3 === 0 ? 'Fitting Room Devices' : undefined;
+};
 
 export const mockDevices: Device[] = [
   {
@@ -34,7 +52,6 @@ export const mockDevices: Device[] = [
   {
     id: "3",
     name: "0A83BC2347AFE7F4",
-    alias: "Just a friendly name here",
     status: "PENDING_SYNC",
     applicationStatus: "DEGRADED",
     systemUpdateStatus: "OUT_OF_DATE",
@@ -56,7 +73,7 @@ export const mockDevices: Device[] = [
     location: "Chicago",
     ip: "192.168.1.25",
     firmware: "v1.9.5",
-    fleet: "Fitting Room Devices",
+    fleet: "Store Devices",
     lastSeen: "4 days ago",
   },
   {
@@ -70,7 +87,7 @@ export const mockDevices: Device[] = [
     location: "Miami",
     ip: "192.168.1.30",
     firmware: "v2.2.0",
-    fleet: "Fitting Room Devices",
+    fleet: "",
     lastSeen: "4 days ago",
   },
   {
@@ -92,7 +109,7 @@ export const mockDevices: Device[] = [
   ...Array.from({ length: 35 }, (_, i) => ({
     id: `${i + 7}`,
     name: `0A83BC2347AFE7F${(i + 8).toString(16).toUpperCase()}`,
-    alias: "Device alias here",
+    alias: i % 5 === 0 ? 'my-device-alias' : undefined,
     status:
       i % 8 === 0
         ? ("SUSPENDED" as const)
@@ -140,7 +157,7 @@ export const mockDevices: Device[] = [
     firmware: `v${Math.floor(i / 10) + 1}.${i % 10}.${Math.floor(
       Math.random() * 10
     )}`,
-    fleet: i % 3 === 0 ? undefined : "Fitting Room Devices",
+    fleet: getMockFleet(i),
     lastSeen: `${Math.floor(Math.random() * 7) + 1} days ago`,
     configVersion:
       i % 8 === 0 ? 120 + Math.floor(Math.random() * 20) : undefined,
@@ -152,5 +169,75 @@ export const mockSystemState: SystemState = {
     .length,
   pendingSyncDeviceCount: mockDevices.filter((d) => d.status === "PENDING_SYNC")
     .length,
-  restoreCompleteTime: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
 };
+
+export const mockDevicesPendingApproval: DevicePendingApproval[] = [
+  {
+    id: "pending-1",
+    name: "B4F9CD3458AFE8A1",
+    requestedAt: "2 minutes ago",
+  },
+  {
+    id: "pending-2",
+    name: "C5A0DE4569BFE9B2",
+    alias: "pos-0104-ny",
+    requestedAt: "15 minutes ago",
+  },
+  {
+    id: "pending-3",
+    name: "D6B1EF5670CFE0C3",
+    alias: "pos-0105-ny",
+    requestedAt: "1 hour ago",
+  },
+];
+
+export const mockFleets: Fleet[] = [
+  { 
+    id: '1', 
+    name: 'Fitting Room Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 125, 
+    total: 200, 
+    status: 'Valid',
+    created: '30 January 2025',
+    deviceSelector: 'key=value',
+    managedBy: '-',
+    sources: 0
+  },
+  { 
+    id: '2', 
+    name: 'Warehouse name', 
+    systemImage: 'Local', 
+    upToDate: 125, 
+    total: 340, 
+    status: 'Selector overlap',
+    created: '15 February 2025',
+    deviceSelector: 'location=warehouse',
+    managedBy: '-',
+    sources: 2
+  },
+  { 
+    id: '3', 
+    name: 'Store Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 217, 
+    total: 217, 
+    status: 'Valid',
+    created: '10 March 2025',
+    deviceSelector: 'type=store',
+    managedBy: '-',
+    sources: 1
+  },
+  { 
+    id: '4', 
+    name: 'Office Devices', 
+    systemImage: 'github.com/flightctl/flightctl-demos @ main', 
+    upToDate: 217, 
+    total: 217, 
+    status: 'Valid',
+    created: '20 March 2025',
+    deviceSelector: 'type=office',
+    managedBy: '-',
+    sources: 0
+  },
+];
