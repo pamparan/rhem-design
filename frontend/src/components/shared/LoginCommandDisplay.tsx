@@ -24,10 +24,19 @@ const LoginCommandDisplay: React.FC<LoginCommandDisplayProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const toggleId = 'login-command-toggle';
 
-  const handleCopyClick = (_event: React.MouseEvent, text: string) => {
+  const clipboardCopyFunc = (event: React.MouseEvent, text: string) => {
     navigator.clipboard.writeText(text.toString());
+  };
+
+  const onClick = (event: React.MouseEvent, text: string) => {
+    clipboardCopyFunc(event, text);
     setCopied(true);
+  };
+
+  const onToggle = (isExpanded: boolean) => {
+    setIsExpanded(isExpanded);
   };
 
   return (
@@ -52,10 +61,10 @@ const LoginCommandDisplay: React.FC<LoginCommandDisplayProps> = ({
             <Fragment>
               <CodeBlockAction>
                 <ClipboardCopyButton
-                  id="copy-button"
+                  id="login-copy-button"
                   textId="login-command-code"
                   aria-label="Copy to clipboard"
-                  onClick={(e) => handleCopyClick(e, loginCommand)}
+                  onClick={(e) => onClick(e, loginCommand)}
                   exitDelay={copied ? 1500 : 600}
                   maxWidth="110px"
                   variant="plain"
@@ -68,40 +77,25 @@ const LoginCommandDisplay: React.FC<LoginCommandDisplayProps> = ({
           }
         >
           <CodeBlockCode id="login-command-code">
-            {isExpanded ? loginCommand : shortLoginCommand}
-            {!isExpanded && (
-              <ExpandableSection
-                isExpanded={isExpanded}
-                isDetached
-                contentId="code-expand"
-                toggleId="toggle-id"
-              >
-                {expandedContent}
-              </ExpandableSection>
-            )}
+            {shortLoginCommand}
+            <ExpandableSection
+              isExpanded={isExpanded}
+              isDetached
+              contentId="login-command-expand"
+              toggleId={toggleId}
+            >
+              {expandedContent}
+            </ExpandableSection>
           </CodeBlockCode>
-          {!isExpanded && (
-            <ExpandableSectionToggle
-              isExpanded={isExpanded}
-              onToggle={setIsExpanded}
-              contentId="code-expand"
-              direction="up"
-              toggleId="toggle-id"
-            >
-              Show more
-            </ExpandableSectionToggle>
-          )}
-          {isExpanded && (
-            <ExpandableSectionToggle
-              isExpanded={isExpanded}
-              onToggle={setIsExpanded}
-              contentId="code-expand"
-              direction="down"
-              toggleId="toggle-id"
-            >
-              Show less
-            </ExpandableSectionToggle>
-          )}
+          <ExpandableSectionToggle
+            isExpanded={isExpanded}
+            onToggle={onToggle}
+            contentId="login-command-expand"
+            direction="up"
+            toggleId={toggleId}
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </ExpandableSectionToggle>
         </CodeBlock>
       </StackItem>
 
