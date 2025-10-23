@@ -16,6 +16,7 @@ import {
   DropdownItem,
   Checkbox,
   Popover,
+  Switch,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -80,6 +81,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [deviceToApprove, setDeviceToApprove] = useState<{ id: string; name: string; alias?: string } | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const [showOnlyDecommissioned, setShowOnlyDecommissioned] = useState(false);
 
   const { deviceStatusChartData, appStatusChartData, systemUpdateChartData } = useDeviceStatusesCount(mockDevices);
 
@@ -401,6 +403,14 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                   <ToolbarItem>
                     <Button variant="secondary">Decommission devices</Button>
                   </ToolbarItem>
+                  <ToolbarItem>
+                    <Switch
+                      id="show-decommissioned-switch"
+                      label="Show decommissioned devices"
+                      isChecked={showOnlyDecommissioned}
+                      onChange={(_event, checked) => setShowOnlyDecommissioned(checked)}
+                    />
+                  </ToolbarItem>                  
                 </ToolbarGroup>
               </ToolbarContent>
             </Toolbar>
