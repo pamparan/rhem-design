@@ -99,7 +99,7 @@ interface Fleet {
   systemImage: string;
   upToDate: number;
   total: number;
-  status: 'Valid' | 'Selector overlap';
+  status: 'Valid' | 'Invalid';
 }
 ```
 
