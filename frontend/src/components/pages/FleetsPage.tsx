@@ -124,6 +124,10 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
               <Tbody>
                 {mockFleets.map((fleet) => {
                   const fleetDevices = mockDevices.filter(device => device.fleet === fleet.name);
+                  const upToDate = fleetDevices.filter(device => device.systemUpdateStatus === 'UP_TO_DATE').length;
+                  const total = fleetDevices.length;
+                      
+                  const upToDateColor = upToDate === total ? '#3e8635' : '#f0ab00'
                   return (
                   <Tr key={fleet.id}>
                     <Td>
@@ -142,7 +146,10 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                       {fleet.systemImage}
                     </Td>
                     <Td>
-                      <FleetDeviceCount fleetDevices={fleetDevices} />
+                      <span style={{ color: upToDateColor }}>
+                        {fleet.upToDate}
+                      </span>
+                      <span style={{ color: '#6a6e73' }}>/{fleet.total}</span>
                     </Td>
                     <Td>
                       <Label

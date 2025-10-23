@@ -21,30 +21,35 @@ export interface DevicePendingApproval {
   requestedAt: string;
 }
 
-export type DeviceStatus =
-  | 'ONLINE'
-  | 'OFFLINE'
-  | 'ERROR'
-  | 'DEGRADED'
-  | 'UNKNOWN'
-  | 'REBOOTING'
-  | 'POWERED_OFF'
-  | 'SUSPENDED'          // New state for devices with newer configs than server
-  | 'PENDING_SYNC';      // New state for devices waiting to connect after restore
+export const DEVICE_STATUSES = [
+  'ERROR',
+  'SUSPENDED',
+  'PENDING_SYNC',
+  'DEGRADED',
+  'UNKNOWN',
+  'REBOOTING',
+  'POWERED_OFF',
+  'ONLINE'
+] as const;
 
-export type ApplicationStatus =
-  | 'HEALTHY'
-  | 'DEGRADED'
-  | 'ERROR'
-  | 'UNKNOWN';
+export const APPLICATION_STATUSES = [
+  'ERROR',
+  'DEGRADED',
+  'UNKNOWN',
+  'HEALTHY'
+] as const;
 
-export type SystemUpdateStatus =
-  | 'UP_TO_DATE'
-  | 'OUT_OF_DATE'
-  | 'UPDATING'
-  | 'FAILED'
-  | 'ROLLING_BACK'
-  | 'UNKNOWN';
+export const SYSTEM_UPDATE_STATUSES = [
+  'OUT_OF_DATE',
+  'UPDATING',
+  'UNKNOWN',
+  'UP_TO_DATE'
+] as const;
+
+// Derive types from the constant arrays
+export type DeviceStatus = typeof DEVICE_STATUSES[number];
+export type ApplicationStatus = typeof APPLICATION_STATUSES[number];
+export type SystemUpdateStatus = typeof SYSTEM_UPDATE_STATUSES[number];
 
 export interface DeviceStatusCount {
   status: DeviceStatus;
