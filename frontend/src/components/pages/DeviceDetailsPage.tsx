@@ -196,7 +196,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           role="region"
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
-          <Tab eventKey="metrics" title={<TabTitleText>Metrics</TabTitleText>} />
           <Tab eventKey="terminal" title={<TabTitleText>Terminal</TabTitleText>} />
           <Tab eventKey="events" title={<TabTitleText>Events</TabTitleText>} />
         </Tabs>
@@ -485,17 +484,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                 </Card>
               </GridItem>
             </Grid>
-          </TabContentBody>
-        </TabContent>
-
-        <TabContent eventKey="metrics" id="metrics-tab" hidden={activeTab !== 'metrics'}>
-          <TabContentBody>
-            <Card>
-              <CardBody>
-                <Title headingLevel="h2" size="lg">Metrics</Title>
-                <p>Device metrics and monitoring data will be displayed here.</p>
-              </CardBody>
-            </Card>
           </TabContentBody>
         </TabContent>
 
