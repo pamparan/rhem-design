@@ -127,7 +127,10 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   );
 
   const { appStatusChartData, deviceStatusChartData, systemUpdateChartData } = useDeviceStatusesCount(fleetDevices);
-  
+
+  const fleetUpToDate = fleetDevices.filter(device => device.systemUpdateStatus === 'UP_TO_DATE').length;
+  const fleetTotal = fleetDevices.length;
+
   return (
     <>
       {/* Breadcrumb */}
@@ -208,10 +211,10 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Up-to-date/devices</div>
                         <div>
-                          <span style={{ color: fleetDetails.upToDate === fleetDetails.total ? '#3e8635' : '#f0ab00' }}>
-                            ⚠ {fleetDetails.upToDate}
+                          <span style={{ color: fleetUpToDate === fleetTotal ? '#3e8635' : '#f0ab00' }}>
+                            ⚠ {fleetUpToDate}
                           </span>
-                          <span style={{ color: '#6a6e73' }}>/{fleetDetails.total}</span>
+                          <span style={{ color: '#6a6e73' }}>/{fleetTotal}</span>
                         </div>
                       </div>
                     </GridItem>
