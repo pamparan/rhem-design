@@ -201,7 +201,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           <Tab eventKey="events" title={<TabTitleText>Events</TabTitleText>} />
         </Tabs>
 
-        <TabContent id="details" eventKey="details" activeKey={activeTab}>
+        <TabContent eventKey="details" id="details-tab" hidden={activeTab !== 'details'}>
           <TabContentBody>
             {/* Basic Device Info */}
             <Card style={{ marginBottom: '24px' }}>
@@ -273,7 +273,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                     <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
                       <FlexItem>
                         <Title headingLevel="h3" size="lg">
-                          System status <InfoCircleIcon style={{ marginLeft: '4px', color: '#6a6e73' }} />
+                          System status
                         </Title>
                       </FlexItem>
                     </Flex>
@@ -488,7 +488,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent id="metrics" eventKey="metrics" activeKey={activeTab}>
+        <TabContent eventKey="metrics" id="metrics-tab" hidden={activeTab !== 'metrics'}>
           <TabContentBody>
             <Card>
               <CardBody>
@@ -499,7 +499,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent id="terminal" eventKey="terminal" activeKey={activeTab}>
+        <TabContent eventKey="terminal" id="terminal-tab" hidden={activeTab !== 'terminal'}>
           <TabContentBody>
             <Card>
               <CardBody>
@@ -510,7 +510,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent id="events" eventKey="events" activeKey={activeTab}>
+        <TabContent eventKey="events" id="events-tab" hidden={activeTab !== 'events'}>
           <TabContentBody>
             <Card>
               <CardBody>

@@ -504,6 +504,11 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                       <Dropdown
                         isOpen={kebabOpenStates[device.id] || false}
                         onSelect={() => toggleKebabMenu(device.id)}
+                        popperProps={{
+                          position: 'right',
+                          enableFlip: false,
+                          appendTo: () => document.body
+                        }}
                         onOpenChange={() => toggleKebabMenu(device.id)}
                         toggle={(toggleRef) => (
                           <MenuToggle
