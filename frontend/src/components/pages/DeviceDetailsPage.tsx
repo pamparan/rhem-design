@@ -151,13 +151,18 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               isOpen={isActionsOpen}
               onSelect={() => setIsActionsOpen(false)}
               onOpenChange={setIsActionsOpen}
+              popperProps={{
+                position: 'right',
+                enableFlip: false,
+                appendTo: () => document.body
+              }}
               toggle={(toggleRef) => (
                 <MenuToggle
                   ref={toggleRef}
                   variant="primary"
                   onClick={() => setIsActionsOpen(!isActionsOpen)}
                 >
-                  Actions <ChevronDownIcon />
+                  Actions
                 </MenuToggle>
               )}
             >
@@ -503,7 +508,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
             <Card>
               <CardBody>
                 <Title headingLevel="h2" size="lg">Events</Title>
-                <p>Device events and logs will be displayed here.</p>
+                <p>Device events will be displayed here.</p>
               </CardBody>
             </Card>
           </TabContentBody>

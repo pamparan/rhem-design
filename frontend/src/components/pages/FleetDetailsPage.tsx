@@ -158,6 +158,11 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
               isOpen={isActionsOpen}
               onSelect={() => setIsActionsOpen(false)}
               onOpenChange={setIsActionsOpen}
+              popperProps={{
+                position: 'right',
+                enableFlip: false,
+                appendTo: () => document.body
+              }}
               toggle={(toggleRef) => (
                 <MenuToggle
                   ref={toggleRef}
@@ -170,7 +175,6 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
             >
               <DropdownList>
                 <DropdownItem>Edit fleet</DropdownItem>
-                <DropdownItem>Duplicate fleet</DropdownItem>
                 <DropdownItem>Delete fleet</DropdownItem>
               </DropdownList>
             </Dropdown>
@@ -400,7 +404,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                         ref={toggleRef}
                         style={{ width: '100%', marginBottom: '16px' }}
                       >
-                        Warning ▼
+                        Warning
                       </MenuToggle>
                     )}
                   >
