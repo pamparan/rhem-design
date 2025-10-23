@@ -5,7 +5,6 @@ A comprehensive, interactive prototype showcasing a complete edge device and fle
 ## 🚀 Features
 
 ### **Overview Dashboard**
-- **System Metrics**: Real-time status for 7250+ devices
 - **Visual Analytics**: Interactive donut charts for Application, Device, and System Update status
 - **Health Monitoring**: Live status indicators and trend analysis
 - **Alert Management**: Centralized notification system

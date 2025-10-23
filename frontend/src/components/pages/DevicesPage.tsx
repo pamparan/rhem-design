@@ -15,8 +15,8 @@ import {
   DropdownList,
   DropdownItem,
   Checkbox,
-  Tooltip,
   Popover,
+  Switch,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -29,22 +29,23 @@ import {
 import {
   FilterIcon,
   EllipsisVIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  PauseCircleIcon,
-  ExclamationTriangleIcon,
-  PowerOffIcon,
-  InProgressIcon,
-  TimesCircleIcon,
-  QuestionCircleIcon,
   OutlinedQuestionCircleIcon
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
+import ApproveDeviceModal from '../shared/ApproveDeviceModal';
 import { mockDevices, mockDevicesPendingApproval, mockFleets } from '../../data/mockData';
 import { Device, DeviceStatus } from '../../types/device';
-import { getStatusLabel, getStatusIcon, countDevicesByStatus, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
+import { getStatusLabel, getStatusIcon, isDeviceResumable, getStatusLabelStyle } from '../../utils/deviceUtils';
+import { 
+  deviceStatusItems, 
+  applicationStatusItems, 
+  systemUpdateStatusItems,
+  createCountMap,
+  generateFilterOptions 
+} from '../../utils/fleetUtils';
 import { useDesignControls } from '../../hooks/useDesignControls';
+import { useDeviceStatusesCount } from '../../hooks/useDeviceStatusesCount';
 import { NavigationItemId, ViewType, NavigationParams } from '../../types/app';
 
 interface DevicesPageProps {
@@ -76,13 +77,13 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
     applicationStatus: new Set(),
     systemUpdateStatus: new Set(),
   });
+  const [selectedPendingDevices, setSelectedPendingDevices] = useState<Set<string>>(new Set());
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [deviceToApprove, setDeviceToApprove] = useState<{ id: string; name: string; alias?: string } | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [showOnlyDecommissioned, setShowOnlyDecommissioned] = useState(false);
 
-  // Get status counts for filter labels
-  const statusCounts = countDevicesByStatus(mockDevices);
-  const statusCountsMap = statusCounts.reduce((acc, item) => {
-    acc[item.status] = item.count;
-    return acc;
-  }, {} as Record<DeviceStatus, number>);
+  const { deviceStatusChartData, appStatusChartData, systemUpdateChartData } = useDeviceStatusesCount(mockDevices);
 
   // Enhanced filtering logic with multi-select
   const filteredDevices = mockDevices.filter(device => {
@@ -102,30 +103,11 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
     return matchesSearch && matchesDeviceStatus && matchesApplicationStatus && matchesSystemUpdateStatus;
   });
 
-  // Filter options with counts and PatternFly icons matching the exact design image colors
+  // Generate filter options from hook data
   const filterOptions = {
-    deviceStatus: [
-      { value: 'ERROR', label: 'Error', count: statusCountsMap.ERROR || 0, color: '#c9190b', icon: TimesCircleIcon },
-      { value: 'DEGRADED', label: 'Degraded', count: statusCountsMap.DEGRADED || 0, color: '#f0ab00', icon: ExclamationTriangleIcon },
-      { value: 'UNKNOWN', label: 'Unknown', count: statusCountsMap.UNKNOWN || 0, color: '#6a6e73', icon: ExclamationTriangleIcon },
-      { value: 'POWERED_OFF', label: 'Powered off', count: statusCountsMap.POWERED_OFF || 0, color: '#2b9af3', icon: PowerOffIcon },
-      { value: 'REBOOTING', label: 'Rebooting', count: statusCountsMap.REBOOTING || 0, color: '#2b9af3', icon: InProgressIcon },
-      { value: 'ONLINE', label: 'Online', count: statusCountsMap.ONLINE || 0, color: '#3e8635', icon: CheckCircleIcon },
-      { value: 'PENDING_SYNC', label: 'Pending Sync', count: statusCountsMap.PENDING_SYNC || 0, color: '#2b9af3', icon: ClockIcon },
-      { value: 'SUSPENDED', label: 'Suspended', count: statusCountsMap.SUSPENDED || 0, color: '#ec7a08', icon: PauseCircleIcon },
-    ].filter(option => option.count > 0),
-    applicationStatus: [
-      { value: 'ERROR', label: 'Error', count: mockDevices.filter(d => d.applicationStatus === 'ERROR').length, color: '#c9190b', icon: TimesCircleIcon },
-      { value: 'DEGRADED', label: 'Degraded', count: mockDevices.filter(d => d.applicationStatus === 'DEGRADED').length, color: '#f0ab00', icon: ExclamationTriangleIcon },
-      { value: 'UNKNOWN', label: 'Unknown', count: mockDevices.filter(d => d.applicationStatus === 'UNKNOWN').length, color: '#6a6e73', icon: ExclamationTriangleIcon },
-      { value: 'HEALTHY', label: 'Healthy', count: mockDevices.filter(d => d.applicationStatus === 'HEALTHY').length, color: '#3e8635', icon: CheckCircleIcon },
-    ].filter(option => option.count > 0),
-    systemUpdateStatus: [
-      { value: 'OUT_OF_DATE', label: 'Out-of-date', count: mockDevices.filter(d => d.systemUpdateStatus === 'OUT_OF_DATE').length, color: '#f0ab00', icon: ExclamationTriangleIcon },
-      { value: 'UNKNOWN', label: 'Unknown', count: mockDevices.filter(d => d.systemUpdateStatus === 'UNKNOWN').length, color: '#6a6e73', icon: ExclamationTriangleIcon },
-      { value: 'UPDATING', label: 'Updating', count: mockDevices.filter(d => d.systemUpdateStatus === 'UPDATING').length, color: '#2b9af3', icon: InProgressIcon },
-      { value: 'UP_TO_DATE', label: 'Up-to-date', count: mockDevices.filter(d => d.systemUpdateStatus === 'UP_TO_DATE').length, color: '#3e8635', icon: CheckCircleIcon },
-    ].filter(option => option.count > 0),
+    deviceStatus: generateFilterOptions(deviceStatusItems, createCountMap(deviceStatusChartData)),
+    applicationStatus: generateFilterOptions(applicationStatusItems, createCountMap(appStatusChartData)),
+    systemUpdateStatus: generateFilterOptions(systemUpdateStatusItems, createCountMap(systemUpdateChartData)),
   };
 
   const handleFilterChange = (category: 'deviceStatus' | 'applicationStatus' | 'systemUpdateStatus', value: string, checked: boolean) => {
@@ -180,6 +162,51 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
     }));
   };
 
+  const handleSelectPendingDevice = (deviceId: string, checked: boolean) => {
+    setSelectedPendingDevices(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(deviceId);
+      } else {
+        newSet.delete(deviceId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllPendingDevices = (checked: boolean) => {
+    if (checked) {
+      setSelectedPendingDevices(new Set(pendingDevices.map(d => d.id)));
+    } else {
+      setSelectedPendingDevices(new Set());
+    }
+  };
+
+  const handleApproveSelected = () => {
+    console.log(`Approving ${selectedPendingDevices.size} devices:`, Array.from(selectedPendingDevices));
+    // In a real app, you would call an API here
+    // After approval, clear the selection
+    setSelectedPendingDevices(new Set());
+  };
+
+  const handleOpenApproveModal = (device: { id: string; name: string; alias?: string }) => {
+    setDeviceToApprove(device);
+    setIsApproveModalOpen(true);
+  };
+
+  const handleApproveDevice = async (deviceId: string, alias: string, labels: string[]) => {
+    setIsApproving(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    console.log(`Approving device ${deviceId}:`, { alias, labels });
+    // In a real app, you would call an API here to approve the device
+
+    setIsApproving(false);
+    setIsApproveModalOpen(false);
+    setDeviceToApprove(null);
+  };
+
   return (
     <>
       <PostRestoreBanners onNavigate={onNavigate} />
@@ -189,17 +216,34 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
         <PageSection>
           <Card>
             <CardBody>
-              <div style={{ marginBottom: '16px' }}>
-                <Title headingLevel="h3" size="lg">
-                  Devices pending approval
-                </Title>
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
-                  {pendingDevices.length} {pendingDevices.length === 1 ? 'device' : 'devices'} waiting for approval
+              <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <Title headingLevel="h3" size="lg">
+                    Devices pending approval
+                  </Title>
+                  <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
+                    {pendingDevices.length} {pendingDevices.length === 1 ? 'device' : 'devices'} waiting for approval
+                  </div>
                 </div>
+                <Button 
+                  variant="primary" 
+                  onClick={handleApproveSelected}
+                  isDisabled={selectedPendingDevices.size === 0}
+                >
+                  Approve ({selectedPendingDevices.size})
+                </Button>
               </div>
               <Table aria-label="Devices pending approval" variant="compact">
                 <Thead>
                   <Tr>
+                    <Th width={10}>
+                      <Checkbox
+                        id="select-all-pending"
+                        isChecked={selectedPendingDevices.size === pendingDevices.length && pendingDevices.length > 0}
+                        onChange={(_event, checked) => handleSelectAllPendingDevices(checked)}
+                        aria-label="Select all pending devices"
+                      />
+                    </Th>
                     <Th>Alias</Th>
                     <Th>Name</Th>
                     <Th>Created</Th>
@@ -209,6 +253,14 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                 <Tbody>
                   {pendingDevices.map((device: { id: string; name: string; alias?: string; requestedAt: string }) => (
                     <Tr key={device.id}>
+                      <Td>
+                        <Checkbox
+                          id={`select-${device.id}`}
+                          isChecked={selectedPendingDevices.has(device.id)}
+                          onChange={(_event, checked) => handleSelectPendingDevice(device.id, checked)}
+                          aria-label={`Select ${device.alias || device.name}`}
+                        />
+                      </Td>
                       <Td>
                         <Button variant="link" style={{ padding: 0 }}>
                           {device.alias || 'Untitled'}
@@ -223,8 +275,8 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                       <Td>
                         <Button 
                           variant="link" 
-                            style={{ padding: 0 }}
-                          onClick={() => console.log(`Approve device ${device.name}`)}
+                          style={{ padding: 0 }}
+                          onClick={() => handleOpenApproveModal(device)}
                         >
                           Approve
                         </Button>
@@ -351,6 +403,14 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                   <ToolbarItem>
                     <Button variant="secondary">Decommission devices</Button>
                   </ToolbarItem>
+                  <ToolbarItem>
+                    <Switch
+                      id="show-decommissioned-switch"
+                      label="Show decommissioned devices"
+                      isChecked={showOnlyDecommissioned}
+                      onChange={(_event, checked) => setShowOnlyDecommissioned(checked)}
+                    />
+                  </ToolbarItem>                  
                 </ToolbarGroup>
               </ToolbarContent>
             </Toolbar>
@@ -505,6 +565,11 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                         isOpen={kebabOpenStates[device.id] || false}
                         onSelect={() => toggleKebabMenu(device.id)}
                         onOpenChange={() => toggleKebabMenu(device.id)}
+                        popperProps={{
+                          position: 'right',
+                          enableFlip: false,
+                          appendTo: () => document.body
+                        }}
                         toggle={(toggleRef) => (
                           <MenuToggle
                             ref={toggleRef}
@@ -603,6 +668,21 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
         deviceName={deviceToResume?.alias || deviceToResume?.name}
         isLoading={isResuming}
       />
+
+      {/* Approve Device Modal */}
+      {deviceToApprove && isApproveModalOpen && (
+        <ApproveDeviceModal
+          onClose={() => {
+            setIsApproveModalOpen(false);
+            setDeviceToApprove(null);
+          }}
+          onApprove={handleApproveDevice}
+          deviceId={deviceToApprove.id}
+          deviceName={deviceToApprove.name}
+          defaultAlias={deviceToApprove.alias}
+          isLoading={isApproving}
+        />
+      )}
     </>
   );
 };
