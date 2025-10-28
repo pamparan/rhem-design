@@ -8,10 +8,15 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["prototype", "edge-devices", "patternfly"],
+  "keywords": [
+    "prototype",
+    "edge-devices",
+    "patternfly"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@patternfly/react-charts": "8.2.2",
     "@patternfly/react-core": "^6.3.1",
     "@patternfly/react-icons": "^6.3.1",
     "@patternfly/react-table": "^6.3.1",
@@ -21,6 +26,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.9.3",
+    "victory": "^37.3.6",
     "vite": "^7.1.7"
   }
 }

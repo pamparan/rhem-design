@@ -46,7 +46,6 @@ npm run preview  # Preview production build
 ## Application Features
 
 ### **Overview Dashboard**
-- **System Metrics**: Real-time status display for 7250+ devices
 - **Visual Analytics**: Three interactive donut charts (Application Status, Device Status, System Update Status)
 - **Health Monitoring**: Color-coded status indicators with percentages
 - **Alert System**: Centralized notification area (currently shows "no active alerts")
@@ -100,7 +99,7 @@ interface Fleet {
   systemImage: string;
   upToDate: number;
   total: number;
-  status: 'Valid' | 'Selector overlap';
+  status: 'Valid' | 'Invalid';
 }
 ```
 
@@ -123,7 +122,7 @@ interface Repository {
 - **Sidebar.tsx**: Navigation menu with active state management
 
 ### **Page Components** (`components/pages/`)
-- **OverviewPage.tsx**: Dashboard with SVG-based donut charts and metrics
+- **OverviewPage.tsx**: Dashboard with SVG-based donut charts
 - **DevicesPage.tsx**: Device table with filtering, search, and modal integration
 - **FleetsPage.tsx**: Fleet management with status indicators and alerts
 - **RepositoriesPage.tsx**: Repository listing with sync status

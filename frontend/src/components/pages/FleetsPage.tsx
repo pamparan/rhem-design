@@ -33,6 +33,7 @@ import PostRestoreBanners from '../shared/PostRestoreBanners';
 import { mockDevices, mockFleets } from '../../data/mockData';
 import { getSuspendedDevicesCount } from '../../utils/deviceUtils';
 import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
+import FleetDeviceCount from '../shared/FleetDeviceCount';
 
 interface FleetsPageProps {
   onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
@@ -121,7 +122,12 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                 </Tr>
               </Thead>
               <Tbody>
-                {mockFleets.map((fleet, index) => (
+                {mockFleets.map((fleet) => {
+                  const fleetDevices = mockDevices.filter(device => device.fleet === fleet.name);
+                  const fleetUpToDate = fleetDevices.filter(device => device.systemUpdateStatus === 'UP_TO_DATE').length;
+                  const fleetTotal = fleetDevices.length;
+                      
+                  return (
                   <Tr key={fleet.id}>
                     <Td>
                       <input type="checkbox" />
@@ -139,23 +145,29 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                       {fleet.systemImage}
                     </Td>
                     <Td>
-                      <span style={{ color: index === 1 ? '#c9190b' : '#3e8635' }}>
-                        {fleet.upToDate}
+                      <span style={{ color: fleetUpToDate === fleetTotal ? '#3e8635' : '#f0ab00' }}>
+                        {fleetUpToDate}
                       </span>
-                      <span style={{ color: '#6a6e73' }}>/{fleet.total}</span>
+                      <span style={{ color: '#6a6e73' }}>/{fleetTotal}</span>
                     </Td>
                     <Td>
-                      {fleet.status === 'Valid' ? (
-                        <Label color="green">● Valid</Label>
-                      ) : (
-                        <Label color="orange">⚠ Selector overlap</Label>
-                      )}
+                      <Label
+                        variant='outline'
+                        status={fleet.status === 'Valid' ? 'success' : 'danger'}
+                      >
+                        {fleet.status}
+                      </Label>
                     </Td>
                     <Td>
                       <Dropdown
                         isOpen={openMenuFleetId === fleet.id}
                         onSelect={() => setOpenMenuFleetId(null)}
                         onOpenChange={(isOpen) => setOpenMenuFleetId(isOpen ? fleet.id : null)}
+                        popperProps={{
+                          position: 'right',
+                          enableFlip: false,
+                          appendTo: () => document.body
+                        }}
                         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                           <MenuToggle
                             ref={toggleRef}
@@ -188,7 +200,8 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                       </Dropdown>
                     </Td>
                   </Tr>
-                ))}
+                  );
+                })}
               </Tbody>
             </Table>
           </CardBody>

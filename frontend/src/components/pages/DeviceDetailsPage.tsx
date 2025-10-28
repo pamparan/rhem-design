@@ -151,13 +151,18 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               isOpen={isActionsOpen}
               onSelect={() => setIsActionsOpen(false)}
               onOpenChange={setIsActionsOpen}
+              popperProps={{
+                position: 'right',
+                enableFlip: false,
+                appendTo: () => document.body
+              }}
               toggle={(toggleRef) => (
                 <MenuToggle
                   ref={toggleRef}
                   variant="primary"
                   onClick={() => setIsActionsOpen(!isActionsOpen)}
                 >
-                  Actions <ChevronDownIcon />
+                  Actions
                 </MenuToggle>
               )}
             >
@@ -196,12 +201,11 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           role="region"
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
-          <Tab eventKey="metrics" title={<TabTitleText>Metrics</TabTitleText>} />
           <Tab eventKey="terminal" title={<TabTitleText>Terminal</TabTitleText>} />
           <Tab eventKey="events" title={<TabTitleText>Events</TabTitleText>} />
         </Tabs>
 
-        <TabContent id="details" eventKey="details" activeKey={activeTab}>
+        <TabContent eventKey="details" id="details-tab" hidden={activeTab !== 'details'}>
           <TabContentBody>
             {/* Basic Device Info */}
             <Card style={{ marginBottom: '24px' }}>
@@ -273,7 +277,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                     <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
                       <FlexItem>
                         <Title headingLevel="h3" size="lg">
-                          System status <InfoCircleIcon style={{ marginLeft: '4px', color: '#6a6e73' }} />
+                          System status
                         </Title>
                       </FlexItem>
                     </Flex>
@@ -488,18 +492,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent id="metrics" eventKey="metrics" activeKey={activeTab}>
-          <TabContentBody>
-            <Card>
-              <CardBody>
-                <Title headingLevel="h2" size="lg">Metrics</Title>
-                <p>Device metrics and monitoring data will be displayed here.</p>
-              </CardBody>
-            </Card>
-          </TabContentBody>
-        </TabContent>
-
-        <TabContent id="terminal" eventKey="terminal" activeKey={activeTab}>
+        <TabContent eventKey="terminal" id="terminal-tab" hidden={activeTab !== 'terminal'}>
           <TabContentBody>
             <Card>
               <CardBody>
@@ -510,12 +503,12 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
-        <TabContent id="events" eventKey="events" activeKey={activeTab}>
+        <TabContent eventKey="events" id="events-tab" hidden={activeTab !== 'events'}>
           <TabContentBody>
             <Card>
               <CardBody>
                 <Title headingLevel="h2" size="lg">Events</Title>
-                <p>Device events and logs will be displayed here.</p>
+                <p>Device events will be displayed here.</p>
               </CardBody>
             </Card>
           </TabContentBody>

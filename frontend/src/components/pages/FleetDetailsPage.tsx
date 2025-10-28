@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   PageSection,
   Title,
@@ -19,13 +19,17 @@ import {
   GridItem,
   Flex,
   FlexItem,
+  Label,
 } from '@patternfly/react-core';
 import {
   ExclamationTriangleIcon,
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
+import DonutChart from '../shared/DonutChart';
 import { mockDevices, mockFleets } from '../../data/mockData';
 import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
+import { useDeviceStatusesCount } from '../../hooks/useDeviceStatusesCount';
+import { statusDescriptions } from '../../utils/fleetUtils';
 
 interface FleetDetailsPageProps {
   fleetId: string;
@@ -107,6 +111,7 @@ const mockEvents = [
   },
 ];
 
+
 const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   fleetId,
   onNavigate,
@@ -114,91 +119,17 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   const [activeTabKey, setActiveTabKey] = useState<string | number>('details');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
 
-  // Look up fleet details using the fleetId prop
-  const fleetDetails = mockFleets.find(f => f.id === fleetId);
-  
-  // Fallback to first fleet if not found (shouldn't happen in normal usage)
-  const mockFleetDetails = fleetDetails || mockFleets[0];
+  const fleetDetails = mockFleets.find(f => f.id === fleetId) || mockFleets[0];
 
-  // Filter devices for this fleet
-  const fleetDevices = mockDevices.filter(device => device.fleet === mockFleetDetails.name);
+  const fleetDevices = useMemo(() => 
+    mockDevices.filter(device => device.fleet === fleetDetails.name),
+    [fleetDetails.name]
+  );
 
-  // Calculate device status counts
-  const deviceStatusCounts = {
-    online: fleetDevices.filter(d => d.status === 'ONLINE').length,
-    error: fleetDevices.filter(d => d.status === 'ERROR').length,
-    poweredOff: fleetDevices.filter(d => d.status === 'POWERED_OFF').length,
-    rebooting: fleetDevices.filter(d => d.status === 'REBOOTING').length,
-    degraded: fleetDevices.filter(d => d.status === 'DEGRADED').length,
-    unknown: fleetDevices.filter(d => d.status === 'UNKNOWN').length,
-  };
+  const { appStatusChartData, deviceStatusChartData, systemUpdateChartData } = useDeviceStatusesCount(fleetDevices);
 
-  // Calculate application status counts
-  const appStatusCounts = {
-    healthy: fleetDevices.filter(d => d.applicationStatus === 'HEALTHY').length,
-    error: fleetDevices.filter(d => d.applicationStatus === 'ERROR').length,
-    degraded: fleetDevices.filter(d => d.applicationStatus === 'DEGRADED').length,
-    unknown: fleetDevices.filter(d => d.applicationStatus === 'UNKNOWN').length,
-  };
-
-  // Calculate system update status counts
-  const systemUpdateCounts = {
-    upToDate: fleetDevices.filter(d => d.systemUpdateStatus === 'UP_TO_DATE').length,
-    outOfDate: fleetDevices.filter(d => d.systemUpdateStatus === 'OUT_OF_DATE').length,
-    updating: fleetDevices.filter(d => d.systemUpdateStatus === 'UPDATING').length,
-    unknown: fleetDevices.filter(d => d.systemUpdateStatus === 'UNKNOWN').length,
-  };
-
-  // Create donut chart data
-  const createDonutSVG = (data: Array<{label: string, value: number, color: string}>, total: number, centerText: string) => {
-    let cumulativePercentage = 0;
-    const radius = 65;
-    const strokeWidth = 10;
-    const circumference = 2 * Math.PI * radius;
-
-    return (
-      <div style={{ position: 'relative', width: '160px', height: '160px', margin: '0 auto' }}>
-        <svg width="160" height="160" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="80" cy="80" r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
-          {data.map((segment, index) => {
-            const percentage = total > 0 ? (segment.value / total) * 100 : 0;
-            const strokeLength = (percentage / 100) * circumference;
-            const strokeDasharray = `${strokeLength} ${circumference}`;
-            const strokeDashoffset = -cumulativePercentage * circumference / 100;
-
-            cumulativePercentage += percentage;
-
-            return percentage > 0 ? (
-              <circle
-                key={index}
-                cx="80"
-                cy="80"
-                r={radius}
-                fill="transparent"
-                stroke={segment.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDasharray}
-                strokeDashoffset={strokeDashoffset}
-              />
-            ) : null;
-          })}
-        </svg>
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          color: '#151515',
-        }}>
-          <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{centerText}</div>
-          <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
-            {total === 4540 ? 'Application Status' : total === 3210 ? 'Device Status' : 'System Update Status'}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const fleetUpToDate = fleetDevices.filter(device => device.systemUpdateStatus === 'UP_TO_DATE').length;
+  const fleetTotal = fleetDevices.length;
 
   return (
     <>
@@ -210,7 +141,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
               Fleets
             </Button>
           </BreadcrumbItem>
-          <BreadcrumbItem isActive>{mockFleetDetails.name}</BreadcrumbItem>
+          <BreadcrumbItem isActive>{fleetDetails.name}</BreadcrumbItem>
         </Breadcrumb>
       </PageSection>
 
@@ -219,7 +150,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
           <FlexItem>
             <Title headingLevel="h1" size="2xl">
-              {mockFleetDetails.name}
+              {fleetDetails.name}
             </Title>
           </FlexItem>
           <FlexItem>
@@ -227,6 +158,11 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
               isOpen={isActionsOpen}
               onSelect={() => setIsActionsOpen(false)}
               onOpenChange={setIsActionsOpen}
+              popperProps={{
+                position: 'right',
+                enableFlip: false,
+                appendTo: () => document.body
+              }}
               toggle={(toggleRef) => (
                 <MenuToggle
                   ref={toggleRef}
@@ -239,7 +175,6 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
             >
               <DropdownList>
                 <DropdownItem>Edit fleet</DropdownItem>
-                <DropdownItem>Duplicate fleet</DropdownItem>
                 <DropdownItem>Delete fleet</DropdownItem>
               </DropdownList>
             </Dropdown>
@@ -275,47 +210,52 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                     <GridItem span={4}>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Created</div>
-                        <div>{mockFleetDetails.created}</div>
+                        <div>{fleetDetails.created}</div>
                       </div>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Up-to-date/devices</div>
                         <div>
-                          <span style={{ color: mockFleetDetails.upToDate === mockFleetDetails.total ? '#3e8635' : '#f0ab00' }}>
-                            ⚠ {mockFleetDetails.upToDate}
+                          <span style={{ color: fleetUpToDate === fleetTotal ? '#3e8635' : '#f0ab00' }}>
+                            ⚠ {fleetUpToDate}
                           </span>
-                          <span style={{ color: '#6a6e73' }}>/{mockFleetDetails.total}</span>
+                          <span style={{ color: '#6a6e73' }}>/{fleetTotal}</span>
                         </div>
                       </div>
                     </GridItem>
                     <GridItem span={4}>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Status</div>
-                        <div>
-                          <span style={{ color: '#3e8635' }}>✓ {mockFleetDetails.status}</span>
-                        </div>
+                        <Label
+                          variant='outline'
+                          status={fleetDetails.status === 'Valid' ? 'success' : 'danger'}
+                        >
+                          {fleetDetails.status}
+                        </Label>
                       </div>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Device selector</div>
-                        <div style={{ fontFamily: 'monospace', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-                          {mockFleetDetails.deviceSelector}
-                        </div>
+                        <Label
+                          variant="outline"
+                        >
+                          {fleetDetails.deviceSelector}
+                        </Label>
                       </div>
                     </GridItem>
                     <GridItem span={4}>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>System image</div>
-                        <div>{mockFleetDetails.systemImage}</div>
+                        <div>{fleetDetails.systemImage}</div>
                       </div>
                       <div style={{ marginBottom: '16px' }}>
                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Managed by</div>
-                        <div>{mockFleetDetails.managedBy}</div>
+                        <div>{fleetDetails.managedBy}</div>
                       </div>
                     </GridItem>
                   </Grid>
 
                   <div style={{ marginTop: '16px' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Sources ({mockFleetDetails.sources})</div>
-                    <div>{mockFleetDetails.sources === 0 ? '-' : ''}</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Sources ({fleetDetails.sources})</div>
+                    <div>{fleetDetails.sources === 0 ? '-' : ''}</div>
                   </div>
                 </CardBody>
               </Card>
@@ -323,129 +263,40 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
               {/* Fleet Devices Charts */}
               <Card>
                 <CardBody>
-                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '24px' }}>
+                  <Title headingLevel="h3" size="lg" style={{ marginBottom: '4px' }}>
                     Fleet devices
                   </Title>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    color: '#6a6e73',
+                    marginBottom: '24px'
+                  }}>
+                    {fleetDevices.length} {fleetDevices.length === 1 ? 'device' : 'devices'}
+                  </div>
 
                   <Grid hasGutter>
-                    {/* Application Status Chart */}
                     <GridItem span={4}>
-                      <div style={{ textAlign: 'center' }}>
-                        {createDonutSVG([
-                          { label: 'Healthy', value: 2280, color: '#5cb85c' },
-                          { label: 'Error', value: 1135, color: '#d9534f' },
-                          { label: 'Degraded', value: 228, color: '#f0ad4e' },
-                          { label: 'Unknown', value: 897, color: '#6c757d' },
-                        ], 4540, '4540')}
-
-                        {/* Legend in clean horizontal rows */}
-                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '180px', margin: '16px auto 0' }}>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
-                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>50%</span>
-                              <span>Healthy</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#d9534f', flexShrink: 0 }}></span>
-                              <span style={{ color: '#d9534f', fontWeight: '500' }}>25%</span>
-                              <span>Error</span>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#f0ad4e', flexShrink: 0 }}></span>
-                              <span style={{ color: '#f0ad4e', fontWeight: '500' }}>5%</span>
-                              <span>Degraded</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
-                              <span style={{ color: '#6c757d', fontWeight: '500' }}>20%</span>
-                              <span>Unknown</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <DonutChart 
+                        data={appStatusChartData} 
+                        title="Application Status"
+                        titlePopoverContent={statusDescriptions.applicationStatus}
+                      />
                     </GridItem>
 
-                    {/* Device Status Chart */}
                     <GridItem span={4}>
-                      <div style={{ textAlign: 'center' }}>
-                        {createDonutSVG([
-                          { label: 'Online', value: 2247, color: '#5cb85c' },
-                          { label: 'Error', value: 321, color: '#d9534f' },
-                          { label: 'Rebooting', value: 642, color: '#337ab7' },
-                          { label: 'Unknown', value: 0, color: '#6c757d' },
-                        ], 3210, '3210')}
-
-                        {/* Legend in clean horizontal rows */}
-                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '180px', margin: '16px auto 0' }}>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
-                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>70%</span>
-                              <span>Online</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#d9534f', flexShrink: 0 }}></span>
-                              <span style={{ color: '#d9534f', fontWeight: '500' }}>10%</span>
-                              <span>Error</span>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#337ab7', flexShrink: 0 }}></span>
-                              <span style={{ color: '#337ab7', fontWeight: '500' }}>20%</span>
-                              <span>Rebooting</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
-                              <span style={{ color: '#6c757d', fontWeight: '500' }}>0%</span>
-                              <span>Unknown</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <DonutChart 
+                        data={deviceStatusChartData} 
+                        title="Device Status"
+                        titlePopoverContent={statusDescriptions.deviceStatus}
+                      />
                     </GridItem>
 
-                    {/* System Update Status Chart */}
                     <GridItem span={4}>
-                      <div style={{ textAlign: 'center' }}>
-                        {createDonutSVG([
-                          { label: 'Up to date', value: 1391, color: '#5cb85c' },
-                          { label: 'Out of date', value: 214, color: '#f0ad4e' },
-                          { label: 'Updating', value: 428, color: '#337ab7' },
-                          { label: 'Unknown', value: 107, color: '#6c757d' },
-                        ], 2140, '2140')}
-
-                        {/* Legend in clean horizontal rows */}
-                        <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px', margin: '16px auto 0' }}>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#5cb85c', flexShrink: 0 }}></span>
-                              <span style={{ color: '#5cb85c', fontWeight: '500' }}>65%</span>
-                              <span>Up to date</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#f0ad4e', flexShrink: 0 }}></span>
-                              <span style={{ color: '#f0ad4e', fontWeight: '500' }}>10%</span>
-                              <span>Out of date</span>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#337ab7', flexShrink: 0 }}></span>
-                              <span style={{ color: '#337ab7', fontWeight: '500' }}>20%</span>
-                              <span>Updating</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                              <span style={{ width: '8px', height: '8px', backgroundColor: '#6c757d', flexShrink: 0 }}></span>
-                              <span style={{ color: '#6c757d', fontWeight: '500' }}>5%</span>
-                              <span>Unknown</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <DonutChart 
+                        data={systemUpdateChartData} 
+                        title="System Update Status"
+                        titlePopoverContent={statusDescriptions.systemUpdateStatus}
+                      />
                     </GridItem>
                   </Grid>
                 </CardBody>
@@ -459,7 +310,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                   </Title>
 
                   <Grid hasGutter>
-                    {mockRollouts.map((rollout, index) => (
+                    {mockRollouts.map((rollout) => (
                       <GridItem span={4} key={rollout.id}>
                         <Card style={{ border: '1px solid #d2d2d2' }}>
                           <CardBody style={{ padding: '16px' }}>
@@ -553,7 +404,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
                         ref={toggleRef}
                         style={{ width: '100%', marginBottom: '16px' }}
                       >
-                        Warning ▼
+                        Warning
                       </MenuToggle>
                     )}
                   >

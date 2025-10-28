@@ -1,0 +1,11 @@
+.fctl-charts__donut {
+    display: flex;
+    justify-content: center;
+}
+
+.fctl-charts__title {
+    color: var(--pf-v6-global--Color--200);
+    background-color: red;
+    font-size: 14px;
+}
+

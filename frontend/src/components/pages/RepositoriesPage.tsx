@@ -29,7 +29,7 @@ import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 // Mock repositories data for prototype
 const mockRepositories = [
   { id: '1', name: 'basic-nginx-demo', type: 'Git repository', url: 'https://github.com/flightctl/flightctl-demos', syncStatus: 'Accessible', lastTransition: '17 hours ago' },
-  { id: '2', name: 'HTTP-nginx-demo', type: 'HTTP service', url: 'https://nowhere.com/flightctl/flightctl-demos', syncStatus: 'No access', lastTransition: '17 hours ago' },
+  { id: '2', name: 'http-nginx-demo', type: 'HTTP service', url: 'https://nowhere.com/flightctl/flightctl-demos', syncStatus: 'No access', lastTransition: '17 hours ago' },
 ];
 
 interface RepositoriesPageProps {
