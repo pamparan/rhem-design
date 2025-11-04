@@ -134,7 +134,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   return (
     <>
       {/* Breadcrumb */}
-      <PageSection style={{ paddingBottom: '8px' }}>
+      <PageSection padding={{ default: 'noPadding' }} style={{ paddingBottom: '8px' }}>
         <Breadcrumb>
           <BreadcrumbItem>
             <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0, color: '#06c' }}>
@@ -185,7 +185,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
       <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Tabs */}
-      <PageSection style={{ paddingTop: 0 }}>
+      <PageSection padding={{ default: 'noPadding' }} style={{ paddingTop: 0 }}>
         <Tabs
           activeKey={activeTabKey}
           onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}

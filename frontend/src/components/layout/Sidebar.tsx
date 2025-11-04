@@ -28,7 +28,6 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     { id: 'fleets', label: 'Fleets' },
     { id: 'devices', label: 'Devices' },
     { id: 'repositories', label: 'Repositories' },
-    { id: 'settings', label: 'Settings' },
   ];
 
   const navigation = (

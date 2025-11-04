@@ -1,4 +1,3 @@
-import { ChartDonut } from '@patternfly/react-charts/victory';
 import { Flex, FlexItem, Stack, StackItem, Popover, Button } from '@patternfly/react-core';
 import { OutlinedQuestionCircleIcon } from '@patternfly/react-icons';
 import * as React from 'react';
@@ -64,46 +63,85 @@ const LegendItem = ({ children, color }: { children: React.ReactNode; color: str
   );
 };
 
-const DonutChart = ({ 
-  data, 
-  title, 
+const DonutChart = ({
+  data,
+  title,
   titlePopoverContent
-}: { 
-  data: DonutChartData[]; 
+}: {
+  data: DonutChartData[];
   title: string;
   titlePopoverContent?: string;
 }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const isEmpty = total === 0;
 
-  const chartData = isEmpty
-    ? [{ x: 'No data', y: 100 }]
-    : data.map((d) => ({ x: d.label, y: d.value }));
+  // Calculate angles for each segment
+  const segments = React.useMemo(() => {
+    if (isEmpty) {
+      return [{ color: '#d2d2d2', startAngle: 0, endAngle: 360, value: 100, label: 'No data' }];
+    }
 
-  const colorScale = isEmpty ? ['#d2d2d2'] : data.map((d) => d.color);
+    let currentAngle = 0;
+    return data.map((item) => {
+      const angle = (item.value / total) * 360;
+      const segment = {
+        color: item.color,
+        startAngle: currentAngle,
+        endAngle: currentAngle + angle,
+        value: item.value,
+        label: item.label
+      };
+      currentAngle += angle;
+      return segment;
+    });
+  }, [data, total, isEmpty]);
+
+  // Create SVG path for donut segment
+  const createPath = (startAngle: number, endAngle: number, outerRadius: number, innerRadius: number) => {
+    const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+    const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+
+    const x1 = 80 + outerRadius * Math.cos(startAngleRad);
+    const y1 = 80 + outerRadius * Math.sin(startAngleRad);
+    const x2 = 80 + outerRadius * Math.cos(endAngleRad);
+    const y2 = 80 + outerRadius * Math.sin(endAngleRad);
+
+    const x3 = 80 + innerRadius * Math.cos(endAngleRad);
+    const y3 = 80 + innerRadius * Math.sin(endAngleRad);
+    const x4 = 80 + innerRadius * Math.cos(startAngleRad);
+    const y4 = 80 + innerRadius * Math.sin(startAngleRad);
+
+    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+    return [
+      "M", x1, y1,
+      "A", outerRadius, outerRadius, 0, largeArcFlag, 1, x2, y2,
+      "L", x3, y3,
+      "A", innerRadius, innerRadius, 0, largeArcFlag, 0, x4, y4,
+      "Z"
+    ].join(" ");
+  };
 
   return (
     <Flex
       justifyContent={{ default: 'justifyContentCenter' }}
       direction={{ default: 'column' }}
       alignItems={{ default: 'alignItemsCenter' }}
-    >     
+    >
       <FlexItem className="fctl-charts__donut">
         <div style={{ height: '160px', width: '160px', position: 'relative' }}>
-          <ChartDonut
-            ariaDesc={title}
-            ariaTitle={title}
-            constrainToVisibleArea
-            colorScale={colorScale}
-            data={chartData}
-            height={160}
-            width={160}
-            labels={() => ''}
-            padding={0}
-            innerRadius={65}
-            title=""
-            subTitle=""
-          />
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            {segments.map((segment, index) => (
+              <path
+                key={index}
+                d={createPath(segment.startAngle, segment.endAngle, 75, 40)}
+                fill={segment.color}
+                stroke="#fff"
+                strokeWidth="1"
+              />
+            ))}
+          </svg>
+
           {/* Custom title overlay with popover */}
           <div style={{
             position: 'absolute',

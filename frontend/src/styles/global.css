@@ -1,0 +1,55 @@
+/* Targeted fix for PatternFly v6 page container spacing */
+
+/* Remove max-width constraint and all right/bottom spacing from page container */
+.pf-v6-c-page__main-container,
+.pf-v6-c-page__drawer {
+  max-width: none !important;
+  padding-left: var(--pf-v6-global--spacer--lg) !important;
+  padding-right: 0 !important;
+  padding-bottom: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Also ensure the main page content extends to bottom edge but keep right padding */
+.pf-v6-c-page__main-section {
+  padding-bottom: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ensure the page itself extends to full viewport */
+.pf-v6-c-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  height: 100vh;
+}
+
+/* Remove bottom spacing from page sections */
+.pf-v6-c-page__main-section .pf-v6-c-page-section {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Remove bottom spacing from the last page section specifically */
+.pf-v6-c-page__main-section .pf-v6-c-page-section:last-child {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ensure body and html extend to full height */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Make sure the root app container also extends fully */
+#root {
+  height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+

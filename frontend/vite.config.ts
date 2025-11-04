@@ -8,9 +8,4 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
   },
-  optimizeDeps: {
-    include: [
-      '@patternfly/react-charts/victory',
-    ],
-  },
 }))

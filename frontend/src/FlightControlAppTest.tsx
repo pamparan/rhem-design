@@ -16,15 +16,13 @@ import RepositoriesPage from './components/pages/RepositoriesPage';
 import ResumeSuspendedDevicesPage from './components/pages/ResumeSuspendedDevicesPage';
 import DeviceDetailsPage from './components/pages/DeviceDetailsPage';
 import LoginPage from './components/pages/LoginPage';
-import CLIAuthPage from './components/pages/CLIAuthPage';
-import SystemSettingsPage from './components/pages/SystemSettingsPage';
 import DeviceModal from './components/shared/DeviceModal';
 
 import { mockDevicesPendingApproval } from './data/mockData';
 import { useDesignControls } from './hooks/useDesignControls';
 import { ViewType, NavigationItemId, NavigationParams } from './types/app';
 
-const FlightControlApp: React.FC = () => {
+const FlightControlAppTest: React.FC = () => {
   const { getSetting } = useDesignControls();
   const showDevicesPendingApproval = getSetting('showDevicesPendingApproval');
   const pendingDevicesCount = showDevicesPendingApproval ? mockDevicesPendingApproval.length : 0;
@@ -45,7 +43,6 @@ const FlightControlApp: React.FC = () => {
     setCurrentView('main');
     setSelectedDeviceId(null);
     setSelectedFleetId(null);
-    // Sidebar stays open - user controls it manually
   };
 
   const handleNavigate = (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => {
@@ -69,15 +66,10 @@ const FlightControlApp: React.FC = () => {
     setCurrentView('fleet-details');
   };
 
-  const handleShowLoginInterface = () => {
-    setCurrentView('login');
-  };
-
   const masthead = (
     <AppMasthead
       isSidebarOpen={isSidebarOpen}
       onSidebarToggle={onSidebarToggle}
-      onShowLoginInterface={handleShowLoginInterface}
     />
   );
 
@@ -92,8 +84,8 @@ const FlightControlApp: React.FC = () => {
 
   return (
     <DesignControls>
-      {/* Main Application - hidden when login or cli-auth is active */}
-      {currentView !== 'login' && currentView !== 'cli-auth' && (
+      {/* Main Application */}
+      {currentView !== 'login' && (
         <Page masthead={masthead} sidebar={sidebar}>
           <div style={{ minHeight: '100%' }}>
             {/* Add Device Modal */}
@@ -102,11 +94,8 @@ const FlightControlApp: React.FC = () => {
               onClose={() => setIsAddDeviceModalOpen(false)}
             />
 
-            {/* SubNav with Get login command button */}
-            <SubNav
-              onCopyLoginCommand={() => handleNavigate('cli-auth')}
-              onSystemSettings={() => handleNavigate('system-settings')}
-            />
+            {/* SubNav */}
+            <SubNav onCopyLoginCommand={() => handleNavigate('login')} />
 
             {/* Content based on current view and active navigation item */}
             {currentView === 'main' && (
@@ -156,28 +145,16 @@ const FlightControlApp: React.FC = () => {
                 onNavigate={handleNavigate}
               />
             )}
-
-            {/* System Settings Page */}
-            {currentView === 'system-settings' && (
-              <SystemSettingsPage onNavigate={handleNavigate} />
-            )}
-
           </div>
         </Page>
       )}
 
-      {/* Full-screen Login Overlay - renders outside of Page component */}
+      {/* Simple Login Page */}
       {currentView === 'login' && (
         <LoginPage onBack={() => handleNavigate('main')} />
       )}
-
-      {/* Full-screen CLI Auth Overlay - renders outside of Page component */}
-      {currentView === 'cli-auth' && (
-        <CLIAuthPage onBack={() => handleNavigate('main')} />
-      )}
-
     </DesignControls>
   );
 };
 
-export default FlightControlApp;
+export default FlightControlAppTest;

@@ -69,7 +69,7 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
   return (
     <>
       {/* Header */}
-      <PageSection >
+      <PageSection>
         <Title headingLevel="h1" size="2xl">
           Fleets
         </Title>

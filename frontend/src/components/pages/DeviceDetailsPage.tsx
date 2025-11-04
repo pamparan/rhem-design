@@ -4,6 +4,7 @@ import {
   Title,
   Card,
   CardBody,
+  CardTitle,
   Label,
   Button,
   Dropdown,
@@ -26,6 +27,10 @@ import {
   Flex,
   FlexItem,
   Icon,
+  ExpandableSection,
+  Content,
+  Split,
+  SplitItem,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -42,6 +47,12 @@ import {
   InfoCircleIcon,
   CopyIcon,
   ChevronDownIcon,
+  EditIcon,
+  ServerIcon,
+  NetworkIcon,
+  CubeIcon,
+  ClipboardIcon,
+  CogIcon,
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import DeviceSuspendedBanner from '../shared/DeviceSuspendedBanner';
@@ -65,6 +76,11 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   const [isResuming, setIsResuming] = useState(false);
   const [activeTab, setActiveTab] = useState<string | number>('details');
 
+  // Expandable section states
+  const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(false);
+  const [isNetworkExpanded, setIsNetworkExpanded] = useState(false);
+  const [isConfigExpanded, setIsConfigExpanded] = useState(false);
+
   const handleResumeDevice = () => {
     setIsResumeModalOpen(true);
   };
@@ -77,18 +93,50 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
     setIsResumeModalOpen(false);
   };
 
-  // Mock data for applications table
+  // Enhanced mock data matching staging environment
+  const deviceInfo = {
+    name: 'orange-device',
+    shortName: 'gbp0sn...0574270',
+    fleetName: 'None',
+    architecture: 'amd64',
+    operatingSystem: 'linux',
+    distro: 'CentOS Stream 9',
+    hostname: 'localhost.localdomain',
+    kernel: '5.14.0-570.el9.x86_64',
+    netInterfaceDefault: 'enp1s0',
+    netMACDefault: '52:54:00:2c:99:3e',
+    productName: 'Standard PC (Q35 + ICH9, 2009)',
+    bootID: '6a8a4653-e383-488f-82d8-0c7d3356cffc',
+    netIPDefault: '192.168.122.93/24',
+    productUUID: '13c4629c-fedc-4314-a616-65cb62526fe2',
+    agentVersion: 'v1.0.0-main-92-ge92789ef',
+  };
+
+  // Mock applications data
   const mockApplications = [
-    { name: 'Application Monitor Rooms', status: 'Running', ready: '4/4', restarts: '1', type: 'App' },
-    { name: 'Application log visitors', status: 'Starting', ready: '2/4', restarts: '0', type: 'App' },
-    { name: 'kjekjer789epw', status: 'Running', ready: '4/4', restarts: '0', type: 'SystemD service' },
+    { name: 'chronyd.service', status: 'Running', ready: '1/1', restarts: '0', type: 'Systemd' },
   ];
 
-  // Mock resource status data
+  // Mock resource status data matching staging
   const mockResourceStatus = {
-    cpuPressure: { status: 'Past threshold (90%)', severity: 'danger' },
-    memoryPressure: { status: 'Past threshold (50%)', severity: 'warning' },
-    diskPressure: { status: 'Within limits (70%)', severity: 'success' },
+    cpuPressure: { status: 'Within limits', severity: 'success' },
+    diskPressure: { status: 'Within limits', severity: 'success' },
+    memoryPressure: { status: 'Within limits', severity: 'success' },
+  };
+
+  // Mock system status
+  const mockSystemStatus = {
+    applicationStatus: 'Unknown',
+    deviceStatus: 'Unknown',
+    updateStatus: 'Unknown',
+    integrityStatus: 'Unknown',
+    lastSeen: '2 days ago'
+  };
+
+  // Mock configurations
+  const mockConfigurations = {
+    systemImage: 'quay.io/rh_ee_camadorg/centos-bootc-flightctl-local/local-rpm-v1',
+    sources: 0
   };
 
   const renderStatusIcon = (severity: string) => {
@@ -127,14 +175,14 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   return (
     <>
       {/* Breadcrumb */}
-      <PageSection style={{ paddingBottom: '8px' }}>
+      <PageSection padding={{ default: 'noPadding' }} style={{ paddingBottom: '8px' }}>
         <Breadcrumb>
           <BreadcrumbItem>
             <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0 }}>
               Devices
             </Button>
           </BreadcrumbItem>
-          <BreadcrumbItem isActive>{device.alias || device.name}</BreadcrumbItem>
+          <BreadcrumbItem isActive>{deviceInfo.name}</BreadcrumbItem>
         </Breadcrumb>
       </PageSection>
 
@@ -142,9 +190,16 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       <PageSection>
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
           <FlexItem>
-            <Title headingLevel="h1" size="2xl">
-              {device.alias || device.name}
-            </Title>
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+              <FlexItem>
+                <Title headingLevel="h1" size="2xl">
+                  {deviceInfo.name}
+                </Title>
+              </FlexItem>
+              <FlexItem>
+                <EditIcon style={{ fontSize: '20px', color: '#6a6e73' }} />
+              </FlexItem>
+            </Flex>
           </FlexItem>
           <FlexItem>
             <Dropdown
@@ -193,7 +248,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       />
 
       {/* Tabs */}
-      <PageSection style={{ paddingTop: 0 }}>
+      <PageSection padding={{ default: 'noPadding' }} style={{ paddingTop: 0 }}>
         <Tabs
           activeKey={activeTab}
           onSelect={(_event, tabIndex) => setActiveTab(tabIndex)}
@@ -201,60 +256,69 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           role="region"
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
+          <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} />
           <Tab eventKey="terminal" title={<TabTitleText>Terminal</TabTitleText>} />
           <Tab eventKey="events" title={<TabTitleText>Events</TabTitleText>} />
         </Tabs>
 
         <TabContent eventKey="details" id="details-tab" hidden={activeTab !== 'details'}>
           <TabContentBody>
-            {/* Basic Device Info */}
-            <Card style={{ marginBottom: '24px' }}>
-              <CardBody>
-                <Grid hasGutter>
-                  <GridItem span={4}>
-                    <DescriptionList>
+            {/* Primary Device Information - Always Visible with Enhanced Layout */}
+            <Grid hasGutter style={{ marginBottom: '32px' }}>
+              {/* Left Column - Device Identity */}
+              <GridItem span={4}>
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                        <ServerIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                      </FlexItem>
+                      <FlexItem>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Device Identity</h3>
+                      </FlexItem>
+                    </Flex>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1 }}>
+                    <DescriptionList isCompact>
                       <DescriptionListGroup>
                         <DescriptionListTerm>Name</DescriptionListTerm>
                         <DescriptionListDescription>
                           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                            <FlexItem style={{ fontFamily: 'monospace' }}>{device.name}</FlexItem>
+                            <FlexItem>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.shortName}
+                                </span>
+                              </Content>
+                            </FlexItem>
                             <FlexItem>
                               <Button variant="plain" aria-label="Copy device name">
-                                <CopyIcon />
+                                <CopyIcon style={{ fontSize: '14px' }} />
                               </Button>
                             </FlexItem>
                           </Flex>
                         </DescriptionListDescription>
                       </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
-                  <GridItem span={4}>
-                    <DescriptionList>
                       <DescriptionListGroup>
                         <DescriptionListTerm>Fleet name</DescriptionListTerm>
                         <DescriptionListDescription>
-                          {device.fleet ? (
-                            <Button variant="link" style={{ padding: 0 }}>
-                              {device.fleet}
-                            </Button>
-                          ) : '--'}
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>{deviceInfo.fleetName}</FlexItem>
+                            <FlexItem>
+                              <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                            </FlexItem>
+                          </Flex>
                         </DescriptionListDescription>
                       </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
-                  <GridItem span={4}>
-                    <DescriptionList>
                       <DescriptionListGroup>
-                        <DescriptionListTerm>Device labels</DescriptionListTerm>
+                        <DescriptionListTerm>Labels</DescriptionListTerm>
                         <DescriptionListDescription>
                           <Flex spaceItems={{ default: 'spaceItemsXs' }} style={{ flexWrap: 'wrap', gap: '4px' }}>
-                            {deviceLabels.map((label, index) => (
-                              <FlexItem key={index}>
-                                <Label variant="outline" style={{ fontSize: '11px', padding: '2px 6px' }}>
-                                  {label}
-                                </Label>
-                              </FlexItem>
-                            ))}
+                            <FlexItem>
+                              <Label variant="outline" isCompact>
+                                device=test
+                              </Label>
+                            </FlexItem>
                             <FlexItem>
                               <Button variant="link" style={{ padding: 0, fontSize: '12px' }}>
                                 Add label
@@ -264,105 +328,334 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     </DescriptionList>
-                  </GridItem>
-                </Grid>
+                  </CardBody>
+                </Card>
+              </GridItem>
+
+              {/* Middle Column - System Overview */}
+              <GridItem span={4}>
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                        <CubeIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                      </FlexItem>
+                      <FlexItem>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>System Overview</h3>
+                      </FlexItem>
+                    </Flex>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1 }}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Architecture</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Label color="blue" variant="filled" isCompact>
+                            {deviceInfo.architecture}
+                          </Label>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Operating system</DescriptionListTerm>
+                        <DescriptionListDescription>{deviceInfo.operatingSystem}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Distro</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Label color="cyan" variant="outline" isCompact>
+                            {deviceInfo.distro}
+                          </Label>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Agent version</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              {deviceInfo.agentVersion}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </CardBody>
+                </Card>
+              </GridItem>
+
+              {/* Right Column - Product Information */}
+              <GridItem span={4}>
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                        <ClipboardIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                      </FlexItem>
+                      <FlexItem>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Product Details</h3>
+                      </FlexItem>
+                    </Flex>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1 }}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Product name</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <span style={{ fontSize: '13px', lineHeight: '1.3' }}>
+                            {deviceInfo.productName}
+                          </span>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Product UUID</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px', lineHeight: '1.3' }}>
+                              {deviceInfo.productUUID}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </CardBody>
+                </Card>
+              </GridItem>
+            </Grid>
+
+            {/* Expandable Technical Specifications */}
+            <Card style={{ marginBottom: '32px' }}>
+              <CardBody>
+                <ExpandableSection
+                  toggleText="Technical specifications"
+                  toggleTextExpanded="Hide technical specifications"
+                  isExpanded={isTechnicalExpanded}
+                  onToggle={setIsTechnicalExpanded}
+                  displaySize="lg"
+                >
+                  <div style={{ marginTop: '16px' }}>
+                    <Grid hasGutter>
+                      <GridItem span={6}>
+                        <DescriptionList isHorizontal>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Hostname</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.hostname}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Kernel</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.kernel}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
+                      </GridItem>
+                      <GridItem span={6}>
+                        <DescriptionList isHorizontal>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Boot ID</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.bootID}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
+                      </GridItem>
+                    </Grid>
+                  </div>
+                </ExpandableSection>
               </CardBody>
             </Card>
 
-            <Grid hasGutter>
-              {/* System Status */}
-              <GridItem span={6}>
-                <Card style={{ height: '100%' }}>
-                  <CardBody>
-                    <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
+            {/* Expandable Network Configuration */}
+            <Card style={{ marginBottom: '32px' }}>
+              <CardBody>
+                <ExpandableSection
+                  toggleText="Network configuration"
+                  toggleTextExpanded="Hide network configuration"
+                  isExpanded={isNetworkExpanded}
+                  onToggle={setIsNetworkExpanded}
+                  displaySize="lg"
+                >
+                  <div style={{ marginTop: '16px' }}>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '16px' }}>
                       <FlexItem>
-                        <Title headingLevel="h3" size="lg">
-                          System status
-                        </Title>
+                        <NetworkIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                      </FlexItem>
+                      <FlexItem>
+                        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Default Interface</h4>
                       </FlexItem>
                     </Flex>
-
                     <Grid hasGutter>
-                      <GridItem span={4}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Application status <InfoCircleIcon style={{ marginLeft: '4px', color: '#6a6e73' }} /></div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div
-                              style={{
-                                backgroundColor: getStatusLabelStyle(device.applicationStatus).backgroundColor,
-                                color: getStatusLabelStyle(device.applicationStatus).color,
-                                border: `1px solid ${getStatusLabelStyle(device.applicationStatus).borderColor}`,
-                                padding: '4px 8px',
-                                borderRadius: '16px',
-                                fontWeight: '500',
-                                fontSize: '12px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {React.createElement(getStatusIcon(device.applicationStatus), { style: { fontSize: '12px', color: getStatusLabelStyle(device.applicationStatus).color } })}
-                              {getStatusLabel(device.applicationStatus)}
-                            </div>
-                          </div>
+                      <GridItem span={6}>
+                        <DescriptionList isHorizontal>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Net interface default</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.netInterfaceDefault}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Net IP default</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.netIPDefault}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
+                      </GridItem>
+                      <GridItem span={6}>
+                        <DescriptionList isHorizontal>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Net MAC default</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.netMACDefault}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
+                      </GridItem>
+                    </Grid>
+                  </div>
+                </ExpandableSection>
+              </CardBody>
+            </Card>
+
+            {/* Enhanced Status Cards */}
+            <Grid hasGutter style={{ marginBottom: '32px' }}>
+              {/* System Status */}
+              <GridItem span={6}>
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <FlexItem>
+                        <CogIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                      </FlexItem>
+                      <FlexItem>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>System status</h3>
+                      </FlexItem>
+                    </Flex>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1, padding: '24px' }}>
+                    <Grid hasGutter>
+                      <GridItem span={6}>
+                        <div style={{ marginBottom: '24px' }}>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                            <FlexItem>
+                              <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Application status</h6>
+                            </FlexItem>
+                            <FlexItem>
+                              <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                            </FlexItem>
+                          </Flex>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <ExclamationTriangleIcon style={{ fontSize: '18px', color: '#dca614' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="orange" variant="filled" isCompact>
+                                {mockSystemStatus.applicationStatus}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
                         </div>
                       </GridItem>
-                      <GridItem span={4}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Device status <InfoCircleIcon style={{ marginLeft: '4px', color: '#6a6e73' }} /></div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div
-                              style={{
-                                backgroundColor: getStatusLabelStyle(device.status).backgroundColor,
-                                color: getStatusLabelStyle(device.status).color,
-                                border: `1px solid ${getStatusLabelStyle(device.status).borderColor}`,
-                                padding: '4px 8px',
-                                borderRadius: '16px',
-                                fontWeight: '500',
-                                fontSize: '12px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {React.createElement(getStatusIcon(device.status), { style: { fontSize: '12px', color: getStatusLabelStyle(device.status).color } })}
-                              {getStatusLabel(device.status)}
-                            </div>
-                          </div>
+                      <GridItem span={6}>
+                        <div style={{ marginBottom: '24px' }}>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                            <FlexItem>
+                              <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Device status</h6>
+                            </FlexItem>
+                            <FlexItem>
+                              <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                            </FlexItem>
+                          </Flex>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <ExclamationTriangleIcon style={{ fontSize: '18px', color: '#dca614' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="orange" variant="filled" isCompact>
+                                {mockSystemStatus.deviceStatus}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
                         </div>
                       </GridItem>
-                      <GridItem span={4}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Update status</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div
-                              style={{
-                                backgroundColor: getStatusLabelStyle(device.systemUpdateStatus).backgroundColor,
-                                color: getStatusLabelStyle(device.systemUpdateStatus).color,
-                                border: `1px solid ${getStatusLabelStyle(device.systemUpdateStatus).borderColor}`,
-                                padding: '4px 8px',
-                                borderRadius: '16px',
-                                fontWeight: '500',
-                                fontSize: '12px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {React.createElement(getStatusIcon(device.systemUpdateStatus), { style: { fontSize: '12px', color: getStatusLabelStyle(device.systemUpdateStatus).color } })}
-                              {getStatusLabel(device.systemUpdateStatus)}
-                            </div>
-                          </div>
+                      <GridItem span={6}>
+                        <div style={{ marginBottom: '24px' }}>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                            <FlexItem>
+                              <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Update status</h6>
+                            </FlexItem>
+                            <FlexItem>
+                              <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                            </FlexItem>
+                          </Flex>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <ExclamationTriangleIcon style={{ fontSize: '18px', color: '#dca614' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="orange" variant="filled" isCompact>
+                                {mockSystemStatus.updateStatus}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
+                        </div>
+                      </GridItem>
+                      <GridItem span={6}>
+                        <div style={{ marginBottom: '24px' }}>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                            <FlexItem>
+                              <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Integrity status</h6>
+                            </FlexItem>
+                            <FlexItem>
+                              <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                            </FlexItem>
+                          </Flex>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <ExclamationTriangleIcon style={{ fontSize: '18px', color: '#dca614' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="orange" variant="filled" isCompact>
+                                {mockSystemStatus.integrityStatus}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
                         </div>
                       </GridItem>
                     </Grid>
-
-                    <div style={{ marginTop: '16px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Last seen</div>
-                      <div style={{ color: '#6a6e73' }}>{device.lastSeen}</div>
+                    <div style={{ borderTop: '1px solid #d2d2d2', paddingTop: '16px', marginTop: '8px' }}>
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem>
+                          <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Last seen</h6>
+                        </FlexItem>
+                        <FlexItem>
+                          <span style={{ color: '#6a6e73' }}>{mockSystemStatus.lastSeen}</span>
+                        </FlexItem>
+                      </Flex>
                     </div>
                   </CardBody>
                 </Card>
@@ -370,94 +663,122 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
               {/* Resource Status */}
               <GridItem span={6}>
-                <Card style={{ height: '100%' }}>
-                  <CardBody>
-                    <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px' }}>
-                      Resource status
-                    </Title>
-
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Resource status</h3>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1, padding: '24px' }}>
                     <Grid hasGutter>
                       <GridItem span={4}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>CPU pressure</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {renderStatusIcon(mockResourceStatus.cpuPressure.severity)}
-                            <span style={{ fontSize: '14px' }}>{mockResourceStatus.cpuPressure.status}</span>
-                          </div>
+                        <div style={{ marginBottom: '24px' }}>
+                          <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>CPU pressure</h6>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <CheckCircleIcon style={{ fontSize: '18px', color: '#3d7317' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="green" variant="filled" isCompact>
+                                {mockResourceStatus.cpuPressure.status}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
                         </div>
                       </GridItem>
                       <GridItem span={4}>
-                        <div style={{ marginBottom: '16px' }}>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Disk pressure</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {renderStatusIcon(mockResourceStatus.diskPressure.severity)}
-                            <span style={{ fontSize: '14px' }}>{mockResourceStatus.diskPressure.status}</span>
-                          </div>
+                        <div style={{ marginBottom: '24px' }}>
+                          <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Disk pressure</h6>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <CheckCircleIcon style={{ fontSize: '18px', color: '#3d7317' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="green" variant="filled" isCompact>
+                                {mockResourceStatus.diskPressure.status}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
+                        </div>
+                      </GridItem>
+                      <GridItem span={4}>
+                        <div style={{ marginBottom: '24px' }}>
+                          <h6 style={{ margin: 0, fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>Memory pressure</h6>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <CheckCircleIcon style={{ fontSize: '18px', color: '#3d7317' }} />
+                            </FlexItem>
+                            <FlexItem>
+                              <Label color="green" variant="filled" isCompact>
+                                {mockResourceStatus.memoryPressure.status}
+                              </Label>
+                            </FlexItem>
+                          </Flex>
                         </div>
                       </GridItem>
                     </Grid>
-
-                    <div>
-                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Memory pressure</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {renderStatusIcon(mockResourceStatus.memoryPressure.severity)}
-                        <span style={{ fontSize: '14px' }}>{mockResourceStatus.memoryPressure.status}</span>
-                      </div>
-                    </div>
                   </CardBody>
                 </Card>
               </GridItem>
             </Grid>
 
-            <Grid hasGutter style={{ marginTop: '24px' }}>
+            {/* Configurations and Applications */}
+            <Grid hasGutter style={{ marginBottom: '32px' }}>
               {/* Configurations */}
               <GridItem span={6}>
-                <Card style={{ height: '100%' }}>
-                  <CardBody>
-                    <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
-                      <FlexItem>
-                        <Title headingLevel="h3" size="lg">
-                          Configurations <InfoCircleIcon style={{ marginLeft: '4px', color: '#6a6e73' }} />
-                        </Title>
-                      </FlexItem>
-                    </Flex>
-
-                    <div style={{ marginBottom: '16px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>System image (running)</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>quay.io/redhat/rhde 9.3</span>
-                        <ExclamationTriangleIcon style={{ color: '#dca614' }} />
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Configurations</h3>
+                  </CardTitle>
+                  <CardBody style={{ flex: 1 }}>
+                    <ExpandableSection
+                      toggleText="System image details"
+                      toggleTextExpanded="Hide system image details"
+                      isExpanded={isConfigExpanded}
+                      onToggle={setIsConfigExpanded}
+                    >
+                      <div style={{ marginTop: '16px' }}>
+                        <DescriptionList isHorizontal>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>System image (running)</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px', lineHeight: '1.4' }}>
+                                  {mockConfigurations.systemImage}
+                                </span>
+                              </Content>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>Sources</DescriptionListTerm>
+                            <DescriptionListDescription>
+                              <Label color="grey" variant="outline" isCompact>
+                                ({mockConfigurations.sources})
+                              </Label>
+                              <span style={{ marginLeft: '8px', color: '#6a6e73' }}>–</span>
+                            </DescriptionListDescription>
+                          </DescriptionListGroup>
+                        </DescriptionList>
                       </div>
-                    </div>
-
-                    <div style={{ marginBottom: '16px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Sources (1)</div>
-                      <div style={{ fontFamily: 'monospace', fontSize: '14px' }}>App_definition</div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Device overrides</div>
-                      <div>Enabled</div>
-                    </div>
+                    </ExpandableSection>
                   </CardBody>
                 </Card>
               </GridItem>
 
               {/* Applications */}
               <GridItem span={6}>
-                <Card style={{ height: '100%' }}>
-                  <CardBody>
-                    <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
+                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardTitle>
+                    <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
                       <FlexItem>
-                        <Title headingLevel="h3" size="lg">Applications</Title>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Applications</h3>
                       </FlexItem>
                       <FlexItem>
-                        <Button variant="link" style={{ padding: 0 }}>
-                          Track SystemD services
+                        <Button variant="link" style={{ padding: 0, fontSize: '14px' }}>
+                          Track systemd services
                         </Button>
                       </FlexItem>
                     </Flex>
-
+                  </CardTitle>
+                  <CardBody style={{ flex: 1 }}>
                     <Table aria-label="Applications table" variant="compact">
                       <Thead>
                         <Tr>
@@ -471,16 +792,36 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                       <Tbody>
                         {mockApplications.map((app, index) => (
                           <Tr key={index}>
-                            <Td>{app.name}</Td>
                             <Td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {renderApplicationStatusIcon(app.status)}
-                                {app.status}
-                              </div>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {app.name}
+                                </span>
+                              </Content>
                             </Td>
-                            <Td>{app.ready}</Td>
+                            <Td>
+                              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                                <FlexItem>
+                                  <CheckCircleIcon style={{ fontSize: '16px', color: '#3d7317' }} />
+                                </FlexItem>
+                                <FlexItem>
+                                  <Label color="green" variant="filled" isCompact>
+                                    {app.status}
+                                  </Label>
+                                </FlexItem>
+                              </Flex>
+                            </Td>
+                            <Td>
+                              <Label color="blue" variant="outline" isCompact>
+                                {app.ready}
+                              </Label>
+                            </Td>
                             <Td>{app.restarts}</Td>
-                            <Td>{app.type}</Td>
+                            <Td>
+                              <Label color="cyan" variant="outline" isCompact>
+                                {app.type}
+                              </Label>
+                            </Td>
                           </Tr>
                         ))}
                       </Tbody>
@@ -492,12 +833,88 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           </TabContentBody>
         </TabContent>
 
+        <TabContent id="yaml" eventKey="yaml" hidden={activeTab !== 'yaml'}>
+          <TabContentBody>
+            <Card>
+              <CardBody>
+                <Title headingLevel="h2" size="lg">YAML Configuration</Title>
+                <Content>
+                  <span style={{ fontFamily: 'monospace', fontSize: '14px', whiteSpace: 'pre-wrap', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '8px' }}>
+{`apiVersion: v1alpha1
+kind: Device
+metadata:
+  name: orange-device
+  namespace: default
+  labels:
+    device: test
+spec:
+  fleetName: ""
+  systemImage:
+    image: quay.io/rh_ee_camadorg/centos-bootc-flightctl-local/local-rpm-v1
+  applications: []
+  resources: []
+  systemd:
+    units: []
+status:
+  phase: Online
+  lastSeen: "2024-10-22T19:30:00Z"
+  systemInfo:
+    architecture: amd64
+    operatingSystem: linux
+    kernelVersion: 5.14.0-570.el9.x86_64
+    bootID: 6a8a4653-e383-488f-82d8-0c7d3356cffc`}
+                  </span>
+                </Content>
+              </CardBody>
+            </Card>
+          </TabContentBody>
+        </TabContent>
+
         <TabContent eventKey="terminal" id="terminal-tab" hidden={activeTab !== 'terminal'}>
           <TabContentBody>
             <Card>
               <CardBody>
-                <Title headingLevel="h2" size="lg">Terminal</Title>
-                <p>Device terminal access will be available here.</p>
+                <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
+                  <FlexItem>
+                    <Title headingLevel="h2" size="lg">Terminal</Title>
+                  </FlexItem>
+                  <FlexItem>
+                    <Button variant="primary" size="sm">
+                      Connect to device terminal
+                    </Button>
+                  </FlexItem>
+                </Flex>
+                <div style={{
+                  backgroundColor: '#1e1e1e',
+                  color: '#d4d4d4',
+                  fontFamily: 'Monaco, "Lucida Console", monospace',
+                  fontSize: '14px',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  minHeight: '400px',
+                  border: '1px solid #3e3e3e'
+                }}>
+                  <div style={{ color: '#569cd6' }}>
+                    [root@orange-device ~]# <span style={{ color: '#d4d4d4' }}>systemctl status chronyd</span>
+                  </div>
+                  <div style={{ marginTop: '8px', color: '#4ec9b0' }}>
+                    ● chronyd.service - NTP client/server<br/>
+                    &nbsp;&nbsp;&nbsp;Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)<br/>
+                    &nbsp;&nbsp;&nbsp;Active: <span style={{ color: '#00ff00' }}>active (running)</span> since Tue 2024-10-22 19:30:12 UTC; 2 days ago<br/>
+                    &nbsp;&nbsp;&nbsp;Docs: man:chronyd(8)<br/>
+                    &nbsp;&nbsp;&nbsp;Main PID: 1234 (chronyd)<br/>
+                    &nbsp;&nbsp;&nbsp;Tasks: 1 (limit: 4915)<br/>
+                    &nbsp;&nbsp;&nbsp;Memory: 2.1M<br/>
+                    &nbsp;&nbsp;&nbsp;CGroup: /system.slice/chronyd.service<br/>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─1234 /usr/sbin/chronyd
+                  </div>
+                  <div style={{ marginTop: '16px', color: '#569cd6' }}>
+                    [root@orange-device ~]# <span style={{ animation: 'blink 1s infinite', borderRight: '2px solid #d4d4d4' }}>&nbsp;</span>
+                  </div>
+                </div>
+                <div style={{ marginTop: '12px', fontSize: '14px', color: '#6a6e73' }}>
+                  <span>Terminal access allows you to execute commands directly on the device. Use the connect button above to establish a secure connection.</span>
+                </div>
               </CardBody>
             </Card>
           </TabContentBody>
@@ -507,8 +924,170 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
           <TabContentBody>
             <Card>
               <CardBody>
-                <Title headingLevel="h2" size="lg">Events</Title>
-                <p>Device events will be displayed here.</p>
+                <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
+                  <FlexItem>
+                    <Title headingLevel="h2" size="lg">Events</Title>
+                  </FlexItem>
+                  <FlexItem>
+                    <Button variant="secondary" size="sm">
+                      Refresh events
+                    </Button>
+                  </FlexItem>
+                </Flex>
+
+                <Table aria-label="Device events" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th width={20}>Time</Th>
+                      <Th width={15}>Type</Th>
+                      <Th width={15}>Source</Th>
+                      <Th>Message</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    <Tr>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            2024-10-22 19:32:15
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <InfoCircleIcon style={{ fontSize: '14px', color: '#2b9af3' }} />
+                          </FlexItem>
+                          <FlexItem>
+                            <Label color="blue" variant="filled" isCompact>Info</Label>
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            flightctl-agent
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>Device heartbeat sent successfully</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            2024-10-22 19:30:12
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <CheckCircleIcon style={{ fontSize: '14px', color: '#3e8635' }} />
+                          </FlexItem>
+                          <FlexItem>
+                            <Label color="green" variant="filled" isCompact>Success</Label>
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            systemd
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>Service chronyd.service started successfully</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            2024-10-22 19:29:45
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <ExclamationTriangleIcon style={{ fontSize: '14px', color: '#f0ab00' }} />
+                          </FlexItem>
+                          <FlexItem>
+                            <Label color="orange" variant="filled" isCompact>Warning</Label>
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            kernel
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>Network interface enp1s0 link state changed to UP</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            2024-10-22 19:29:30
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <InfoCircleIcon style={{ fontSize: '14px', color: '#2b9af3' }} />
+                          </FlexItem>
+                          <FlexItem>
+                            <Label color="blue" variant="filled" isCompact>Info</Label>
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            flightctl-agent
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>Device configuration synchronized successfully</Td>
+                    </Tr>
+                    <Tr>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            2024-10-22 19:28:15
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <InfoCircleIcon style={{ fontSize: '14px', color: '#2b9af3' }} />
+                          </FlexItem>
+                          <FlexItem>
+                            <Label color="blue" variant="filled" isCompact>Info</Label>
+                          </FlexItem>
+                        </Flex>
+                      </Td>
+                      <Td>
+                        <Content>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                            boot
+                          </span>
+                        </Content>
+                      </Td>
+                      <Td>System boot completed in 2.34s</Td>
+                    </Tr>
+                  </Tbody>
+                </Table>
+
+                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                  <Button variant="link">
+                    Load more events
+                  </Button>
+                </div>
               </CardBody>
             </Card>
           </TabContentBody>

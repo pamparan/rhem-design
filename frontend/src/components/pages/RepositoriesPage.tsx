@@ -44,7 +44,7 @@ const RepositoriesPage: React.FC<RepositoriesPageProps> = ({
   return (
     <>
       {/* Header */}
-      <PageSection >
+      <PageSection>
         <Title headingLevel="h1" size="2xl">
           Repositories
         </Title>

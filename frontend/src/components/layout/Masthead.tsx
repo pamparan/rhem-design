@@ -17,11 +17,13 @@ import { CaretDownIcon } from '@patternfly/react-icons';
 interface AppMastheadProps {
   isSidebarOpen: boolean;
   onSidebarToggle: () => void;
+  onShowLoginInterface?: () => void;
 }
 
 const AppMasthead: React.FC<AppMastheadProps> = ({
   isSidebarOpen,
   onSidebarToggle,
+  onShowLoginInterface,
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
@@ -141,8 +143,16 @@ const AppMasthead: React.FC<AppMastheadProps> = ({
             >
               <DropdownList>
                 <DropdownItem value="profile" key="profile">Profile</DropdownItem>
-                <DropdownItem value="settings" key="settings">Settings</DropdownItem>
-                <DropdownItem value="logout" key="logout">Logout</DropdownItem>
+                <DropdownItem
+                  value="logout"
+                  key="logout"
+                  onClick={() => {
+                    setIsUserDropdownOpen(false);
+                    onShowLoginInterface?.();
+                  }}
+                >
+                  Logout
+                </DropdownItem>
               </DropdownList>
             </Dropdown>
           </div>

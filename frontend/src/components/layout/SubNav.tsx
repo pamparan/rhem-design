@@ -11,6 +11,7 @@ import {
 } from '@patternfly/react-core';
 import {
   ExternalLinkAltIcon,
+  CogIcon,
 } from '@patternfly/react-icons';
 import OrganizationSelectorModal from '../shared/OrganizationSelectorModal';
 
@@ -20,9 +21,10 @@ interface SubNavProps {
   selectedDeviceDetails?: any;
   onNavigateToMain?: () => void;
   onCopyLoginCommand?: () => void;
+  onSystemSettings?: () => void;
 }
 
-const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
+const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand, onSystemSettings }) => {
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const [currentOrganization, setCurrentOrganization] = useState('charlie');
@@ -47,7 +49,10 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
       display: 'flex',
       justifyContent: 'flex-end',
       alignItems: 'center',
-      minHeight: '48px'
+      minHeight: '48px',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000
     }}>
       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
         <FlexItem>
@@ -94,6 +99,22 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand }) => {
             </SelectList>
           </Select>
         </FlexItem>
+
+        <FlexItem style={{ marginLeft: 'auto' }}>
+          <Tooltip content="Manage authentication providers and system configuration">
+            <Button
+              variant="plain"
+              icon={<CogIcon />}
+              onClick={onSystemSettings}
+              style={{
+                fontSize: '16px',
+                padding: '8px',
+                color: '#06c'
+              }}
+            />
+          </Tooltip>
+        </FlexItem>
+
       </Flex>
 
       {/* Organization Selector Modal */}
