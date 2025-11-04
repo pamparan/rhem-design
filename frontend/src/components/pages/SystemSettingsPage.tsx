@@ -64,13 +64,13 @@ const SystemSettingsPage: React.FC<SystemSettingsPageProps> = ({ onNavigate }) =
   return (
     <PageSection>
       <Grid hasGutter>
-        <GridItem span={3}>
+        <GridItem span={2}>
           <SettingsSidebar
             activeSection={activeSection}
             onSectionChange={setActiveSection}
           />
         </GridItem>
-        <GridItem span={9}>
+        <GridItem span={10}>
           {renderSettingsContent()}
         </GridItem>
       </Grid>

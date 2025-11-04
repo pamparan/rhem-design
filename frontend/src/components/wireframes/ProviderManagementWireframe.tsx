@@ -43,6 +43,7 @@ interface IdentityProvider {
   id: string;
   name: string;
   type: string;
+  issuerUrl: string;
   status: boolean; // enabled/disabled
   isBuiltIn: boolean; // cannot be deleted if true
 }
@@ -53,11 +54,11 @@ interface ProviderManagementWireframeProps {
 
 const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = ({ onAddProvider }) => {
   const [providers, setProviders] = useState<IdentityProvider[]>([
-    { id: 'internal', name: 'Internal', type: 'Internal OIDC', status: true, isBuiltIn: true },
-    { id: 'aap', name: 'AAP', type: 'Ansible Automation Platform', status: true, isBuiltIn: false },
-    { id: 'google', name: 'Google', type: 'OIDC', status: true, isBuiltIn: false },
-    { id: 'okta', name: 'Customer-B Okta', type: 'OIDC', status: false, isBuiltIn: false },
-    { id: 'kubernetes', name: 'K8s Cluster Auth', type: 'Kubernetes', status: true, isBuiltIn: false },
+    { id: 'internal', name: 'Internal', type: 'Internal OIDC', issuerUrl: 'https://flightcontrol.internal/auth', status: true, isBuiltIn: true },
+    { id: 'aap', name: 'AAP', type: 'Ansible Automation Platform', issuerUrl: 'https://aap.example.com/api/gateway/v1/social/', status: true, isBuiltIn: false },
+    { id: 'google', name: 'Google', type: 'OIDC', issuerUrl: 'https://accounts.google.com', status: true, isBuiltIn: false },
+    { id: 'okta', name: 'Customer-B Okta', type: 'OIDC', issuerUrl: 'https://customer-b.okta.com/oauth2/default', status: false, isBuiltIn: false },
+    { id: 'kubernetes', name: 'K8s Cluster Auth', type: 'Kubernetes', issuerUrl: 'https://k8s.cluster.local:6443', status: true, isBuiltIn: false },
   ]);
 
   const [actionDropdownOpen, setActionDropdownOpen] = useState<string | null>(null);
@@ -120,6 +121,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
                 <Tr>
                   <Th>Name</Th>
                   <Th>Type</Th>
+                  <Th>Issuer URL</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
@@ -140,6 +142,11 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
                       )}
                     </Td>
                     <Td>{provider.type}</Td>
+                    <Td>
+                      <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                        {provider.issuerUrl}
+                      </span>
+                    </Td>
                     <Td>{getStatusLabel(provider.status)}</Td>
                     <Td>
                       {!provider.isBuiltIn ? (

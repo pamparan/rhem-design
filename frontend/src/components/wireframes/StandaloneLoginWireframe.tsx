@@ -31,6 +31,7 @@ const StandaloneLoginWireframe: React.FC = () => {
   // Sample authentication providers
   const authProviders: AuthProvider[] = [
     { id: 'internal', displayName: 'Internal Account', enabled: true },
+    { id: 'token', displayName: 'Token Login Command', enabled: true },
     { id: 'google', displayName: 'Google', enabled: true },
     { id: 'github', displayName: 'GitHub', enabled: true },
     { id: 'okta', displayName: 'Customer-B Okta', enabled: false }, // Disabled example
@@ -115,7 +116,7 @@ const StandaloneLoginWireframe: React.FC = () => {
                       size="lg"
                       onClick={() => handleProviderLogin(provider.id)}
                     >
-                      Log in with {provider.displayName}
+                      {provider.id === 'token' ? provider.displayName : `Log in with ${provider.displayName}`}
                     </Button>
                   </StackItem>
                 ))}
