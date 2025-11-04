@@ -81,7 +81,7 @@ const ProviderFormWireframe: React.FC<ProviderFormWireframeProps> = ({ onCancel,
     issuerUrl: '',
     clientId: '',
     clientSecret: '',
-    scopes: ['a', 'd'],
+    scopes: [],
     usernameClaim: 'preferred_username',
     roleClaim: 'groups',
     organizationAssignment: 'Static',
@@ -186,7 +186,7 @@ const ProviderFormWireframe: React.FC<ProviderFormWireframeProps> = ({ onCancel,
               issuerUrl: 'https://example.com/auth/realms/demo',
               clientId: 'demo-client-id',
               clientSecret: 'demo-client-secret',
-              scopes: ['openid', 'profile', 'email'],
+              scopes: ['a', 'd'],
               usernameClaim: 'preferred_username',
               roleClaim: 'groups',
               organizationAssignment: 'Static',
@@ -425,6 +425,14 @@ const ProviderFormWireframe: React.FC<ProviderFormWireframeProps> = ({ onCancel,
                 Control how users are assigned to organizations. Manual assignment requires admin intervention, while auto-creation can map provider groups to organizations automatically.
               </div>
 
+              {/* Test Connection Status */}
+              {testConnectionStatus === 'success' && (
+                <Alert variant="success" title="Connection test successful" isInline style={{ marginTop: '16px' }} />
+              )}
+              {testConnectionStatus === 'error' && (
+                <Alert variant="danger" title="Connection test failed" isInline style={{ marginTop: '16px' }} />
+              )}
+
               {/* Actions */}
               <ActionGroup style={{ marginTop: '32px' }}>
                 <Button variant="primary" onClick={handleSave}>
@@ -432,6 +440,14 @@ const ProviderFormWireframe: React.FC<ProviderFormWireframeProps> = ({ onCancel,
                 </Button>
                 <Button variant="link" onClick={handleCancel}>
                   Cancel
+                </Button>
+                <Button
+                  variant={getTestConnectionVariant()}
+                  onClick={handleTestConnection}
+                  isLoading={testConnectionStatus === 'testing'}
+                  isDisabled={!formData.issuerUrl || !formData.clientId || !formData.clientSecret}
+                >
+                  {getTestConnectionText()}
                 </Button>
               </ActionGroup>
             </Form>
