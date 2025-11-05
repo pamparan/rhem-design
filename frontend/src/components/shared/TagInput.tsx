@@ -17,6 +17,7 @@ interface TagInputProps {
   placeholder?: string;
   helperText?: string;
   isRequired?: boolean;
+  addButtonText?: string;
 }
 
 const TagInput: React.FC<TagInputProps> = ({
@@ -27,6 +28,7 @@ const TagInput: React.FC<TagInputProps> = ({
   placeholder,
   helperText,
   isRequired = false,
+  addButtonText = "Add scope",
 }) => {
   const [inputValue, setInputValue] = useState('');
 
@@ -60,24 +62,8 @@ const TagInput: React.FC<TagInputProps> = ({
       isRequired={isRequired}
     >
       <div>
-        {/* Tags Display */}
-        {tags.length > 0 && (
-          <div style={{ marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-            {tags.map((tag, index) => (
-              <Label
-                key={index}
-                color="blue"
-                onClose={() => removeTag(tag)}
-                style={{ cursor: 'pointer' }}
-              >
-                {tag}
-              </Label>
-            ))}
-          </div>
-        )}
-
         {/* Input Section */}
-        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '12px' }}>
           <FlexItem grow={{ default: 'grow' }}>
             <TextInput
               type="text"
@@ -93,12 +79,33 @@ const TagInput: React.FC<TagInputProps> = ({
               variant="link"
               onClick={handleAddClick}
               isDisabled={!inputValue.trim()}
-              style={{ padding: '6px 12px' }}
+              style={{ padding: '6px 12px', fontSize: '14px', textDecoration: 'none' }}
             >
-              Add scope
+              {addButtonText}
             </Button>
           </FlexItem>
         </Flex>
+
+        {/* Tags Display */}
+        {tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+            {tags.map((tag, index) => (
+              <Label
+                key={index}
+                color="blue"
+                variant="outline"
+                onClose={() => removeTag(tag)}
+                style={{
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  padding: '4px 8px'
+                }}
+              >
+                {tag}
+              </Label>
+            ))}
+          </div>
+        )}
 
       </div>
 

@@ -16,7 +16,7 @@ import {
 // Import wireframe components
 import StandaloneLoginWireframe from '../wireframes/StandaloneLoginWireframe';
 import ProviderManagementWireframe from '../wireframes/ProviderManagementWireframe';
-import ProviderFormWireframe from '../wireframes/ProviderFormWireframe';
+import ProviderFormPage from './ProviderFormPage';
 
 /**
  * Wireframes Page - Authentication Provider Feature Mockups
@@ -140,7 +140,9 @@ const WireframesPage: React.FC<WireframesPageProps> = () => {
                         borderRadius: '8px',
                         overflow: 'hidden'
                       }}>
-                        <ProviderFormWireframe />
+                        <ProviderFormPage
+                          onNavigate={() => {}}
+                        />
                       </div>
                     </TabContentBody>
                   </TabContent>

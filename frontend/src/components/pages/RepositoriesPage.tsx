@@ -43,17 +43,13 @@ const RepositoriesPage: React.FC<RepositoriesPageProps> = ({
 
   return (
     <>
-      {/* Header */}
-      <PageSection>
-        <Title headingLevel="h1" size="2xl">
-          Repositories
-        </Title>
-      </PageSection>
-
       <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Main Content */}
       <PageSection>
+        <Title headingLevel="h1" size="2xl" style={{ marginBottom: '1.5rem' }}>
+          Repositories
+        </Title>
         <Card>
           <CardBody>
             {/* Toolbar */}

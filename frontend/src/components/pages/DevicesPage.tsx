@@ -29,7 +29,9 @@ import {
 import {
   FilterIcon,
   EllipsisVIcon,
-  OutlinedQuestionCircleIcon
+  OutlinedQuestionCircleIcon,
+  InfoCircleIcon,
+  InfoAltIcon
 } from '@patternfly/react-icons';
 import PostRestoreBanners from '../shared/PostRestoreBanners';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
@@ -490,7 +492,7 @@ const DevicesPage: React.FC<DevicesPageProps> = ({
                             <Button
                               isInline
                               variant="plain"
-                              icon={<OutlinedQuestionCircleIcon />}
+                              icon={<InfoAltIcon />}
                               aria-label="Ownership information"
                             />
                           </Popover>

@@ -68,17 +68,13 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
 
   return (
     <>
-      {/* Header */}
-      <PageSection>
-        <Title headingLevel="h1" size="2xl">
-          Fleets
-        </Title>
-      </PageSection>
-
       <PostRestoreBanners onNavigate={onNavigate} />
 
       {/* Main Content */}
       <PageSection>
+        <Title headingLevel="h1" size="2xl" style={{ marginBottom: '1.5rem' }}>
+          Fleets
+        </Title>
         <Card>
           <CardBody>
             {/* Toolbar */}

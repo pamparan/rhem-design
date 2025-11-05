@@ -1,5 +1,5 @@
 import { Flex, FlexItem, Stack, StackItem, Popover, Button } from '@patternfly/react-core';
-import { OutlinedQuestionCircleIcon } from '@patternfly/react-icons';
+import { OutlinedQuestionCircleIcon, InfoCircleIcon, InfoAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 
 import './DonutChart.css';
@@ -150,19 +150,26 @@ const DonutChart = ({
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
             pointerEvents: 'none',
-            width: '100px'
+            width: '78px', // Slightly smaller than inner circle diameter (80px)
+            height: '78px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
             <div style={{
-              fontSize: '14px',
+              fontSize: '11px',
               color: '#6a6e73',
-              lineHeight: '1.2',
+              lineHeight: '1.1',
+              fontWeight: '500',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px',
-              flexWrap: 'wrap'
+              gap: '2px',
+              flexDirection: 'column',
+              wordBreak: 'break-word',
+              hyphens: 'auto'
             }}>
-              <span>{title}</span>
+              <span style={{ textAlign: 'center' }}>{title}</span>
               {titlePopoverContent && (
                 <Popover
                   aria-label={`${title} information`}
@@ -174,11 +181,12 @@ const DonutChart = ({
                       padding: 0,
                       minWidth: 'auto',
                       height: 'auto',
-                      pointerEvents: 'auto'
+                      pointerEvents: 'auto',
+                      marginTop: '2px'
                     }}
                     aria-label={`More information about ${title}`}
                   >
-                    <OutlinedQuestionCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                    <InfoAltIcon style={{ fontSize: '11px', color: '#6a6e73' }} />
                   </Button>
                 </Popover>
               )}

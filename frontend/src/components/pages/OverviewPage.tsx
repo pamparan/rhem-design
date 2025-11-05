@@ -55,19 +55,15 @@ const OverviewPage: React.FC<OverviewPageProps> = ({
 
   return (
     <>
-      {/* Header */}
-      <PageSection>
-        <Title headingLevel="h1" size="2xl">
-          Overview
-        </Title>
-      </PageSection>
-
       <PostRestoreBanners
         onNavigate={onNavigate}
       />
 
       {/* Main Overview Content */}
       <PageSection>
+        <Title headingLevel="h1" size="2xl" style={{ marginBottom: '1.5rem' }}>
+          Overview
+        </Title>
         <Grid hasGutter>
           <GridItem md={9}>
             <Grid hasGutter>

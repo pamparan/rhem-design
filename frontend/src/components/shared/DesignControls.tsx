@@ -131,6 +131,31 @@ const DesignControls: React.FC<DesignControlsProps> = ({ children }) => {
           </StackItem>
 
           <StackItem>
+            <Title headingLevel="h3" size="md">
+              Form Controls
+            </Title>
+          </StackItem>
+
+          <StackItem>
+            <Switch
+              id="fill-provider-form-switch"
+              label="Auto-fill Provider Form"
+              isChecked={getSetting("fillProviderForm")}
+              onChange={(_event, checked) =>
+                setSetting("fillProviderForm", checked)
+              }
+            />
+            <HelperText>
+              <HelperTextItem
+                variant="indeterminate"
+                style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+              >
+                When enabled, automatically fills the authentication provider form with sample data when creating a new provider.
+              </HelperTextItem>
+            </HelperText>
+          </StackItem>
+
+          <StackItem>
             <Button variant="secondary" onClick={resetAll} isBlock>
               Reset All to Defaults
             </Button>
