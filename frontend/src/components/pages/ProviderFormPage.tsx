@@ -50,31 +50,32 @@ import { useDesignControls } from '../../hooks/useDesignControls';
 interface ProviderFormPageProps {
   onNavigate: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
   providerId?: string | null;
+  providerData?: any;
 }
 
-const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, providerId }) => {
+const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, providerId, providerData }) => {
   const isEdit = !!providerId;
   const { getSetting, setSetting } = useDesignControls();
 
   // Form state
   const [formData, setFormData] = useState({
-    name: isEdit ? 'Google Workspace' : '',
-    type: isEdit ? 'OIDC' : 'OIDC',
-    enabled: isEdit ? true : false,
-    clientId: isEdit ? 'google-client-id-example' : '',
-    clientSecret: isEdit ? '••••••••••••••••' : '',
-    issuerUrl: isEdit ? 'https://accounts.google.com' : '',
-    authorizationUrl: isEdit ? '' : '',
-    tokenUrl: isEdit ? '' : '',
-    userinfoUrl: isEdit ? '' : '',
-    scopes: isEdit ? ['a', 'd'] : [],
-    usernameClaim: isEdit ? 'preferred_username' : '',
-    roleClaim: isEdit ? 'groups' : '',
-    organizationAssignment: isEdit ? 'Static' : 'Static',
-    externalOrganizationName: isEdit ? '' : '',
-    claimPath: isEdit ? '' : '',
-    organizationNamePrefix: isEdit ? '' : '',
-    organizationNameSuffix: isEdit ? '' : '',
+    name: isEdit && providerData ? providerData.name : '',
+    type: isEdit && providerData ? providerData.type : 'OIDC',
+    enabled: isEdit && providerData ? providerData.enabled : false,
+    clientId: isEdit && providerData ? providerData.clientId : '',
+    clientSecret: isEdit && providerData ? providerData.clientSecret : '',
+    issuerUrl: isEdit && providerData ? providerData.issuerUrl : '',
+    authorizationUrl: isEdit && providerData ? (providerData.authorizationUrl || '') : '',
+    tokenUrl: isEdit && providerData ? (providerData.tokenUrl || '') : '',
+    userinfoUrl: isEdit && providerData ? (providerData.userinfoUrl || '') : '',
+    scopes: isEdit && providerData ? providerData.scopes : [],
+    usernameClaim: isEdit && providerData ? providerData.usernameClaim : '',
+    roleClaim: isEdit && providerData ? providerData.roleClaim : '',
+    organizationAssignment: isEdit && providerData ? providerData.organizationAssignment : 'Static',
+    externalOrganizationName: isEdit && providerData ? (providerData.externalOrganizationName || '') : '',
+    claimPath: isEdit && providerData ? (providerData.claimPath || '') : '',
+    organizationNamePrefix: isEdit && providerData ? (providerData.organizationNamePrefix || '') : '',
+    organizationNameSuffix: isEdit && providerData ? (providerData.organizationNameSuffix || '') : '',
   });
 
   const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error' | 'partial'>('idle');
@@ -120,6 +121,31 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
       setHasAutoFilled(true);
     }
   }, [getSetting('fillProviderForm'), isEdit, hasAutoFilled]);
+
+  // Update form data when providerData prop changes (for edit mode)
+  useEffect(() => {
+    if (isEdit && providerData) {
+      setFormData({
+        name: providerData.name || '',
+        type: providerData.type || 'OIDC',
+        enabled: providerData.enabled || false,
+        clientId: providerData.clientId || '',
+        clientSecret: providerData.clientSecret || '',
+        issuerUrl: providerData.issuerUrl || '',
+        authorizationUrl: providerData.authorizationUrl || '',
+        tokenUrl: providerData.tokenUrl || '',
+        userinfoUrl: providerData.userinfoUrl || '',
+        scopes: providerData.scopes || [],
+        usernameClaim: providerData.usernameClaim || '',
+        roleClaim: providerData.roleClaim || '',
+        organizationAssignment: providerData.organizationAssignment || 'Static',
+        externalOrganizationName: providerData.externalOrganizationName || '',
+        claimPath: providerData.claimPath || '',
+        organizationNamePrefix: providerData.organizationNamePrefix || '',
+        organizationNameSuffix: providerData.organizationNameSuffix || '',
+      });
+    }
+  }, [isEdit, providerData]);
 
   // Track when scopes are autofilled to mark as interacted
   useEffect(() => {
@@ -655,35 +681,64 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
               <FlexItem>
                 <label htmlFor="provider-name" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
-                  Provider name <span style={{ color: '#c9190b' }}>*</span>
+                  Provider name {!isEdit && <span style={{ color: '#c9190b' }}>*</span>}
                 </label>
               </FlexItem>
-              <FlexItem>
-                <Tooltip content={<ProviderNameValidationTooltip name={formData.name} />}>
-                  <Button
-                    variant="plain"
-                    size="sm"
-                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
-                    aria-label="Provider name requirements"
-                  />
-                </Tooltip>
-              </FlexItem>
+              {!isEdit && (
+                <FlexItem>
+                  <Tooltip content={<ProviderNameValidationTooltip name={formData.name} />}>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                      aria-label="Provider name requirements"
+                    />
+                  </Tooltip>
+                </FlexItem>
+              )}
             </Flex>
             <div style={{ marginTop: '16px' }}>
-              <TextInput
-                isRequired
-                type="text"
-                id="provider-name"
-                value={formData.name}
-                onChange={(_event, value) => handleInputChange('name', value)}
-                placeholder=""
-                validated={nameError ? 'error' : 'default'}
-              />
+              {isEdit ? (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #d2d2d2',
+                    borderRadius: '3px',
+                    backgroundColor: '#f5f5f5',
+                    fontFamily: 'var(--pf-v6-global--FontFamily--text)',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.5',
+                    color: '#6a6e73',
+                    minHeight: '36px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  {formData.name}
+                </div>
+              ) : (
+                <TextInput
+                  isRequired
+                  type="text"
+                  id="provider-name"
+                  value={formData.name}
+                  onChange={(_event, value) => handleInputChange('name', value)}
+                  placeholder=""
+                  validated={nameError ? 'error' : 'default'}
+                />
+              )}
             </div>
-            {nameError && (
+            {!isEdit && nameError && (
               <HelperText>
                 <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
                   {nameError}
+                </HelperTextItem>
+              </HelperText>
+            )}
+            {isEdit && (
+              <HelperText>
+                <HelperTextItem variant="indeterminate">
+                  Provider name cannot be changed after creation
                 </HelperTextItem>
               </HelperText>
             )}
