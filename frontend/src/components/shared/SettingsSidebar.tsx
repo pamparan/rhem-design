@@ -3,7 +3,8 @@ import {
   Nav,
   NavList,
   NavItem,
-  Button
+  Button,
+  Tooltip
 } from '@patternfly/react-core';
 import {
   CogIcon,
@@ -76,22 +77,24 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           position: 'sticky',
           top: '16px', // Much reduced sticky positioning
           zIndex: 999,
-          paddingTop: '4px' // Minimal top padding
+          paddingTop: '16px' // Top padding for better spacing
         }}
       >
         {/* Toggle Button - consistent positioning */}
         <div className="toggle-button-container">
-          <Button
-            variant="plain"
-            onClick={() => {
-              const newCollapsedState = !isCollapsed;
-              setIsCollapsed(newCollapsedState);
-              onCollapseChange?.(newCollapsedState);
-            }}
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? <PanelOpenIcon /> : <PanelCloseIcon />}
-          </Button>
+          <Tooltip content={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+            <Button
+              variant="plain"
+              onClick={() => {
+                const newCollapsedState = !isCollapsed;
+                setIsCollapsed(newCollapsedState);
+                onCollapseChange?.(newCollapsedState);
+              }}
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isCollapsed ? <PanelOpenIcon /> : <PanelCloseIcon />}
+            </Button>
+          </Tooltip>
         </div>
         <div className="nav-container">
           <Nav

@@ -30,7 +30,7 @@ const PostRestoreBanners: React.FC<PostRestoreBannersProps> = ({
   }
 
   return (
-    <PageSection style={{ paddingTop: 0, paddingBottom: '16px' }}>
+    <PageSection style={{ paddingTop: 0, paddingBottom: '8px' }}>
       <Stack hasGutter>
         {/* Warning Banner - System Recovery Complete */}
         <StackItem>

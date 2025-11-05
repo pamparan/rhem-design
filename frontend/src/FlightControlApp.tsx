@@ -105,7 +105,7 @@ const FlightControlApp: React.FC = () => {
 
             {/* SubNav with Get login command button */}
             <SubNav
-              onCopyLoginCommand={() => handleNavigate('login')}
+              onCopyLoginCommand={() => handleNavigate('cli-auth')}
               onSystemSettings={() => handleNavigate('system-settings')}
             />
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   PageSection,
+  PageBreadcrumb,
   Title,
   Card,
   CardBody,
@@ -134,20 +135,23 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
   return (
     <>
       {/* Breadcrumb */}
-      <PageSection padding={{ default: 'noPadding' }} style={{ paddingBottom: '8px' }}>
+      <PageBreadcrumb>
         <Breadcrumb>
           <BreadcrumbItem>
-            <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0, color: '#06c' }}>
+            <Button variant="link" onClick={() => onNavigate('main')}>
               Fleets
             </Button>
           </BreadcrumbItem>
           <BreadcrumbItem isActive>{fleetDetails.name}</BreadcrumbItem>
         </Breadcrumb>
-      </PageSection>
+      </PageBreadcrumb>
 
-      {/* Header */}
-      <PageSection style={{ paddingTop: '8px', paddingBottom: '16px' }}>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+      <PostRestoreBanners onNavigate={onNavigate} />
+
+      {/* Header, Tabs and Content - Combined */}
+      <PageSection variant="light">
+        {/* Header */}
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '24px' }}>
           <FlexItem>
             <Title headingLevel="h1" size="2xl">
               {fleetDetails.name}
@@ -180,23 +184,18 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
             </Dropdown>
           </FlexItem>
         </Flex>
-      </PageSection>
 
-      <PostRestoreBanners onNavigate={onNavigate} />
-
-      {/* Tabs */}
-      <PageSection padding={{ default: 'noPadding' }} style={{ paddingTop: 0 }}>
+        {/* Tabs */}
         <Tabs
           activeKey={activeTabKey}
           onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
-          style={{ borderBottom: '1px solid #d2d2d2' }}
+          usePageInsets
         >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} />
         </Tabs>
-
         <TabContent id="details" eventKey="details" activeKey={activeTabKey} hidden={activeTabKey !== 'details'}>
-          <Grid hasGutter style={{ marginTop: '24px' }}>
+          <Grid hasGutter>
             {/* Left Column - Details and Fleet Devices */}
             <GridItem span={8}>
               {/* Details Section */}
@@ -445,7 +444,7 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
         </TabContent>
 
         <TabContent id="yaml" eventKey="yaml" activeKey={activeTabKey} hidden={activeTabKey !== 'yaml'}>
-          <Card style={{ marginTop: '24px' }}>
+          <Card>
             <CardBody>
               <div style={{
                 fontFamily: 'monospace',

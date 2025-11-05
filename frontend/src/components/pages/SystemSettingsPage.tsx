@@ -69,7 +69,8 @@ const SystemSettingsPage: React.FC<SystemSettingsPageProps> = ({ onNavigate }) =
       <div style={{
         width: sidebarWidth,
         flexShrink: 0,
-        transition: 'width 0.3s ease'
+        transition: 'width 0.3s ease',
+        position: 'relative'
       }}>
         <SettingsSidebar
           activeSection={activeSection}
@@ -80,7 +81,8 @@ const SystemSettingsPage: React.FC<SystemSettingsPageProps> = ({ onNavigate }) =
       <div style={{
         flex: 1,
         padding: '24px',
-        transition: 'margin-left 0.3s ease'
+        minWidth: 0, // Allow content to shrink below its intrinsic width
+        overflow: 'hidden' // Prevent content from overflowing
       }}>
         {renderSettingsContent()}
       </div>

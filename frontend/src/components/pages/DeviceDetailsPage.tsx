@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   PageSection,
+  PageBreadcrumb,
   Title,
   Card,
   CardBody,
@@ -175,19 +176,19 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   return (
     <>
       {/* Breadcrumb */}
-      <PageSection padding={{ default: 'noPadding' }} style={{ paddingBottom: '8px' }}>
+      <PageBreadcrumb>
         <Breadcrumb>
           <BreadcrumbItem>
-            <Button variant="link" onClick={() => onNavigate('main')} style={{ padding: 0 }}>
+            <Button variant="link" onClick={() => onNavigate('main')}>
               Devices
             </Button>
           </BreadcrumbItem>
           <BreadcrumbItem isActive>{deviceInfo.name}</BreadcrumbItem>
         </Breadcrumb>
-      </PageSection>
+      </PageBreadcrumb>
 
-      {/* Header */}
-      <PageSection>
+      {/* Header, Tabs and Content - Combined */}
+      <PageSection variant="light">
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
           <FlexItem>
             <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
@@ -238,23 +239,23 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
             </Dropdown>
           </FlexItem>
         </Flex>
-      </PageSection>
 
-      {/* Suspended Device Alert */}
-      <DeviceSuspendedBanner
-        device={device}
-        onResumeDevice={handleResumeDevice}
-        onNavigate={onNavigate}
-      />
+        {/* Suspended Device Alert */}
+        <DeviceSuspendedBanner
+          device={device}
+          onResumeDevice={handleResumeDevice}
+          onNavigate={onNavigate}
+        />
 
-      {/* Tabs */}
-      <PageSection padding={{ default: 'noPadding' }} style={{ paddingTop: 0 }}>
-        <Tabs
-          activeKey={activeTab}
-          onSelect={(_event, tabIndex) => setActiveTab(tabIndex)}
-          aria-label="Device details tabs"
-          role="region"
-        >
+        {/* Tabs */}
+        <div style={{ marginTop: '24px' }}>
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(_event, tabIndex) => setActiveTab(tabIndex)}
+            aria-label="Device details tabs"
+            role="region"
+            usePageInsets
+          >
           <Tab eventKey="details" title={<TabTitleText>Details</TabTitleText>} />
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} />
           <Tab eventKey="terminal" title={<TabTitleText>Terminal</TabTitleText>} />
@@ -838,8 +839,17 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
             <Card>
               <CardBody>
                 <Title headingLevel="h2" size="lg">YAML Configuration</Title>
-                <Content>
-                  <span style={{ fontFamily: 'monospace', fontSize: '14px', whiteSpace: 'pre-wrap', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '8px' }}>
+                <div style={{
+                  fontFamily: 'monospace',
+                  fontSize: '14px',
+                  backgroundColor: '#f5f5f5',
+                  padding: '16px',
+                  borderRadius: '4px',
+                  border: '1px solid #d2d2d2',
+                  whiteSpace: 'pre-wrap',
+                  overflow: 'auto',
+                  marginTop: '16px'
+                }}>
 {`apiVersion: v1alpha1
 kind: Device
 metadata:
@@ -863,8 +873,7 @@ status:
     operatingSystem: linux
     kernelVersion: 5.14.0-570.el9.x86_64
     bootID: 6a8a4653-e383-488f-82d8-0c7d3356cffc`}
-                  </span>
-                </Content>
+                </div>
               </CardBody>
             </Card>
           </TabContentBody>
@@ -1092,6 +1101,7 @@ status:
             </Card>
           </TabContentBody>
         </TabContent>
+        </div>
       </PageSection>
 
       {/* Resume Device Modal */}

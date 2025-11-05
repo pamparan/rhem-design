@@ -722,13 +722,7 @@ ${orgAssignmentConfig}
                 <Stack hasGutter>
                   <StackItem>
                     <Toolbar>
-                      <ToolbarContent>
-                        <ToolbarItem>
-                          <Title headingLevel="h3" size="md">
-                            Authentication Provider Configuration
-                          </Title>
-                        </ToolbarItem>
-                        <ToolbarItem variant="separator" />
+                      <ToolbarContent style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <ToolbarItem>
                           <Button
                             variant="secondary"
@@ -738,22 +732,13 @@ ${orgAssignmentConfig}
                             Copy YAML
                           </Button>
                         </ToolbarItem>
-                        <ToolbarItem>
-                          <Button
-                            variant="secondary"
-                            icon={<DownloadIcon />}
-                            onClick={handleDownloadYAML}
-                          >
-                            Download
-                          </Button>
-                        </ToolbarItem>
                       </ToolbarContent>
                     </Toolbar>
                   </StackItem>
                   <StackItem>
-                    <Card style={{ backgroundColor: '#f5f5f5' }}>
-                      <CardBody style={{ backgroundColor: '#f5f5f5', padding: '1rem' }}>
-                        <CodeBlock style={{ backgroundColor: '#f5f5f5' }}>
+                    <Card style={{ backgroundColor: '#f5f5f5', width: '100%', maxWidth: '100%' }}>
+                      <CardBody style={{ backgroundColor: '#f5f5f5', padding: '1rem', width: '100%', maxWidth: '100%' }}>
+                        <CodeBlock style={{ backgroundColor: '#f5f5f5', width: '100%', maxWidth: '100%' }}>
                           <CodeBlockCode
                             style={{
                               backgroundColor: '#f5f5f5',
@@ -762,7 +747,11 @@ ${orgAssignmentConfig}
                               display: 'block',
                               whiteSpace: 'pre',
                               counterReset: 'line-numbering',
-                              paddingLeft: '3em'
+                              paddingLeft: '3em',
+                              width: '100%',
+                              maxWidth: '100%',
+                              overflow: 'auto', // Allow horizontal scrolling for long lines
+                              boxSizing: 'border-box'
                             }}
                           >
                             {generateProviderYAML(provider).split('\n').map((line, index) => (
