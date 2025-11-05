@@ -343,25 +343,31 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             field: 'Issuer URL',
             value: formData.issuerUrl,
             status: 'success',
-            details: 'Successfully discovered OIDC configuration'
+            details: 'Successfully discovered OIDC configuration from .well-known/openid_configuration'
           },
           {
             field: 'Authorization URL',
-            value: `${formData.issuerUrl}/oauth2/v2/auth`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'success',
-            details: 'Authorization endpoint is reachable (HTTP 200)'
+            details: 'Authorization endpoint discovered and reachable (HTTP 200)'
           },
           {
             field: 'Token URL',
-            value: `${formData.issuerUrl.replace('accounts.google.com', 'oauth2.googleapis.com')}/token`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'success',
-            details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint likely accepts POST)'
+            details: 'Token endpoint discovered and reachable (HTTP 404 for GET - endpoint accepts POST)'
           },
           {
             field: 'Userinfo URL',
-            value: `${formData.issuerUrl.replace('accounts.google.com', 'openidconnect.googleapis.com')}/v1/userinfo`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'success',
-            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+            details: 'Userinfo endpoint discovered and reachable (HTTP 401 - authentication required)'
+          },
+          {
+            field: 'JWKs URL',
+            value: 'Auto-discovered from OIDC metadata',
+            status: 'success',
+            details: 'JSON Web Key Set endpoint discovered for token verification'
           }
         ]);
       } else {
@@ -377,16 +383,16 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             field: 'Token URL',
             value: formData.tokenUrl || 'Not configured',
             status: 'success',
-            details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint likely accepts POST)'
+            details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint accepts POST)'
           },
           {
             field: 'Userinfo URL',
             value: formData.userinfoUrl || 'Not configured',
             status: 'success',
-            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required)'
           },
           ...(formData.issuerUrl ? [{
-            field: 'Issuer URL',
+            field: 'Issuer URL (Optional)',
             value: formData.issuerUrl,
             status: 'success',
             details: 'Optional issuer URL is reachable for metadata discovery'
@@ -402,25 +408,31 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             field: 'Issuer URL',
             value: formData.issuerUrl,
             status: 'success',
-            details: 'Successfully discovered OIDC configuration'
+            details: 'Successfully discovered OIDC configuration from .well-known/openid_configuration'
           },
           {
             field: 'Authorization URL',
-            value: `${formData.issuerUrl}/oauth2/v2/auth`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'success',
-            details: 'Authorization endpoint is reachable (HTTP 200)'
+            details: 'Authorization endpoint discovered and reachable (HTTP 200)'
           },
           {
             field: 'Token URL',
-            value: `${formData.issuerUrl.replace('accounts.google.com', 'oauth2.googleapis.com')}/token`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'error',
-            details: 'Token URL is not reachable: Get "https://oauth2.googleapis.com/token": dial tcp: lookup oauth2.googleapis.com: no such host'
+            details: 'Token endpoint discovered but not reachable: Connection timeout after 30 seconds'
           },
           {
             field: 'Userinfo URL',
-            value: `${formData.issuerUrl.replace('accounts.google.com', 'openidconnect.googleapis.com')}/v1/userinfo`,
+            value: 'Auto-discovered from OIDC metadata',
             status: 'success',
-            details: 'Userinfo URL is reachable (HTTP 401 - authentication required, as expected)'
+            details: 'Userinfo endpoint discovered and reachable (HTTP 401 - authentication required)'
+          },
+          {
+            field: 'JWKs URL',
+            value: 'Auto-discovered from OIDC metadata',
+            status: 'error',
+            details: 'JSON Web Key Set endpoint discovered but not reachable: SSL certificate error'
           }
         ]);
       } else {
@@ -436,16 +448,16 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             field: 'Token URL',
             value: formData.tokenUrl || 'Not configured',
             status: 'error',
-            details: 'Token URL is not reachable: Connection timeout after 30 seconds'
+            details: 'Token endpoint is not reachable: Connection timeout after 30 seconds'
           },
           {
             field: 'Userinfo URL',
             value: formData.userinfoUrl || 'Not configured',
             status: 'success',
-            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required)'
           },
           ...(formData.issuerUrl ? [{
-            field: 'Issuer URL',
+            field: 'Issuer URL (Optional)',
             value: formData.issuerUrl,
             status: 'error',
             details: 'Optional issuer URL is not reachable for metadata discovery'
@@ -464,22 +476,34 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             details: 'Unable to connect to issuer URL. Please check the URL and network connectivity.'
           },
           {
-            field: 'Authorization URL',
-            value: 'N/A',
+            field: 'OIDC Discovery',
+            value: '.well-known/openid_configuration',
             status: 'error',
-            details: 'Could not discover authorization endpoint due to connection failure.'
+            details: 'Cannot discover OIDC configuration metadata due to issuer URL connection failure.'
+          },
+          {
+            field: 'Authorization URL',
+            value: 'Cannot be discovered',
+            status: 'error',
+            details: 'Authorization endpoint cannot be discovered without OIDC metadata.'
           },
           {
             field: 'Token URL',
-            value: 'N/A',
+            value: 'Cannot be discovered',
             status: 'error',
-            details: 'Could not discover token endpoint due to connection failure.'
+            details: 'Token endpoint cannot be discovered without OIDC metadata.'
           },
           {
             field: 'Userinfo URL',
-            value: 'N/A',
+            value: 'Cannot be discovered',
             status: 'error',
-            details: 'Could not discover userinfo endpoint due to connection failure.'
+            details: 'Userinfo endpoint cannot be discovered without OIDC metadata.'
+          },
+          {
+            field: 'JWKs URL',
+            value: 'Cannot be discovered',
+            status: 'error',
+            details: 'JSON Web Key Set endpoint cannot be discovered without OIDC metadata.'
           }
         ]);
       } else {
@@ -504,10 +528,10 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             details: 'Unable to connect to userinfo URL. Please check the URL and network connectivity.'
           },
           ...(formData.issuerUrl ? [{
-            field: 'Issuer URL',
+            field: 'Issuer URL (Optional)',
             value: formData.issuerUrl,
             status: 'error',
-            details: 'Unable to connect to issuer URL. Please check the URL and network connectivity.'
+            details: 'Unable to connect to optional issuer URL. Please check the URL and network connectivity.'
           }] : [])
         ]);
       }
