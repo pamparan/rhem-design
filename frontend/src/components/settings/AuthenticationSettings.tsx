@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import {
   PageSection,
-  Title,
-  Breadcrumb,
-  BreadcrumbItem
+  Title
 } from '@patternfly/react-core';
 
 // Import wireframe components
@@ -14,12 +12,14 @@ import ProviderDetailsWireframe from '../wireframes/ProviderDetailsWireframe';
 interface AuthenticationSettingsProps {
   onShowLoginInterface?: () => void;
   onNavigateToSettings?: () => void;
+  onNavigationRequest?: (handler: (navigationFn: () => void) => void) => void;
 }
 
-const AuthenticationSettings: React.FC<AuthenticationSettingsProps> = ({ onShowLoginInterface, onNavigateToSettings }) => {
+const AuthenticationSettings: React.FC<AuthenticationSettingsProps> = ({ onShowLoginInterface, onNavigateToSettings, onNavigationRequest }) => {
   const [activeView, setActiveView] = useState<'management' | 'form' | 'details'>('management');
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [selectedProviderData, setSelectedProviderData] = useState<any | null>(null);
+  const [navigationHandler, setNavigationHandler] = useState<((navigationFn: () => void) => void) | null>(null);
 
   const handleViewDetails = (providerId: string) => {
     setSelectedProviderId(providerId);
@@ -38,32 +38,37 @@ const AuthenticationSettings: React.FC<AuthenticationSettingsProps> = ({ onShowL
     setActiveView('form');
   };
 
+  const handleNavigationToManagement = () => {
+    setActiveView('management');
+  };
+
+  const handleNavigationRequest = (navigationFn: () => void) => {
+    if (navigationHandler) {
+      navigationHandler(navigationFn);
+    } else {
+      navigationFn();
+    }
+  };
+
+  // Register the navigation handler with the parent when it's available
+  React.useEffect(() => {
+    if (onNavigationRequest && navigationHandler) {
+      onNavigationRequest(navigationHandler);
+    }
+  }, [onNavigationRequest, navigationHandler]);
+
   return (
-    <PageSection>
+    <PageSection style={{ height: 'fit-content' }}>
       {/* Only show header section when in management view */}
       {activeView === 'management' && (
-        <>
-          <Breadcrumb>
-            <BreadcrumbItem
-              to="#"
-              onClick={(e) => {
-                e.preventDefault();
-                onNavigateToSettings?.();
-              }}
-            >
-              Settings
-            </BreadcrumbItem>
-            <BreadcrumbItem isActive>Authentication & Security</BreadcrumbItem>
-          </Breadcrumb>
-          <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
-            <Title headingLevel="h1" size="2xl">
-              Authentication & Security
-            </Title>
-            <p style={{ marginTop: '0.5rem', color: '#6a6e73' }}>
-              Manage authentication providers, security policies, and access controls.
-            </p>
-          </div>
-        </>
+        <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+          <Title headingLevel="h1" size="2xl">
+            Authentication & Security
+          </Title>
+          <p style={{ marginTop: '0.5rem', color: '#6a6e73' }}>
+            Manage authentication providers, security policies, and access controls.
+          </p>
+        </div>
       )}
 
       {/* Content Section */}

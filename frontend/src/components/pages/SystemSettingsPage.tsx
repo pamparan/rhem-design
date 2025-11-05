@@ -25,6 +25,7 @@ interface SystemSettingsPageProps {
 
 const SystemSettingsPage: React.FC<SystemSettingsPageProps> = ({ onNavigate }) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const renderSettingsContent = () => {
     switch (activeSection) {
@@ -61,20 +62,29 @@ const SystemSettingsPage: React.FC<SystemSettingsPageProps> = ({ onNavigate }) =
     }
   };
 
+  const sidebarWidth = isSidebarCollapsed ? '60px' : '250px';
+
   return (
-    <PageSection>
-      <Grid hasGutter>
-        <GridItem span={2}>
-          <SettingsSidebar
-            activeSection={activeSection}
-            onSectionChange={setActiveSection}
-          />
-        </GridItem>
-        <GridItem span={10}>
-          {renderSettingsContent()}
-        </GridItem>
-      </Grid>
-    </PageSection>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - 120px)' }}>
+      <div style={{
+        width: sidebarWidth,
+        flexShrink: 0,
+        transition: 'width 0.3s ease'
+      }}>
+        <SettingsSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onCollapseChange={setIsSidebarCollapsed}
+        />
+      </div>
+      <div style={{
+        flex: 1,
+        padding: '24px',
+        transition: 'margin-left 0.3s ease'
+      }}>
+        {renderSettingsContent()}
+      </div>
+    </div>
   );
 };
 

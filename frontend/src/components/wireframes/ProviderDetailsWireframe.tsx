@@ -32,7 +32,9 @@ import {
   CodeBlockCode,
   Toolbar,
   ToolbarContent,
-  ToolbarItem
+  ToolbarItem,
+  Content,
+  ClipboardCopy
 } from '@patternfly/react-core';
 import { CaretDownIcon, CopyIcon, DownloadIcon } from '@patternfly/react-icons';
 
@@ -59,6 +61,24 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
   const [actionsOpen, setActionsOpen] = React.useState(false);
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
 
+  // Style constants using PatternFly 6 typography standards
+  const codeStyle = {
+    fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+    fontSize: '0.875rem', // Standard body text (14px)
+    lineHeight: '1.5',
+    backgroundColor: '#f5f5f5',
+    padding: '2px 4px',
+    borderRadius: '3px'
+  };
+
+  const smallTextStyle = {
+    fontFamily: 'var(--pf-v6-global--FontFamily--text, "Red Hat Text", sans-serif)',
+    fontSize: '0.875rem', // Standard body text (14px)
+    color: '#6a6e73',
+    marginTop: '4px',
+    lineHeight: '1.5'
+  };
+
   const handleTabClick = (event: React.MouseEvent<any> | React.KeyboardEvent | MouseEvent, tabIndex: string | number) => {
     setActiveTabKey(tabIndex);
   };
@@ -81,27 +101,13 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Mock provider data based on ID
+
+  // Mock provider data based on ID - matching ProviderManagementWireframe data
   const getProviderData = (id: string) => {
     const providers = {
-      'google': {
-        name: 'Google',
-        type: 'OIDC',
-        enabled: true,
-        authorizationUrl: 'https://accounts.google.com/oauth2/v2/auth',
-        tokenUrl: 'https://oauth2.googleapis.com/token',
-        userinfoUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
-        issuerUrl: 'https://accounts.google.com',
-        clientId: 'Ov23litEUO8O8bbv6Jhs',
-        scopes: ['read:user', 'user:email'],
-        usernameClaim: 'login',
-        roleClaim: 'groups',
-        organizationAssignment: 'Static',
-        externalOrgName: 'default'
-      },
       'aap': {
-        name: 'AAP',
-        type: 'Ansible Automation Platform',
+        name: 'enterprise-platform',
+        type: 'OAuth2',
         enabled: true,
         authorizationUrl: 'https://aap.example.com/api/gateway/v1/social/authorize',
         tokenUrl: 'https://aap.example.com/api/gateway/v1/social/token',
@@ -112,7 +118,57 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
         usernameClaim: 'preferred_username',
         roleClaim: 'groups',
         organizationAssignment: 'Dynamic',
-        externalOrgName: ''
+        externalOrgName: '',
+        claimPath: 'custom_claims.organization_id',
+        organizationNamePrefix: 'org-',
+        organizationNameSuffix: '-demo'
+      },
+      'google': {
+        name: 'google',
+        type: 'OIDC',
+        enabled: true,
+        authorizationUrl: 'https://accounts.google.com/oauth2/v2/auth',
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        userinfoUrl: 'https://openidconnect.googleapis.com/v1/userinfo',
+        issuerUrl: 'https://accounts.google.com',
+        clientId: 'google-client-id-example',
+        scopes: ['openid', 'profile', 'email'],
+        usernameClaim: 'email',
+        roleClaim: 'groups',
+        organizationAssignment: 'Static',
+        externalOrgName: 'Google Users'
+      },
+      'okta': {
+        name: 'customer-b-okta',
+        type: 'OIDC',
+        enabled: false,
+        authorizationUrl: 'https://customer-b.okta.com/oauth2/default/v1/authorize',
+        tokenUrl: 'https://customer-b.okta.com/oauth2/default/v1/token',
+        userinfoUrl: 'https://customer-b.okta.com/oauth2/default/v1/userinfo',
+        issuerUrl: 'https://customer-b.okta.com/oauth2/default',
+        clientId: 'okta-client-abc123',
+        scopes: ['openid', 'profile'],
+        usernameClaim: 'preferred_username',
+        roleClaim: 'groups',
+        organizationAssignment: 'Per user',
+        externalOrgName: '',
+        organizationNamePrefix: 'user-',
+        organizationNameSuffix: '-org'
+      },
+      'kubernetes': {
+        name: 'k8s-cluster-auth',
+        type: 'OIDC',
+        enabled: true,
+        authorizationUrl: 'https://k8s.cluster.local:6443/oauth2/v1/authorize',
+        tokenUrl: 'https://k8s.cluster.local:6443/oauth2/v1/token',
+        userinfoUrl: 'https://k8s.cluster.local:6443/oauth2/v1/userinfo',
+        issuerUrl: 'https://k8s.cluster.local:6443',
+        clientId: 'k8s-client-xyz789',
+        scopes: ['openid'],
+        usernameClaim: 'sub',
+        roleClaim: 'groups',
+        organizationAssignment: 'Static',
+        externalOrgName: 'Kubernetes Cluster'
       }
     };
     return providers[id as keyof typeof providers] || providers.google;
@@ -121,6 +177,48 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
   const provider = getProviderData(providerId);
 
   const generateProviderYAML = (providerData: any) => {
+    // Generate organization assignment configuration based on type
+    let orgAssignmentConfig = `  organizationAssignment:
+    type: "${providerData.organizationAssignment}"`;
+
+    if (providerData.organizationAssignment === 'Static' && providerData.externalOrgName) {
+      orgAssignmentConfig += `\n    externalOrganizationName: "${providerData.externalOrgName}"`;
+    } else if (providerData.organizationAssignment === 'Dynamic') {
+      if (providerData.claimPath) {
+        orgAssignmentConfig += `\n    claimPath: "${providerData.claimPath}"`;
+      }
+      if (providerData.organizationNamePrefix) {
+        orgAssignmentConfig += `\n    organizationNamePrefix: "${providerData.organizationNamePrefix}"`;
+      }
+      if (providerData.organizationNameSuffix) {
+        orgAssignmentConfig += `\n    organizationNameSuffix: "${providerData.organizationNameSuffix}"`;
+      }
+    } else if (providerData.organizationAssignment === 'Per user') {
+      if (providerData.organizationNamePrefix) {
+        orgAssignmentConfig += `\n    organizationNamePrefix: "${providerData.organizationNamePrefix}"`;
+      }
+      if (providerData.organizationNameSuffix) {
+        orgAssignmentConfig += `\n    organizationNameSuffix: "${providerData.organizationNameSuffix}"`;
+      }
+    }
+
+    // Generate configuration fields based on type
+    let configFields = '';
+    if (providerData.type === 'OIDC') {
+      // OIDC only needs issuer URL - other endpoints are auto-discovered
+      configFields = `    issuerURL: "${providerData.issuerUrl || 'N/A'}"`;
+    } else if (providerData.type === 'OAuth2') {
+      // OAuth2 needs explicit endpoint URLs
+      configFields = `    authorizationURL: "${providerData.authorizationUrl}"
+    tokenURL: "${providerData.tokenUrl}"
+    userinfoURL: "${providerData.userinfoUrl}"`;
+
+      // Add optional issuer URL for OAuth2 if present
+      if (providerData.issuerUrl) {
+        configFields += `\n    issuerURL: "${providerData.issuerUrl}"  # Optional for OAuth2 metadata discovery`;
+      }
+    }
+
     return `apiVersion: v1
 kind: IdentityProvider
 metadata:
@@ -131,16 +229,13 @@ metadata:
     app.kubernetes.io/component: authentication
     app.kubernetes.io/part-of: flight-control
   annotations:
-    description: "OIDC Authentication Provider for ${providerData.name}"
+    description: "${providerData.type} Authentication Provider for ${providerData.name}"
     created: "${new Date().toISOString()}"
 spec:
   type: ${providerData.type}
   enabled: ${providerData.enabled}
   config:
-    authorizationURL: "${providerData.authorizationUrl}"
-    tokenURL: "${providerData.tokenUrl}"
-    userinfoURL: "${providerData.userinfoUrl}"
-    issuerURL: "${providerData.issuerUrl || 'N/A'}"
+${configFields}
     clientID: "${providerData.clientId}"
     clientSecretRef:
       name: ${providerData.name.toLowerCase().replace(/\s+/g, '-')}-client-secret
@@ -148,8 +243,7 @@ spec:
     scopes:${providerData.scopes.length > 0 ? providerData.scopes.map((scope: string) => `\n      - "${scope}"`).join('') : '\n      - "openid"'}
     usernameClaim: "${providerData.usernameClaim || 'preferred_username'}"
     roleClaim: "${providerData.roleClaim || 'groups'}"
-  organizationAssignment:
-    type: "${providerData.organizationAssignment}"${providerData.externalOrgName ? `\n    externalOrganizationName: "${providerData.externalOrgName}"` : ''}
+${orgAssignmentConfig}
   security:
     validateCertificates: true
     timeout: 30s
@@ -297,13 +391,13 @@ spec:
         <StackItem>
           <Tabs activeKey={activeTabKey} onSelect={handleTabClick}>
             <Tab eventKey={0} title="Details">
-              <TabContent style={{ marginTop: '1rem' }}>
+              <TabContent className="pf-v6-u-mt-md">
                 <Stack hasGutter>
-                  {/* Overview Section */}
+                  {/* Combined Overview & Configuration Section */}
                   <StackItem>
                     <Card>
                       <CardBody>
-                        <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
+                        <Title headingLevel="h2" size="lg" className="pf-v6-u-mb-md">
                           Provider Overview
                         </Title>
                         <Grid hasGutter>
@@ -340,74 +434,149 @@ spec:
                             </DescriptionList>
                           </GridItem>
                         </Grid>
-                      </CardBody>
-                    </Card>
-                  </StackItem>
 
-                  {/* OIDC Configuration Section */}
-                  <StackItem>
-                    <Card>
-                      <CardBody>
-                        <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-                          OIDC Configuration
+                        <Divider style={{ margin: '24px 0' }} />
+
+                        <Title headingLevel="h3" size="md" className="pf-v6-u-mb-md">
+                          {provider.type} Configuration
                         </Title>
-                        <DescriptionList isHorizontal>
-                          <DescriptionListGroup>
-                            <DescriptionListTerm>Issuer URL</DescriptionListTerm>
-                            <DescriptionListDescription>
-                              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                        <Stack hasGutter>
+                          {/* OIDC providers only show Issuer URL (required) */}
+                          {provider.type === 'OIDC' && (
+                            <StackItem>
+                              <div style={{ marginBottom: '8px' }}>
+                                <strong style={{ fontSize: '0.875rem', color: '#151515' }}>Issuer URL</strong>
+                              </div>
+                              <ClipboardCopy
+                                variant="inline-compact"
+                                truncation={true}
+                                isCode={true}
+                                style={{
+                                  fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+                                  fontSize: '0.875rem',
+                                  lineHeight: '1.5'
+                                }}
+                              >
                                 {provider.issuerUrl || 'N/A'}
-                              </span>
-                            </DescriptionListDescription>
-                          </DescriptionListGroup>
+                              </ClipboardCopy>
+                            </StackItem>
+                          )}
 
-                          <DescriptionListGroup>
-                            <DescriptionListTerm>Authorization URL</DescriptionListTerm>
-                            <DescriptionListDescription>
-                              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                                {provider.authorizationUrl}
-                              </span>
-                            </DescriptionListDescription>
-                          </DescriptionListGroup>
+                          {/* OAuth2 providers show Authorization, Token, Userinfo URLs (required) + optional Issuer URL */}
+                          {provider.type === 'OAuth2' && (
+                            <>
+                              <StackItem>
+                                <div style={{ marginBottom: '8px' }}>
+                                  <strong style={{ fontSize: '0.875rem', color: '#151515' }}>Authorization URL</strong>
+                                </div>
+                                <ClipboardCopy
+                                  variant="inline-compact"
+                                  truncation={true}
+                                  isCode={true}
+                                  style={{
+                                    fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
+                                  {provider.authorizationUrl}
+                                </ClipboardCopy>
+                              </StackItem>
 
-                          <DescriptionListGroup>
-                            <DescriptionListTerm>Token URL</DescriptionListTerm>
-                            <DescriptionListDescription>
-                              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                                {provider.tokenUrl}
-                              </span>
-                            </DescriptionListDescription>
-                          </DescriptionListGroup>
+                              <StackItem>
+                                <div style={{ marginBottom: '8px' }}>
+                                  <strong style={{ fontSize: '0.875rem', color: '#151515' }}>Token URL</strong>
+                                </div>
+                                <ClipboardCopy
+                                  variant="inline-compact"
+                                  truncation={true}
+                                  isCode={true}
+                                  style={{
+                                    fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
+                                  {provider.tokenUrl}
+                                </ClipboardCopy>
+                              </StackItem>
 
-                          <DescriptionListGroup>
-                            <DescriptionListTerm>Userinfo URL</DescriptionListTerm>
-                            <DescriptionListDescription>
-                              <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                                {provider.userinfoUrl}
-                              </span>
-                            </DescriptionListDescription>
-                          </DescriptionListGroup>
-                        </DescriptionList>
+                              <StackItem>
+                                <div style={{ marginBottom: '8px' }}>
+                                  <strong style={{ fontSize: '0.875rem', color: '#151515' }}>Userinfo URL</strong>
+                                </div>
+                                <ClipboardCopy
+                                  variant="inline-compact"
+                                  truncation={true}
+                                  isCode={true}
+                                  style={{
+                                    fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+                                    fontSize: '0.875rem',
+                                    lineHeight: '1.5'
+                                  }}
+                                >
+                                  {provider.userinfoUrl}
+                                </ClipboardCopy>
+                              </StackItem>
+
+                              {provider.issuerUrl && (
+                                <StackItem>
+                                  <div style={{ marginBottom: '8px' }}>
+                                    <strong style={{ fontSize: '0.875rem', color: '#151515' }}>Issuer URL</strong>
+                                  </div>
+                                  <ClipboardCopy
+                                    variant="inline-compact"
+                                    truncation={true}
+                                    isCode={true}
+                                    style={{
+                                      fontFamily: 'var(--pf-v6-global--FontFamily--monospace, "Red Hat Mono", monospace)',
+                                      fontSize: '0.875rem',
+                                      lineHeight: '1.5'
+                                    }}
+                                  >
+                                    {provider.issuerUrl}
+                                  </ClipboardCopy>
+                                </StackItem>
+                              )}
+                            </>
+                          )}
+                        </Stack>
                       </CardBody>
                     </Card>
                   </StackItem>
 
-                  {/* Client Configuration Section */}
+                  {/* Client & Claims Configuration Section */}
                   <StackItem>
                     <Card>
                       <CardBody>
-                        <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-                          Client Configuration
+                        <Title headingLevel="h2" size="lg" className="pf-v6-u-mb-md">
+                          Client & Claims Configuration
                         </Title>
                         <Grid hasGutter>
                           <GridItem span={6}>
                             <DescriptionList>
                               <DescriptionListGroup>
-                                <DescriptionListTerm>Client ID</DescriptionListTerm>
+                                <DescriptionListTerm style={{
+                                  fontFamily: 'var(--pf-v6-global--FontFamily--text, "Red Hat Text", sans-serif)',
+                                  fontSize: '0.875rem',
+                                  lineHeight: '1.5'
+                                }}>Client ID</DescriptionListTerm>
                                 <DescriptionListDescription>
-                                  <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                                  <code style={codeStyle}>
                                     {provider.clientId}
-                                  </span>
+                                  </code>
+                                </DescriptionListDescription>
+                              </DescriptionListGroup>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm style={{
+                                  fontFamily: 'var(--pf-v6-global--FontFamily--text, "Red Hat Text", sans-serif)',
+                                  fontSize: '0.875rem',
+                                  lineHeight: '1.5'
+                                }}>Username claim</DescriptionListTerm>
+                                <DescriptionListDescription>
+                                  <code style={codeStyle}>
+                                    {provider.usernameClaim || 'preferred_username'}
+                                  </code>
                                 </DescriptionListDescription>
                               </DescriptionListGroup>
                             </DescriptionList>
@@ -415,54 +584,35 @@ spec:
                           <GridItem span={6}>
                             <DescriptionList>
                               <DescriptionListGroup>
-                                <DescriptionListTerm>Scopes</DescriptionListTerm>
+                                <DescriptionListTerm style={{
+                                  fontFamily: 'var(--pf-v6-global--FontFamily--text, "Red Hat Text", sans-serif)',
+                                  fontSize: '0.875rem',
+                                  lineHeight: '1.5'
+                                }}>Scopes</DescriptionListTerm>
                                 <DescriptionListDescription>
-                                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                  <Flex gap={{ default: 'gapXs' }} flexWrap={{ default: 'wrap' }}>
                                     {provider.scopes.length > 0 ? provider.scopes.map((scope, index) => (
                                       <Label key={index} color="blue" variant="outline">
                                         {scope}
                                       </Label>
                                     )) : (
-                                      <span style={{ color: '#6a6e73', fontStyle: 'italic' }}>No scopes configured</span>
+                                      <div style={{...smallTextStyle, fontStyle: "italic"}}>
+                                        No scopes configured
+                                      </div>
                                     )}
-                                  </div>
+                                  </Flex>
                                 </DescriptionListDescription>
                               </DescriptionListGroup>
-                            </DescriptionList>
-                          </GridItem>
-                        </Grid>
-                      </CardBody>
-                    </Card>
-                  </StackItem>
-
-                  {/* Claims Mapping Section */}
-                  <StackItem>
-                    <Card>
-                      <CardBody>
-                        <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
-                          Claims Mapping
-                        </Title>
-                        <Grid hasGutter>
-                          <GridItem span={6}>
-                            <DescriptionList>
                               <DescriptionListGroup>
-                                <DescriptionListTerm>Username claim</DescriptionListTerm>
+                                <DescriptionListTerm style={{
+                                  fontFamily: 'var(--pf-v6-global--FontFamily--text, "Red Hat Text", sans-serif)',
+                                  fontSize: '0.875rem',
+                                  lineHeight: '1.5'
+                                }}>Role claim</DescriptionListTerm>
                                 <DescriptionListDescription>
-                                  <span style={{ fontFamily: 'monospace' }}>
-                                    {provider.usernameClaim || 'preferred_username'}
-                                  </span>
-                                </DescriptionListDescription>
-                              </DescriptionListGroup>
-                            </DescriptionList>
-                          </GridItem>
-                          <GridItem span={6}>
-                            <DescriptionList>
-                              <DescriptionListGroup>
-                                <DescriptionListTerm>Role claim</DescriptionListTerm>
-                                <DescriptionListDescription>
-                                  <span style={{ fontFamily: 'monospace' }}>
+                                  <code style={codeStyle}>
                                     {provider.roleClaim || 'groups'}
-                                  </span>
+                                  </code>
                                 </DescriptionListDescription>
                               </DescriptionListGroup>
                             </DescriptionList>
@@ -476,30 +626,90 @@ spec:
                   <StackItem>
                     <Card>
                       <CardBody>
-                        <Title headingLevel="h2" size="lg" style={{ marginBottom: '1rem' }}>
+                        <Title headingLevel="h2" size="lg" className="pf-v6-u-mb-md">
                           Organization Assignment
                         </Title>
-                        <DescriptionList>
+                        <DescriptionList isHorizontal>
                           <DescriptionListGroup>
                             <DescriptionListTerm>Assignment type</DescriptionListTerm>
                             <DescriptionListDescription>
-                              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                                <FlexItem>
-                                  <Label color="purple">{provider.organizationAssignment}</Label>
-                                </FlexItem>
-                                {provider.externalOrgName && (
-                                  <>
-                                    <FlexItem>
-                                      <span style={{ color: '#6a6e73' }}>→</span>
-                                    </FlexItem>
-                                    <FlexItem>
-                                      <strong>{provider.externalOrgName}</strong>
-                                    </FlexItem>
-                                  </>
-                                )}
-                              </Flex>
+                              <Label color="purple">{provider.organizationAssignment}</Label>
                             </DescriptionListDescription>
                           </DescriptionListGroup>
+
+                          {/* Static assignment - show external organization name */}
+                          {provider.organizationAssignment === 'Static' && provider.externalOrgName && (
+                            <DescriptionListGroup>
+                              <DescriptionListTerm>Organization</DescriptionListTerm>
+                              <DescriptionListDescription>
+                                <div style={{fontWeight: "bold"}}>
+                                  {provider.externalOrgName}
+                                </div>
+                              </DescriptionListDescription>
+                            </DescriptionListGroup>
+                          )}
+
+                          {/* Dynamic assignment - show claim path and naming options */}
+                          {provider.organizationAssignment === 'Dynamic' && (
+                            <>
+                              {(provider as any).claimPath && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Claim path</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <code style={codeStyle}>
+                                      {(provider as any).claimPath}
+                                    </code>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {(provider as any).organizationNamePrefix && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name prefix</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <code style={codeStyle}>
+                                      {(provider as any).organizationNamePrefix}
+                                    </code>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {(provider as any).organizationNameSuffix && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name suffix</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <code style={codeStyle}>
+                                      {(provider as any).organizationNameSuffix}
+                                    </code>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                            </>
+                          )}
+
+                          {/* Per user assignment - show naming options */}
+                          {provider.organizationAssignment === 'Per user' && (
+                            <>
+                              {(provider as any).organizationNamePrefix && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name prefix</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <code style={codeStyle}>
+                                      {(provider as any).organizationNamePrefix}
+                                    </code>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                              {(provider as any).organizationNameSuffix && (
+                                <DescriptionListGroup>
+                                  <DescriptionListTerm>Name suffix</DescriptionListTerm>
+                                  <DescriptionListDescription>
+                                    <code style={codeStyle}>
+                                      {(provider as any).organizationNameSuffix}
+                                    </code>
+                                  </DescriptionListDescription>
+                                </DescriptionListGroup>
+                              )}
+                            </>
+                          )}
                         </DescriptionList>
                       </CardBody>
                     </Card>
@@ -508,7 +718,7 @@ spec:
               </TabContent>
             </Tab>
             <Tab eventKey={1} title="YAML">
-              <TabContent style={{ marginTop: '1rem' }}>
+              <TabContent className="pf-v6-u-mt-md">
                 <Stack hasGutter>
                   <StackItem>
                     <Toolbar>

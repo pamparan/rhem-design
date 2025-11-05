@@ -185,7 +185,9 @@ const MembersSettings: React.FC = () => {
                     <Td>{getStatusBadge(member.status)}</Td>
                     <Td>{member.lastLogin}</Td>
                     <Td>
-                      <Button variant="plain" icon={<EllipsisVIcon />} />
+                      <Button variant="plain" icon={<EllipsisVIcon />}>
+                        Actions
+                      </Button>
                     </Td>
                   </Tr>
                 ))}

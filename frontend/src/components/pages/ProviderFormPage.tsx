@@ -4,6 +4,7 @@ import {
   Button,
   Form,
   FormGroup,
+  FormGroupLabelHelp,
   TextInput,
   Switch,
   Radio,
@@ -19,11 +20,19 @@ import {
   Popover,
   Modal,
   ModalVariant,
-  Tooltip
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Tooltip,
+  HelperText,
+  HelperTextItem
 } from '@patternfly/react-core';
 import {
   CheckCircleIcon,
   InfoAltIcon,
+  ExclamationTriangleIcon,
+  ExclamationCircleIcon,
+  TimesCircleIcon,
 } from '@patternfly/react-icons';
 import {
   Table,
@@ -68,34 +77,225 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     organizationNameSuffix: isEdit ? '' : '',
   });
 
-  const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testConnectionStatus, setTestConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error' | 'partial'>('idle');
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [testResults, setTestResults] = useState<any[]>([]);
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
+  const [testCycle, setTestCycle] = useState(0); // 0: success, 1: partial, 2: error
+  const [nameError, setNameError] = useState<string>('');
+  const [scopesError, setScopesError] = useState<boolean>(false);
+  const [hasInteractedWithScopes, setHasInteractedWithScopes] = useState<boolean>(false);
+  const [usernameClaimError, setUsernameClaimError] = useState<string>('');
+  const [roleClaimError, setRoleClaimError] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
+  const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+  // Store initial form state to detect changes
+  const [initialFormData] = useState(() => ({ ...formData }));
 
   // Auto-fill form if toggle is enabled and this is a new provider (not edit mode)
   useEffect(() => {
     if (getSetting('fillProviderForm') && !isEdit && !hasAutoFilled) {
       setFormData(prev => ({
         ...prev,
-        name: 'OIDC Provider',
+        name: 'demo-oidc-provider',
         type: 'OIDC',
         enabled: true,
         issuerUrl: 'https://example.com/auth/realms/demo',
+        authorizationUrl: 'https://example.com/auth/realms/demo/protocol/openid-connect/auth',
+        tokenUrl: 'https://example.com/auth/realms/demo/protocol/openid-connect/token',
+        userinfoUrl: 'https://example.com/auth/realms/demo/protocol/openid-connect/userinfo',
         clientId: 'demo-client-id',
         clientSecret: 'demo-client-secret',
         scopes: ['openid', 'profile', 'email'],
         usernameClaim: 'preferred_username',
         roleClaim: 'groups',
-        organizationAssignment: 'Static',
-        externalOrganizationName: 'Demo Organization'
+        organizationAssignment: 'Dynamic',
+        externalOrganizationName: 'demo-organization',
+        claimPath: 'custom_claims.organization_id',
+        organizationNamePrefix: 'org-',
+        organizationNameSuffix: '-demo'
       }));
       setHasAutoFilled(true);
     }
   }, [getSetting('fillProviderForm'), isEdit, hasAutoFilled]);
 
+  // Track when scopes are autofilled to mark as interacted
+  useEffect(() => {
+    if (getSetting('fillProviderForm') && formData.scopes.length > 0 && !hasInteractedWithScopes) {
+      setHasInteractedWithScopes(true);
+    }
+  }, [formData.scopes, getSetting('fillProviderForm'), hasInteractedWithScopes]);
+
+  // Detect unsaved changes
+  useEffect(() => {
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setHasUnsavedChanges(hasChanges);
+  }, [formData, initialFormData]);
+
+  // Validate provider name
+  const validateProviderName = (name: string): string => {
+    if (!name.trim()) {
+      return 'Provider name is required';
+    }
+
+    // Check length first
+    if (name.length > 50) {
+      return 'Provider name must not exceed 50 characters';
+    }
+
+    // Check for invalid characters early
+    if (!/^[a-z0-9.-]+$/.test(name)) {
+      return 'Provider name can only contain lowercase letters, numbers, dashes (-), and dots (.)';
+    }
+
+    // Check start/end characters
+    if (!/^[a-z0-9]/.test(name) || !/[a-z0-9]$/.test(name)) {
+      return 'Provider name must start and end with a lowercase letter or number';
+    }
+
+    // Check for known duplicates (simulated uniqueness check)
+    const knownDuplicates = ['existing-provider', 'duplicate-name'];
+    if (knownDuplicates.includes(name.toLowerCase())) {
+      return 'A provider with this name already exists';
+    }
+
+    return '';
+  };
+
+  // Individual validation functions for tooltip - show green by default, red only when user types and violates rules
+  const validateUniqueness = (name: string): boolean => {
+    if (!name.trim()) return true; // Show green for empty field - encouraging default state
+    // Check against known duplicates
+    const knownDuplicates = ['existing-provider', 'duplicate-name'];
+    return !knownDuplicates.includes(name.toLowerCase());
+  };
+
+  const validateStartsAndEnds = (name: string): boolean => {
+    if (!name.trim()) return true; // Show green for empty field - encouraging default state
+    return /^[a-z0-9]/.test(name) && /[a-z0-9]$/.test(name);
+  };
+
+  const validateCharacters = (name: string): boolean => {
+    if (!name.trim()) return true; // Show green for empty field - encouraging default state
+    return /^[a-z0-9.-]+$/.test(name);
+  };
+
+  const validateLength = (name: string): boolean => {
+    if (!name.trim()) return true; // Show green for empty field - encouraging default state
+    return name.length >= 1 && name.length <= 50;
+  };
+
+  // Provider Name Validation Tooltip component
+  const ProviderNameValidationTooltip = ({ name }: { name: string }) => {
+    const validations = [
+      {
+        message: 'Must be 1-50 characters long',
+        isValid: validateLength(name)
+      },
+      {
+        message: 'Only lowercase letters, numbers, dashes (-), and dots (.)',
+        isValid: validateCharacters(name)
+      },
+      {
+        message: 'Must start and end with a letter or number',
+        isValid: validateStartsAndEnds(name)
+      },
+      {
+        message: 'Must be unique (not already in use)',
+        isValid: validateUniqueness(name)
+      }
+    ];
+
+    return (
+      <div style={{ fontSize: '0.75rem', color: '#ffffff' }}>
+        {validations.map((validation, index) => (
+          <div key={index} style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            marginBottom: '4px',
+            textAlign: 'left'
+          }}>
+            <div style={{
+              width: '16px',
+              height: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '8px',
+              flexShrink: 0
+            }}>
+              {validation.isValid ? (
+                <CheckCircleIcon style={{ color: '#3E8635', fontSize: '0.75rem' }} />
+              ) : (
+                <TimesCircleIcon style={{ color: '#C9190B', fontSize: '0.75rem' }} />
+              )}
+            </div>
+            <span style={{ textAlign: 'left', lineHeight: '1.2' }}>{validation.message}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+
+  // Validate claim fields (username and role claims)
+  const validateClaim = (claim: string): string => {
+    if (!claim.trim()) {
+      return '';
+    }
+
+    // Split by dots for segment validation
+    const segments = claim.split('.');
+
+    for (const segment of segments) {
+      // Each segment must begin with a letter or underscore
+      if (!/^[a-zA-Z_]/.test(segment)) {
+        return 'Each segment must begin with a letter or underscore';
+      }
+
+      // Each segment may contain only letters, numbers, or underscores
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(segment)) {
+        return 'Segments can only contain letters, numbers, or underscores';
+      }
+    }
+
+    // Check for special characters and spaces
+    if (/[^a-zA-Z0-9_.]/g.test(claim)) {
+      return 'Special characters and spaces are not permitted';
+    }
+
+    return '';
+  };
+
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Validate provider name on change
+    if (field === 'name' && typeof value === 'string') {
+      const error = validateProviderName(value);
+      setNameError(error);
+    }
+
+    // Validate username claim on change
+    if (field === 'usernameClaim' && typeof value === 'string') {
+      const error = validateClaim(value);
+      setUsernameClaimError(error);
+    }
+
+    // Validate role claim on change
+    if (field === 'roleClaim' && typeof value === 'string') {
+      const error = validateClaim(value);
+      setRoleClaimError(error);
+    }
+
+    // Validate scopes on change
+    if (field === 'scopes' && Array.isArray(value)) {
+      setHasInteractedWithScopes(true);
+      // Only show error if user has interacted with scopes and they're now empty
+      setScopesError(value.length === 0);
+    }
   };
 
   const handleTestConnection = async () => {
@@ -104,40 +304,236 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     // Simulate test connection
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Simulate random success/failure for demo
-    const success = Math.random() > 0.3;
-    setTestConnectionStatus(success ? 'success' : 'error');
+    // Cycle through three states: success -> partial -> error -> success...
+    const currentCycle = testCycle;
+    const nextCycle = (testCycle + 1) % 3;
+    setTestCycle(nextCycle);
 
-    if (success) {
-      // Mock successful test results
-      setTestResults([
-        {
-          field: 'Authorization URL',
-          value: `${formData.issuerUrl}/oauth2/v2/auth`,
-          status: 'success',
-          details: 'Authorization endpoint is reachable (HTTP 200)'
-        },
-        {
-          field: 'Issuer URL',
-          value: formData.issuerUrl,
-          status: 'success',
-          details: 'Successfully discovered OIDC configuration'
-        },
-        {
-          field: 'Token URL',
-          value: `${formData.issuerUrl.replace('accounts.google.com', 'oauth2.googleapis.com')}/token`,
-          status: 'success',
-          details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint likely accepts POST)'
-        },
-        {
-          field: 'Userinfo URL',
-          value: `${formData.issuerUrl.replace('accounts.google.com', 'openidconnect.googleapis.com')}/v1/userinfo`,
-          status: 'success',
-          details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
-        }
-      ]);
-      setIsTestModalOpen(true);
+    if (currentCycle === 0) {
+      // Full success
+      setTestConnectionStatus('success');
+      if (formData.type === 'OIDC') {
+        setTestResults([
+          {
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'success',
+            details: 'Successfully discovered OIDC configuration'
+          },
+          {
+            field: 'Authorization URL',
+            value: `${formData.issuerUrl}/oauth2/v2/auth`,
+            status: 'success',
+            details: 'Authorization endpoint is reachable (HTTP 200)'
+          },
+          {
+            field: 'Token URL',
+            value: `${formData.issuerUrl.replace('accounts.google.com', 'oauth2.googleapis.com')}/token`,
+            status: 'success',
+            details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint likely accepts POST)'
+          },
+          {
+            field: 'Userinfo URL',
+            value: `${formData.issuerUrl.replace('accounts.google.com', 'openidconnect.googleapis.com')}/v1/userinfo`,
+            status: 'success',
+            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+          }
+        ]);
+      } else {
+        // OAuth2
+        setTestResults([
+          {
+            field: 'Authorization URL',
+            value: formData.authorizationUrl || 'Not configured',
+            status: 'success',
+            details: 'Authorization endpoint is reachable (HTTP 200)'
+          },
+          {
+            field: 'Token URL',
+            value: formData.tokenUrl || 'Not configured',
+            status: 'success',
+            details: 'Token endpoint is reachable (HTTP 404 for GET - endpoint likely accepts POST)'
+          },
+          {
+            field: 'Userinfo URL',
+            value: formData.userinfoUrl || 'Not configured',
+            status: 'success',
+            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+          },
+          ...(formData.issuerUrl ? [{
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'success',
+            details: 'Optional issuer URL is reachable for metadata discovery'
+          }] : [])
+        ]);
+      }
+    } else if (currentCycle === 1) {
+      // Partial success - some validations failed
+      setTestConnectionStatus('partial');
+      if (formData.type === 'OIDC') {
+        setTestResults([
+          {
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'success',
+            details: 'Successfully discovered OIDC configuration'
+          },
+          {
+            field: 'Authorization URL',
+            value: `${formData.issuerUrl}/oauth2/v2/auth`,
+            status: 'success',
+            details: 'Authorization endpoint is reachable (HTTP 200)'
+          },
+          {
+            field: 'Token URL',
+            value: `${formData.issuerUrl.replace('accounts.google.com', 'oauth2.googleapis.com')}/token`,
+            status: 'error',
+            details: 'Token URL is not reachable: Get "https://oauth2.googleapis.com/token": dial tcp: lookup oauth2.googleapis.com: no such host'
+          },
+          {
+            field: 'Userinfo URL',
+            value: `${formData.issuerUrl.replace('accounts.google.com', 'openidconnect.googleapis.com')}/v1/userinfo`,
+            status: 'success',
+            details: 'Userinfo URL is reachable (HTTP 401 - authentication required, as expected)'
+          }
+        ]);
+      } else {
+        // OAuth2
+        setTestResults([
+          {
+            field: 'Authorization URL',
+            value: formData.authorizationUrl || 'Not configured',
+            status: 'success',
+            details: 'Authorization endpoint is reachable (HTTP 200)'
+          },
+          {
+            field: 'Token URL',
+            value: formData.tokenUrl || 'Not configured',
+            status: 'error',
+            details: 'Token URL is not reachable: Connection timeout after 30 seconds'
+          },
+          {
+            field: 'Userinfo URL',
+            value: formData.userinfoUrl || 'Not configured',
+            status: 'success',
+            details: 'Userinfo endpoint is reachable (HTTP 401 - authentication required, as expected)'
+          },
+          ...(formData.issuerUrl ? [{
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'error',
+            details: 'Optional issuer URL is not reachable for metadata discovery'
+          }] : [])
+        ]);
+      }
+    } else {
+      // Full error
+      setTestConnectionStatus('error');
+      if (formData.type === 'OIDC') {
+        setTestResults([
+          {
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'error',
+            details: 'Unable to connect to issuer URL. Please check the URL and network connectivity.'
+          },
+          {
+            field: 'Authorization URL',
+            value: 'N/A',
+            status: 'error',
+            details: 'Could not discover authorization endpoint due to connection failure.'
+          },
+          {
+            field: 'Token URL',
+            value: 'N/A',
+            status: 'error',
+            details: 'Could not discover token endpoint due to connection failure.'
+          },
+          {
+            field: 'Userinfo URL',
+            value: 'N/A',
+            status: 'error',
+            details: 'Could not discover userinfo endpoint due to connection failure.'
+          }
+        ]);
+      } else {
+        // OAuth2
+        setTestResults([
+          {
+            field: 'Authorization URL',
+            value: formData.authorizationUrl || 'Not configured',
+            status: 'error',
+            details: 'Unable to connect to authorization URL. Please check the URL and network connectivity.'
+          },
+          {
+            field: 'Token URL',
+            value: formData.tokenUrl || 'Not configured',
+            status: 'error',
+            details: 'Unable to connect to token URL. Please check the URL and network connectivity.'
+          },
+          {
+            field: 'Userinfo URL',
+            value: formData.userinfoUrl || 'Not configured',
+            status: 'error',
+            details: 'Unable to connect to userinfo URL. Please check the URL and network connectivity.'
+          },
+          ...(formData.issuerUrl ? [{
+            field: 'Issuer URL',
+            value: formData.issuerUrl,
+            status: 'error',
+            details: 'Unable to connect to issuer URL. Please check the URL and network connectivity.'
+          }] : [])
+        ]);
+      }
     }
+
+    // Always open the modal to show results
+    setIsTestModalOpen(true);
+  };
+
+  // Validate if all required fields are filled
+  const isFormValid = () => {
+    // Check provider name
+    if (!formData.name.trim() || nameError) {
+      return false;
+    }
+
+    // Check scopes
+    if (formData.scopes.length === 0) {
+      return false;
+    }
+
+    // Check client ID and secret
+    if (!formData.clientId.trim() || !formData.clientSecret.trim()) {
+      return false;
+    }
+
+    // Check protocol-specific required fields
+    if (formData.type === 'OIDC') {
+      if (!formData.issuerUrl.trim()) {
+        return false;
+      }
+    } else if (formData.type === 'OAuth2') {
+      if (!formData.authorizationUrl?.trim() ||
+          !formData.tokenUrl?.trim() ||
+          !formData.userinfoUrl?.trim()) {
+        return false;
+      }
+    }
+
+    // Check organization assignment fields
+    if (formData.organizationAssignment === 'Static') {
+      if (!formData.externalOrganizationName.trim()) {
+        return false;
+      }
+    } else if (formData.organizationAssignment === 'Dynamic') {
+      if (!formData.claimPath.trim()) {
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const handleSave = () => {
@@ -145,8 +541,32 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     onNavigate('main', 'auth-providers');
   };
 
+  // Navigation functions with unsaved changes detection
+  const navigateWithConfirmation = React.useCallback((navigationFn: () => void) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(() => () => navigationFn());
+      setIsLeaveModalOpen(true);
+    } else {
+      navigationFn();
+    }
+  }, [hasUnsavedChanges]);
+
+
   const handleCancel = () => {
-    onNavigate('main', 'auth-providers');
+    navigateWithConfirmation(() => onNavigate('main', 'auth-providers'));
+  };
+
+  const confirmLeave = () => {
+    setIsLeaveModalOpen(false);
+    if (pendingNavigation) {
+      pendingNavigation();
+      setPendingNavigation(null);
+    }
+  };
+
+  const cancelLeave = () => {
+    setIsLeaveModalOpen(false);
+    setPendingNavigation(null);
   };
 
   const getTestConnectionVariant = () => {
@@ -166,22 +586,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     }
   };
 
-  const getTestResultAlert = () => {
-    if (testConnectionStatus === 'success') {
-      return (
-        <Alert variant="success" isInline title="Connection test successful">
-          Successfully connected to the authentication provider. Configuration appears to be correct.
-        </Alert>
-      );
-    } else if (testConnectionStatus === 'error') {
-      return (
-        <Alert variant="danger" isInline title="Connection test failed">
-          Unable to connect to the authentication provider. Please check your configuration and try again.
-        </Alert>
-      );
-    }
-    return null;
-  };
 
   return (
     <Stack hasGutter>
@@ -192,7 +596,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             to="#"
             onClick={(e) => {
               e.preventDefault();
-              onNavigate('main', 'auth-providers');
+              navigateWithConfirmation(() => onNavigate('main', 'auth-providers'));
             }}
           >
             Authentication providers
@@ -206,7 +610,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
         <Title headingLevel="h1" size="2xl">
           {isEdit ? 'Edit Authentication Provider' : 'Add Authentication Provider'}
         </Title>
-        <p style={{ marginTop: '8px', color: '#6a6e73' }}>
+        <p style={{ marginTop: '8px', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
           Configure an authentication provider for user login and organization assignment.
         </p>
       </StackItem>
@@ -216,60 +620,73 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
       <StackItem>
         <Form>
           {/* Enabled Switch */}
-          <FormGroup label="Enabled" fieldId="provider-enabled">
+          <FormGroup fieldId="provider-enabled">
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+              <FlexItem>
+                <label htmlFor="provider-enabled" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                  Enabled
+                </label>
+              </FlexItem>
+              <FlexItem>
+                <Tooltip content="When enabled, users can authenticate using this provider. Disable to temporarily stop authentication without deleting the configuration.">
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                    aria-label="Enabled help"
+                  />
+                </Tooltip>
+              </FlexItem>
+            </Flex>
             <Switch
               id="provider-enabled"
+              aria-label="Enable authentication provider"
               isChecked={formData.enabled}
               onChange={(_event, checked) => handleInputChange('enabled', checked)}
+              style={{ marginTop: '16px' }}
             />
-            <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
-              When enabled, users can authenticate using this provider. Disable to temporarily stop authentication without deleting the configuration.
-            </div>
           </FormGroup>
 
           {/* Provider Name */}
           <FormGroup
-            label="Provider name"
-            isRequired
             fieldId="provider-name"
-            labelIcon={
-              <Tooltip
-                content={
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                      <CheckCircleIcon style={{ color: '#3e8635', marginRight: '8px', fontSize: '14px' }} />
-                      <span style={{ fontSize: '14px' }}>Name must be unique</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                      <CheckCircleIcon style={{ color: '#3e8635', marginRight: '8px', fontSize: '14px' }} />
-                      <span style={{ fontSize: '14px' }}>Starts and ends with a lowercase letter or a number</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                      <CheckCircleIcon style={{ color: '#3e8635', marginRight: '8px', fontSize: '14px' }} />
-                      <span style={{ fontSize: '14px' }}>Contains only lowercase letters, numbers, dashes (-), and dots (.)</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <CheckCircleIcon style={{ color: '#3e8635', marginRight: '8px', fontSize: '14px' }} />
-                      <span style={{ fontSize: '14px' }}>1-50 characters</span>
-                    </div>
-                  </div>
-                }
-                position="right"
-              >
-                <Button variant="plain" aria-label="Provider name help">
-                  <InfoAltIcon />
-                </Button>
-              </Tooltip>
-            }
+            validated={nameError ? 'error' : 'default'}
           >
-            <TextInput
-              isRequired
-              type="text"
-              id="provider-name"
-              value={formData.name}
-              onChange={(_event, value) => handleInputChange('name', value)}
-              placeholder=""
-            />
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+              <FlexItem>
+                <label htmlFor="provider-name" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                  Provider name <span style={{ color: '#c9190b' }}>*</span>
+                </label>
+              </FlexItem>
+              <FlexItem>
+                <Tooltip content={<ProviderNameValidationTooltip name={formData.name} />}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                    aria-label="Provider name requirements"
+                  />
+                </Tooltip>
+              </FlexItem>
+            </Flex>
+            <div style={{ marginTop: '16px' }}>
+              <TextInput
+                isRequired
+                type="text"
+                id="provider-name"
+                value={formData.name}
+                onChange={(_event, value) => handleInputChange('name', value)}
+                placeholder=""
+                validated={nameError ? 'error' : 'default'}
+              />
+            </div>
+            {nameError && (
+              <HelperText>
+                <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+                  {nameError}
+                </HelperTextItem>
+              </HelperText>
+            )}
           </FormGroup>
 
           {/* Provider Type Radio Buttons */}
@@ -294,7 +711,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 />
               </FlexItem>
             </Flex>
-            <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
+            <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '8px', lineHeight: '1.5' }}>
               OIDC provides user identity information. OAuth2 provides access permissions only. Check your provider's documentation for supported protocols.
             </div>
           </FormGroup>
@@ -310,7 +727,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 onChange={(_event, value) => handleInputChange('issuerUrl', value)}
                 placeholder=""
               />
-              <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                 The OIDC issuer URL
               </div>
             </FormGroup>
@@ -328,7 +745,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('authorizationUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Authorization endpoint for user consent. Refer to your provider's OAuth2 documentation.
                 </div>
               </FormGroup>
@@ -342,7 +759,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('tokenUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Token endpoint for exchanging authorization codes for access tokens.
                 </div>
               </FormGroup>
@@ -356,7 +773,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('userinfoUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   User information endpoint for retrieving profile data with access tokens.
                 </div>
               </FormGroup>
@@ -369,7 +786,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('issuerUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Optional. Provider's base issuer URL for OAuth2 metadata discovery.
                 </div>
               </FormGroup>
@@ -400,72 +817,97 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             />
           </FormGroup>
 
+          <Divider style={{ margin: '32px 0 16px 0' }} />
+
+          {/* User Identity & Authorization */}
+          <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px', fontWeight: '500' }}>
+            User identity & authorization
+          </Title>
+
           {/* Scopes Section */}
           <ScopeInput
             scopes={formData.scopes}
             onScopesChange={(scopes) => handleInputChange('scopes', scopes)}
+            isRequired={true}
+            hasError={scopesError && hasInteractedWithScopes}
           />
 
           {/* Username Claim */}
-          <FormGroup label="Username claim" fieldId="username-claim">
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-              <FlexItem grow={{ default: 'grow' }}>
-                <TextInput
-                  type="text"
-                  id="username-claim"
-                  value={formData.usernameClaim}
-                  onChange={(_event, value) => handleInputChange('usernameClaim', value)}
-                  placeholder="preferred_username"
-                />
+          <FormGroup fieldId="username-claim" validated={usernameClaimError ? 'error' : 'default'}>
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+              <FlexItem>
+                <label htmlFor="username-claim" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                  Username claim
+                </label>
               </FlexItem>
               <FlexItem>
-                <Popover
-                  bodyContent="The claim that contains the username"
-                  position="right"
-                >
-                  <Button variant="plain" aria-label="Username claim help">
-                    <InfoAltIcon />
-                  </Button>
-                </Popover>
+                <Tooltip content="Use dot notation to separate segments (e.g. custom_claims.user_id). Each segment must begin with a letter or underscore and may contain only letters, numbers, or underscores. Special characters and spaces are not permitted.">
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                    aria-label="Username claim help"
+                  />
+                </Tooltip>
               </FlexItem>
             </Flex>
-            <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
-              Use dot notation to separate segments (e.g. <code>custom_claims.user_id</code>). Each segment must begin with a letter or underscore and may contain only letters, numbers, or underscores. Special characters and spaces are not permitted.
-            </div>
+            <TextInput
+              type="text"
+              id="username-claim"
+              value={formData.usernameClaim}
+              onChange={(_event, value) => handleInputChange('usernameClaim', value)}
+              placeholder="e.g. preferred_username"
+              validated={usernameClaimError ? 'error' : 'default'}
+            />
+            {usernameClaimError && (
+              <HelperText>
+                <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+                  {usernameClaimError}
+                </HelperTextItem>
+              </HelperText>
+            )}
           </FormGroup>
 
           {/* Role Claim */}
-          <FormGroup label="Role claim" fieldId="role-claim">
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-              <FlexItem grow={{ default: 'grow' }}>
-                <TextInput
-                  type="text"
-                  id="role-claim"
-                  value={formData.roleClaim}
-                  onChange={(_event, value) => handleInputChange('roleClaim', value)}
-                  placeholder="groups"
-                />
+          <FormGroup fieldId="role-claim" validated={roleClaimError ? 'error' : 'default'}>
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+              <FlexItem>
+                <label htmlFor="role-claim" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                  Role claim
+                </label>
               </FlexItem>
               <FlexItem>
-                <Popover
-                  bodyContent="The claim that contains user roles"
-                  position="right"
-                >
-                  <Button variant="plain" aria-label="Role claim help">
-                    <InfoAltIcon />
-                  </Button>
-                </Popover>
+                <Tooltip content="Claim containing user roles or group memberships for authorization. Check your provider's documentation for the correct claim name.">
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                    aria-label="Role claim help"
+                  />
+                </Tooltip>
               </FlexItem>
             </Flex>
-            <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '8px' }}>
-              Claim containing user roles or group memberships for authorization. Check your provider's documentation for the correct claim name.
-            </div>
+            <TextInput
+              type="text"
+              id="role-claim"
+              value={formData.roleClaim}
+              onChange={(_event, value) => handleInputChange('roleClaim', value)}
+              placeholder="e.g., groups, roles, authorities"
+              validated={roleClaimError ? 'error' : 'default'}
+            />
+            {roleClaimError && (
+              <HelperText>
+                <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+                  {roleClaimError}
+                </HelperTextItem>
+              </HelperText>
+            )}
           </FormGroup>
 
           <Divider style={{ margin: '24px 0' }} />
 
           {/* Organization Assignment */}
-          <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px' }}>
+          <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px', fontWeight: '500' }}>
             Organization assignment
           </Title>
 
@@ -516,7 +958,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 onChange={(_event, value) => handleInputChange('externalOrganizationName', value)}
                 placeholder=""
               />
-              <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                 Users from this provider will be assigned to this organization
               </div>
             </FormGroup>
@@ -533,7 +975,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('claimPath', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Dot notation path to the claim (e.g., "groups", "custom_claims.org_id", ...)
                 </div>
               </FormGroup>
@@ -546,7 +988,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNamePrefix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Optional prefix for the organization name
                 </div>
               </FormGroup>
@@ -559,7 +1001,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNameSuffix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Optional suffix for the organization name
                 </div>
               </FormGroup>
@@ -576,7 +1018,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNamePrefix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Optional prefix for the user-specific organization name
                 </div>
               </FormGroup>
@@ -589,20 +1031,18 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNameSuffix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '14px', color: '#6a6e73', marginTop: '4px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
                   Optional suffix for the user-specific organization name
                 </div>
               </FormGroup>
             </>
           )}
 
-          {/* Test Connection Status Alert */}
-          {getTestResultAlert()}
 
           {/* Actions */}
           <ActionGroup style={{ marginTop: '32px' }}>
-            <Button variant="primary" onClick={handleSave}>
-              {isEdit ? 'Update Provider' : 'Create Provider'}
+            <Button variant="primary" onClick={handleSave} isDisabled={!isFormValid()}>
+              Save
             </Button>
             <Button variant="link" onClick={handleCancel}>
               Cancel
@@ -621,53 +1061,101 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
 
       {/* Test Connection Results Modal */}
       <Modal
-        variant={ModalVariant.medium}
-        title="Test connection results"
+        variant={ModalVariant.large}
         isOpen={isTestModalOpen}
         onClose={() => setIsTestModalOpen(false)}
-        actions={[
-          <Button key="close" variant="primary" onClick={() => setIsTestModalOpen(false)}>
+        position="top"
+      >
+        <ModalHeader title="Test connection results" />
+        <ModalBody tabIndex={0}>
+          <Stack hasGutter>
+            <StackItem>
+              {testConnectionStatus === 'success' ? (
+                <>
+                  <Alert variant="success" isInline title="Connection test successful" />
+                  <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                    The connection test was successful. Find the details below for the discovered endpoints:
+                  </p>
+                </>
+              ) : testConnectionStatus === 'partial' ? (
+                <>
+                  <Alert variant="warning" isInline title="Some validations failed" />
+                  <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                    Some configuration issues were detected. Please review the details below:
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Alert variant="danger" isInline title="Connection test failed" />
+                  <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
+                    The connection test failed. Please review the errors below and check your configuration:
+                  </p>
+                </>
+              )}
+            </StackItem>
+
+            <StackItem>
+              <Table variant="compact">
+                <Thead>
+                  <Tr>
+                    <Th>Field</Th>
+                    <Th width={30}>Value</Th>
+                    <Th width={10}>Status</Th>
+                    <Th width={40}>Details</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {testResults.map((result, index) => (
+                    <Tr key={index}>
+                      <Td>{result.field}</Td>
+                      <Td style={{ fontSize: '0.875rem', color: '#666', lineHeight: '1.5', wordBreak: 'break-all' }}>
+                        {result.value}
+                      </Td>
+                      <Td>
+                        {result.status === 'success' ? (
+                          <CheckCircleIcon style={{ color: '#3E8635', marginRight: '4px' }} />
+                        ) : (
+                          <ExclamationTriangleIcon style={{ color: '#C9190B', marginRight: '4px' }} />
+                        )}
+                      </Td>
+                      <Td style={{ fontSize: '0.875rem', color: '#6a6e73', lineHeight: '1.5' }}>
+                        {result.details}
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </StackItem>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="primary" onClick={() => setIsTestModalOpen(false)}>
             Close
           </Button>
-        ]}
-      >
-        <Stack hasGutter>
-          <StackItem>
-            <Alert variant="success" isInline title="OIDC discovery successful" />
-            <p style={{ marginTop: '8px', color: '#6a6e73' }}>
-              The OIDC discovery was successful. Find the details below for the discovered endpoints:
-            </p>
-          </StackItem>
+        </ModalFooter>
+      </Modal>
 
-          <StackItem>
-            <Table variant="compact">
-              <Thead>
-                <Tr>
-                  <Th>Field</Th>
-                  <Th>Value</Th>
-                  <Th>Status</Th>
-                  <Th>Details</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {testResults.map((result, index) => (
-                  <Tr key={index}>
-                    <Td>{result.field}</Td>
-                    <Td style={{ fontSize: '0.875rem', color: '#666' }}>
-                      {result.value}
-                    </Td>
-                    <Td>
-                      <CheckCircleIcon style={{ color: '#3E8635', marginRight: '4px' }} />
-                    </Td>
-                    <Td style={{ fontSize: '0.875rem', color: '#6a6e73' }}>
-                      {result.details}
-                    </Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </StackItem>
-        </Stack>
+      {/* Leave Confirmation Modal */}
+      <Modal
+        variant={ModalVariant.small}
+        isOpen={isLeaveModalOpen}
+        onClose={cancelLeave}
+        position="top"
+      >
+        <ModalHeader title="Unsaved changes" />
+        <ModalBody>
+          <p style={{ fontSize: '0.875rem', lineHeight: '1.5', color: '#151515' }}>
+            You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="danger" onClick={confirmLeave}>
+            Leave without saving
+          </Button>
+          <Button variant="link" onClick={cancelLeave}>
+            Stay on page
+          </Button>
+        </ModalFooter>
       </Modal>
     </Stack>
   );

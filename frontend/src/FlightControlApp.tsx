@@ -95,7 +95,7 @@ const FlightControlApp: React.FC = () => {
       {/* Main Application - hidden when login or cli-auth is active */}
       {currentView !== 'login' && currentView !== 'cli-auth' && (
         <Page masthead={masthead} sidebar={sidebar}>
-          <div style={{ minHeight: '100%' }}>
+          <div style={{ paddingTop: '48px' }}>
             {/* Add Device Modal */}
             <DeviceModal
               isOpen={isAddDeviceModalOpen}

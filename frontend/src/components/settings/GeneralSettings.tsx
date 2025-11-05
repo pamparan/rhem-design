@@ -1,124 +1,97 @@
 import React, { useState } from 'react';
 import {
+  PageSection,
   Title,
   Card,
   CardBody,
   Form,
   FormGroup,
-  TextInput,
-  TextArea,
-  Button,
-  ActionGroup,
-  Divider,
+  Select,
+  SelectOption,
+  SelectList,
+  MenuToggle,
+  MenuToggleElement,
   Stack,
-  StackItem,
-  Label,
-  Grid,
-  GridItem
+  StackItem
 } from '@patternfly/react-core';
 
 const GeneralSettings: React.FC = () => {
-  const [organizationName, setOrganizationName] = useState('Flight Control Systems');
-  const [description, setDescription] = useState('Enterprise edge device management and fleet orchestration platform');
+  const [selectedTheme, setSelectedTheme] = useState('System default');
+  const [isThemeSelectOpen, setIsThemeSelectOpen] = useState(false);
+
+  const themeOptions = [
+    { value: 'System default', label: 'System default' },
+    { value: 'Light', label: 'Light' },
+    { value: 'Dark', label: 'Dark' }
+  ];
+
+  const onThemeSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+    setSelectedTheme(value as string);
+    setIsThemeSelectOpen(false);
+  };
+
 
   return (
-    <Stack hasGutter>
-      <StackItem>
-        <Title headingLevel="h2" size="xl">
+    <PageSection style={{ height: 'fit-content' }}>
+      {/* Header section to match Authentication & Security style */}
+      <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
+        <Title headingLevel="h1" size="2xl">
           General Settings
         </Title>
-        <p style={{ marginTop: '8px', color: '#6a6e73' }}>
-          Manage your organization's basic information and branding.
+        <p style={{ marginTop: '0.5rem', color: '#6a6e73' }}>
+          Customize your user experience and interface preferences.
         </p>
-      </StackItem>
+      </div>
 
-      {/* Organization Profile */}
-      <StackItem>
-        <Card>
-          <CardBody>
-            <Stack hasGutter>
-              <StackItem>
-                <Title headingLevel="h3" size="lg">
-                  Organization Profile
-                </Title>
-              </StackItem>
+      {/* Theme Settings */}
+      <Card>
+        <CardBody>
+          <Stack hasGutter>
+            <StackItem>
+              <Title headingLevel="h2" size="lg">
+                Theme
+              </Title>
+              <p style={{ marginTop: '8px', color: '#6a6e73', fontSize: '0.875rem' }}>
+                Choose how Flight Control appears to you. Select a single theme, or sync with your system and automatically switch between day and night themes.
+              </p>
+            </StackItem>
 
-
-              <StackItem>
-                <Form>
-                  <FormGroup
-                    label="Organization Name"
-                    isRequired
-                    fieldId="org-name"
+            <StackItem>
+              <Form>
+                <FormGroup fieldId="theme-select">
+                  <Select
+                    id="theme-select"
+                    isOpen={isThemeSelectOpen}
+                    selected={selectedTheme}
+                    onSelect={onThemeSelect}
+                    onOpenChange={(isOpen) => setIsThemeSelectOpen(isOpen)}
+                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setIsThemeSelectOpen(!isThemeSelectOpen)}
+                        isExpanded={isThemeSelectOpen}
+                        style={{ width: '200px' }}
+                      >
+                        {selectedTheme}
+                      </MenuToggle>
+                    )}
                   >
-                    <TextInput
-                      isRequired
-                      type="text"
-                      id="org-name"
-                      value={organizationName}
-                      onChange={(_event, value) => setOrganizationName(value)}
-                    />
-                  </FormGroup>
+                    <SelectList>
+                      {themeOptions.map((option) => (
+                        <SelectOption key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectOption>
+                      ))}
+                    </SelectList>
+                  </Select>
+                </FormGroup>
 
-                  <FormGroup
-                    label="Description"
-                    fieldId="org-description"
-                  >
-                    <TextArea
-                      id="org-description"
-                      value={description}
-                      onChange={(_event, value) => setDescription(value)}
-                      rows={3}
-                    />
-                  </FormGroup>
-
-                  <ActionGroup>
-                    <Button variant="primary">Save changes</Button>
-                    <Button variant="secondary">Cancel</Button>
-                  </ActionGroup>
-                </Form>
-              </StackItem>
-            </Stack>
-          </CardBody>
-        </Card>
-      </StackItem>
-
-      {/* System Information */}
-      <StackItem>
-        <Card>
-          <CardBody>
-            <Stack hasGutter>
-              <StackItem>
-                <Title headingLevel="h3" size="lg">
-                  System Information
-                </Title>
-              </StackItem>
-
-              <StackItem>
-                <Grid hasGutter>
-                  <GridItem span={6}>
-                    <Label>Version</Label>
-                    <div>Flight Control v2.4.1</div>
-                  </GridItem>
-                  <GridItem span={6}>
-                    <Label>License</Label>
-                    <div>Enterprise License</div>
-                  </GridItem>
-                  <GridItem span={6}>
-                    <Label>Last Updated</Label>
-                    <div>October 30, 2024</div>
-                  </GridItem>
-                  <GridItem span={6}>
-                    <Label>Support Status</Label>
-                    <div>Active Support</div>
-                  </GridItem>
-                </Grid>
-              </StackItem>
-            </Stack>
-          </CardBody>
-        </Card>
-      </StackItem>
-    </Stack>
+              </Form>
+            </StackItem>
+          </Stack>
+        </CardBody>
+      </Card>
+    </PageSection>
   );
 };
 

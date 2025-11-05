@@ -74,8 +74,8 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
   const [providers, setProviders] = useState<IdentityProvider[]>([
     {
       id: 'aap',
-      name: 'Enterprise Platform',
-      type: 'Ansible Automation Platform',
+      name: 'enterprise-platform',
+      type: 'OAuth2',
       issuerUrl: 'https://aap.example.com/api/gateway/v1/social/',
       status: true,
       isBuiltIn: false,
@@ -89,7 +89,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     },
     {
       id: 'google',
-      name: 'Google',
+      name: 'google',
       type: 'OIDC',
       issuerUrl: 'https://accounts.google.com',
       status: true,
@@ -104,7 +104,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     },
     {
       id: 'okta',
-      name: 'Customer-B Okta',
+      name: 'customer-b-okta',
       type: 'OIDC',
       issuerUrl: 'https://customer-b.okta.com/oauth2/default',
       status: false,
@@ -119,8 +119,8 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     },
     {
       id: 'kubernetes',
-      name: 'K8s Cluster Auth',
-      type: 'Kubernetes',
+      name: 'k8s-cluster-auth',
+      type: 'OIDC',
       issuerUrl: 'https://k8s.cluster.local:6443',
       status: true,
       isBuiltIn: false,

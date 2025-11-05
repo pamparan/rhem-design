@@ -7,15 +7,18 @@ import {
   FlexItem,
   HelperText,
   HelperTextItem,
+  Tooltip,
 } from '@patternfly/react-core';
-import { InfoCircleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
+import { InfoAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
 interface ScopeInputProps {
   scopes: string[];
   onScopesChange: (scopes: string[]) => void;
+  isRequired?: boolean;
+  hasError?: boolean;
 }
 
-const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange }) => {
+const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange, isRequired = false, hasError = false }) => {
   const [isInputVisible, setIsInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -61,22 +64,29 @@ const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange }) => {
   };
 
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div style={{ marginBottom: '16px' }}>
       {/* Header with title and info icon */}
-      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }} style={{ marginBottom: '4px' }}>
         <FlexItem>
-          <span style={{ fontSize: '16px', fontWeight: '600', color: '#151515' }}>
-            Scopes
-          </span>
+          <label style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+            Scopes{isRequired && <span style={{ color: '#c9190b' }}> *</span>}
+          </label>
         </FlexItem>
         <FlexItem>
-          <InfoCircleIcon style={{ color: '#6a6e73', fontSize: '16px' }} />
+          <Tooltip content="Scopes control what information your app can access. Check your provider's documentation for required scopes.">
+            <Button
+              variant="plain"
+              size="sm"
+              icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+              aria-label="Scopes help"
+            />
+          </Tooltip>
         </FlexItem>
       </Flex>
 
       {/* Description text */}
-      <div style={{ fontSize: '14px', color: '#6a6e73', marginBottom: '8px' }}>
-        Scopes control what information your app can access. Check your provider's documentation for required scopes.
+      <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginBottom: '8px', lineHeight: '1.5' }}>
+        Add all scopes needed to access the username and role claims configured below.
       </div>
 
       {/* Add scope section */}
@@ -154,6 +164,15 @@ const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange }) => {
             </Label>
           ))}
         </div>
+      )}
+
+      {/* Required field error message */}
+      {hasError && isRequired && scopes.length === 0 && (
+        <HelperText style={{ marginTop: '4px' }}>
+          <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+            At least one scope is required
+          </HelperTextItem>
+        </HelperText>
       )}
 
     </div>

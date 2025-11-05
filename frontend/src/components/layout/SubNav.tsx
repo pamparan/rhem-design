@@ -50,8 +50,10 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand, onSystemSettings })
       justifyContent: 'flex-end',
       alignItems: 'center',
       minHeight: '48px',
-      position: 'sticky',
-      top: 0,
+      position: 'fixed',
+      top: 72,
+      left: 0,
+      right: 0,
       zIndex: 1000
     }}>
       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
@@ -101,17 +103,19 @@ const SubNav: React.FC<SubNavProps> = ({ onCopyLoginCommand, onSystemSettings })
         </FlexItem>
 
         <FlexItem style={{ marginLeft: 'auto' }}>
-          <Tooltip content="Manage authentication providers and system configuration">
+          <Tooltip content="Manage authentication providers and system configuration settings">
             <Button
-              variant="plain"
+              variant="link"
               icon={<CogIcon />}
               onClick={onSystemSettings}
               style={{
-                fontSize: '16px',
-                padding: '8px',
+                fontSize: '14px',
+                padding: '4px 8px',
                 color: '#06c'
               }}
-            />
+            >
+              Settings
+            </Button>
           </Tooltip>
         </FlexItem>
 
