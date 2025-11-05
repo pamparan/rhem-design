@@ -18,6 +18,7 @@ import DeviceDetailsPage from './components/pages/DeviceDetailsPage';
 import LoginPage from './components/pages/LoginPage';
 import CLIAuthPage from './components/pages/CLIAuthPage';
 import SystemSettingsPage from './components/pages/SystemSettingsPage';
+import KubernetesTokenLoginPage from './components/pages/KubernetesTokenLoginPage';
 import DeviceModal from './components/shared/DeviceModal';
 
 import { mockDevicesPendingApproval } from './data/mockData';
@@ -92,8 +93,8 @@ const FlightControlApp: React.FC = () => {
 
   return (
     <DesignControls>
-      {/* Main Application - hidden when login or cli-auth is active */}
-      {currentView !== 'login' && currentView !== 'cli-auth' && (
+      {/* Main Application - hidden when login, cli-auth, or kubernetes-token-login is active */}
+      {currentView !== 'login' && currentView !== 'cli-auth' && currentView !== 'kubernetes-token-login' && (
         <Page masthead={masthead} sidebar={sidebar}>
           <div style={{ paddingTop: '48px' }}>
             {/* Add Device Modal */}
@@ -104,7 +105,7 @@ const FlightControlApp: React.FC = () => {
 
             {/* SubNav with Get login command button */}
             <SubNav
-              onCopyLoginCommand={() => handleNavigate('cli-auth')}
+              onCopyLoginCommand={() => handleNavigate('login')}
               onSystemSettings={() => handleNavigate('system-settings')}
             />
 
@@ -168,12 +169,28 @@ const FlightControlApp: React.FC = () => {
 
       {/* Full-screen Login Overlay - renders outside of Page component */}
       {currentView === 'login' && (
-        <LoginPage onBack={() => handleNavigate('main')} />
+        <LoginPage
+          onBack={() => handleNavigate('main')}
+          onNavigate={handleNavigate}
+        />
       )}
 
       {/* Full-screen CLI Auth Overlay - renders outside of Page component */}
       {currentView === 'cli-auth' && (
         <CLIAuthPage onBack={() => handleNavigate('main')} />
+      )}
+
+      {/* Full-screen Kubernetes Token Login Overlay - renders outside of Page component */}
+      {currentView === 'kubernetes-token-login' && (
+        <KubernetesTokenLoginPage
+          onBack={() => handleNavigate('login')}
+          onLogin={(token) => {
+            console.log('Kubernetes token login successful with token:', token.substring(0, 10) + '...');
+            // Here you would implement the actual token authentication logic
+            // For now, we'll just navigate back to main
+            handleNavigate('main');
+          }}
+        />
       )}
 
     </DesignControls>

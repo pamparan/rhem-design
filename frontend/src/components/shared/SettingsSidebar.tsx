@@ -74,9 +74,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       <div
         style={{
           position: 'sticky',
-          top: '80px', // Sticky positioning for the nav content
+          top: '16px', // Much reduced sticky positioning
           zIndex: 999,
-          paddingTop: '8px' // Reduced top padding for tighter layout
+          paddingTop: '4px' // Minimal top padding
         }}
       >
         {/* Toggle Button - consistent positioning */}

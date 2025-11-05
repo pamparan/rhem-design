@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardBody,
@@ -9,6 +9,8 @@ import {
   Title,
   Bullseye
 } from '@patternfly/react-core';
+import TokenLoginModal from '../shared/TokenLoginModal';
+import { ViewType, NavigationItemId, NavigationParams } from '../../types/app';
 
 /**
  * Wireframe Component: Standalone Login Screen
@@ -27,11 +29,17 @@ interface AuthProvider {
   enabled: boolean;
 }
 
-const StandaloneLoginWireframe: React.FC = () => {
+interface StandaloneLoginWireframeProps {
+  onNavigate?: (view: ViewType, activeItem?: NavigationItemId, params?: NavigationParams) => void;
+}
+
+const StandaloneLoginWireframe: React.FC<StandaloneLoginWireframeProps> = ({ onNavigate }) => {
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+
   // Sample authentication providers
   const authProviders: AuthProvider[] = [
     { id: 'internal', displayName: 'Internal Account', enabled: true },
-    { id: 'token', displayName: 'Token Login Command', enabled: true },
+    { id: 'token', displayName: 'Log in with Kubernetes', enabled: true },
     { id: 'google', displayName: 'Google', enabled: true },
     { id: 'github', displayName: 'GitHub', enabled: true },
     { id: 'okta', displayName: 'Customer-B Okta', enabled: false }, // Disabled example
@@ -40,8 +48,28 @@ const StandaloneLoginWireframe: React.FC = () => {
   const enabledProviders = authProviders.filter(provider => provider.enabled);
 
   const handleProviderLogin = (providerId: string) => {
-    console.log(`Login attempt with provider: ${providerId}`);
-    // Implementation would redirect to provider's auth flow
+    if (providerId === 'token') {
+      if (onNavigate) {
+        onNavigate('kubernetes-token-login');
+      } else {
+        // Fallback to modal if no navigation function is provided
+        setIsTokenModalOpen(true);
+      }
+    } else {
+      console.log(`Login attempt with provider: ${providerId}`);
+      // Implementation would redirect to provider's auth flow
+    }
+  };
+
+  const handleTokenLogin = (token: string) => {
+    console.log('Token login successful with token:', token.substring(0, 10) + '...');
+    // Here you would implement the actual token authentication logic
+    // For now, we'll just close the modal and show success
+    setIsTokenModalOpen(false);
+  };
+
+  const handleTokenModalClose = () => {
+    setIsTokenModalOpen(false);
   };
 
   return (
@@ -126,6 +154,13 @@ const StandaloneLoginWireframe: React.FC = () => {
           </Stack>
         </CardBody>
       </Card>
+
+      {/* Token Login Modal */}
+      <TokenLoginModal
+        isOpen={isTokenModalOpen}
+        onClose={handleTokenModalClose}
+        onLogin={handleTokenLogin}
+      />
     </Bullseye>
   );
 };
