@@ -7,7 +7,7 @@ import {
   FlexItem,
   HelperText,
   HelperTextItem,
-  Tooltip,
+  Popover,
 } from '@patternfly/react-core';
 import { InfoAltIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 
@@ -27,12 +27,12 @@ const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange, isRequi
     const trimmedValue = inputValue.trim();
 
     if (!trimmedValue) {
-      setErrorMessage('Scope name cannot be empty');
+      setErrorMessage('Scope name is required. Enter a scope to continue.');
       return;
     }
 
     if (scopes.includes(trimmedValue)) {
-      setErrorMessage('This scope already exists');
+      setErrorMessage('Scope already exists. Choose a different name.');
       return;
     }
 
@@ -64,7 +64,7 @@ const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange, isRequi
   };
 
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div style={{ marginBottom: '8px' }}>
       {/* Header with title and info icon */}
       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }} style={{ marginBottom: '4px' }}>
         <FlexItem>
@@ -73,20 +73,31 @@ const ScopeInput: React.FC<ScopeInputProps> = ({ scopes, onScopesChange, isRequi
           </label>
         </FlexItem>
         <FlexItem>
-          <Tooltip content="Scopes control what information your app can access. Check your provider's documentation for required scopes.">
+          <Popover
+            triggerAction="hover"
+            headerContent="Authentication Scopes"
+            bodyContent={
+              <div>
+                <p><strong>Purpose:</strong> Scopes define the permissions your application requests from the provider.</p>
+                <p><strong>Configuration:</strong> Check your provider's documentation for required scopes.</p>
+                <p><strong>Common examples:</strong> openid, profile, email, groups</p>
+              </div>
+            }
+            position="right"
+          >
             <Button
               variant="plain"
               size="sm"
               icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
               aria-label="Scopes help"
             />
-          </Tooltip>
+          </Popover>
         </FlexItem>
       </Flex>
 
       {/* Description text */}
       <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginBottom: '8px', lineHeight: '1.5' }}>
-        Add all scopes needed to access the username and role claims configured below.
+        Add scopes required to access username and role claims from your authentication provider.
       </div>
 
       {/* Add scope section */}

@@ -23,7 +23,6 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Tooltip,
   HelperText,
   HelperTextItem
 } from '@patternfly/react-core';
@@ -163,28 +162,28 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
   // Validate provider name
   const validateProviderName = (name: string): string => {
     if (!name.trim()) {
-      return 'Provider name is required';
+      return 'Provider name is required. Enter a name to continue.';
     }
 
     // Check length first
     if (name.length > 50) {
-      return 'Provider name must not exceed 50 characters';
+      return 'Name is too long. Use 50 characters or fewer.';
     }
 
     // Check for invalid characters early
     if (!/^[a-z0-9.-]+$/.test(name)) {
-      return 'Provider name can only contain lowercase letters, numbers, dashes (-), and dots (.)';
+      return 'Name contains invalid characters. Use only lowercase letters, numbers, dashes, and dots.';
     }
 
     // Check start/end characters
     if (!/^[a-z0-9]/.test(name) || !/[a-z0-9]$/.test(name)) {
-      return 'Provider name must start and end with a lowercase letter or number';
+      return 'Name format is invalid. Start and end with a letter or number.';
     }
 
     // Check for known duplicates (simulated uniqueness check)
     const knownDuplicates = ['existing-provider', 'duplicate-name'];
     if (knownDuplicates.includes(name.toLowerCase())) {
-      return 'A provider with this name already exists';
+      return 'Name is already taken. Choose a different name.';
     }
 
     return '';
@@ -235,21 +234,21 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     ];
 
     return (
-      <div style={{ fontSize: '0.75rem', color: '#ffffff' }}>
+      <div style={{ fontSize: '0.75rem', color: '#151515' }}>
         {validations.map((validation, index) => (
           <div key={index} style={{
             display: 'flex',
             alignItems: 'flex-start',
-            marginBottom: '4px',
+            marginBottom: '6px',
             textAlign: 'left'
           }}>
             <div style={{
-              width: '16px',
-              height: '16px',
+              width: '14px',
+              height: '14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: '8px',
+              marginRight: '6px',
               flexShrink: 0
             }}>
               {validation.isValid ? (
@@ -258,7 +257,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 <TimesCircleIcon style={{ color: '#C9190B', fontSize: '0.75rem' }} />
               )}
             </div>
-            <span style={{ textAlign: 'left', lineHeight: '1.2' }}>{validation.message}</span>
+            <span style={{ textAlign: 'left', lineHeight: '1.3', color: '#151515', fontSize: '0.75rem' }}>{validation.message}</span>
           </div>
         ))}
       </div>
@@ -278,18 +277,18 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     for (const segment of segments) {
       // Each segment must begin with a letter or underscore
       if (!/^[a-zA-Z_]/.test(segment)) {
-        return 'Each segment must begin with a letter or underscore';
+        return 'Claim format is invalid. Each part must start with a letter or underscore.';
       }
 
       // Each segment may contain only letters, numbers, or underscores
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(segment)) {
-        return 'Segments can only contain letters, numbers, or underscores';
+        return 'Claim contains invalid characters. Use only letters, numbers, and underscores.';
       }
     }
 
     // Check for special characters and spaces
     if (/[^a-zA-Z0-9_.]/g.test(claim)) {
-      return 'Special characters and spaces are not permitted';
+      return 'Claim contains invalid characters. Remove spaces and special characters.';
     }
 
     return '';
@@ -637,7 +636,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
           {isEdit ? 'Edit Authentication Provider' : 'Add Authentication Provider'}
         </Title>
         <p style={{ marginTop: '8px', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
-          Configure an authentication provider for user login and organization assignment.
+          Set up how users will sign in and which organization they'll be assigned to.
         </p>
       </StackItem>
 
@@ -654,14 +653,24 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 </label>
               </FlexItem>
               <FlexItem>
-                <Tooltip content="When enabled, users can authenticate using this provider. Disable to temporarily stop authentication without deleting the configuration.">
+                <Popover
+                  triggerAction="hover"
+                  headerContent="Provider Status"
+                  bodyContent={
+                    <div>
+                      <p>Turn this on to let users sign in with this provider.</p>
+                      <p>You can turn it off anytime without losing your settings.</p>
+                    </div>
+                  }
+                  position="right"
+                >
                   <Button
                     variant="plain"
                     size="sm"
                     icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
                     aria-label="Enabled help"
                   />
-                </Tooltip>
+                </Popover>
               </FlexItem>
             </Flex>
             <Switch
@@ -686,14 +695,19 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
               </FlexItem>
               {!isEdit && (
                 <FlexItem>
-                  <Tooltip content={<ProviderNameValidationTooltip name={formData.name} />}>
+                  <Popover
+                    triggerAction="hover"
+                    headerContent="Provider Name Requirements"
+                    bodyContent={<ProviderNameValidationTooltip name={formData.name} />}
+                    position="right"
+                  >
                     <Button
                       variant="plain"
                       size="sm"
                       icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
                       aria-label="Provider name requirements"
                     />
-                  </Tooltip>
+                  </Popover>
                 </FlexItem>
               )}
             </Flex>
@@ -738,7 +752,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             {isEdit && (
               <HelperText>
                 <HelperTextItem variant="indeterminate">
-                  Provider name cannot be changed after creation
+                  You can't change the provider name after it's created
                 </HelperTextItem>
               </HelperText>
             )}
@@ -766,9 +780,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 />
               </FlexItem>
             </Flex>
-            <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '8px', lineHeight: '1.5' }}>
-              OIDC provides user identity information. OAuth2 provides access permissions only. Check your provider's documentation for supported protocols.
-            </div>
           </FormGroup>
 
           {/* OIDC Issuer URL - required for OIDC */}
@@ -782,9 +793,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 onChange={(_event, value) => handleInputChange('issuerUrl', value)}
                 placeholder=""
               />
-              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                The OIDC issuer URL
-              </div>
             </FormGroup>
           )}
 
@@ -800,9 +808,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('authorizationUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Authorization endpoint for user consent. Refer to your provider's OAuth2 documentation.
-                </div>
               </FormGroup>
 
               <FormGroup label="Token URL" isRequired fieldId="token-url">
@@ -814,9 +819,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('tokenUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Token endpoint for exchanging authorization codes for access tokens.
-                </div>
               </FormGroup>
 
               <FormGroup label="Userinfo URL" isRequired fieldId="userinfo-url">
@@ -828,9 +830,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('userinfoUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  User information endpoint for retrieving profile data with access tokens.
-                </div>
               </FormGroup>
 
               <FormGroup label="Issuer URL" fieldId="issuer-url">
@@ -841,9 +840,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('issuerUrl', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Optional. Provider's base issuer URL for OAuth2 metadata discovery.
-                </div>
               </FormGroup>
             </>
           )}
@@ -875,7 +871,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
           <Divider style={{ margin: '32px 0 16px 0' }} />
 
           {/* User Identity & Authorization */}
-          <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px', fontWeight: '500' }}>
+          <Title headingLevel="h3" size="lg" style={{ marginBottom: '8px', fontWeight: '500' }}>
             User identity & authorization
           </Title>
 
@@ -896,14 +892,25 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 </label>
               </FlexItem>
               <FlexItem>
-                <Tooltip content="Use dot notation to separate segments (e.g. custom_claims.user_id). Each segment must begin with a letter or underscore and may contain only letters, numbers, or underscores. Special characters and spaces are not permitted.">
+                <Popover
+                  triggerAction="hover"
+                  headerContent="Username Claim"
+                  bodyContent={
+                    <div>
+                      <p><strong>Purpose:</strong> The claim field that contains the username.</p>
+                      <p><strong>Format:</strong> Use dot notation to access nested fields (e.g., 'custom_claims.user_id').</p>
+                      <p><strong>Requirements:</strong> Each segment must start with a letter or underscore and contain only letters, numbers, or underscores.</p>
+                    </div>
+                  }
+                  position="right"
+                >
                   <Button
                     variant="plain"
                     size="sm"
                     icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
                     aria-label="Username claim help"
                   />
-                </Tooltip>
+                </Popover>
               </FlexItem>
             </Flex>
             <TextInput
@@ -932,14 +939,25 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 </label>
               </FlexItem>
               <FlexItem>
-                <Tooltip content="Claim containing user roles or group memberships for authorization. Check your provider's documentation for the correct claim name.">
+                <Popover
+                  triggerAction="hover"
+                  headerContent="Role Claim"
+                  bodyContent={
+                    <div>
+                      <p><strong>Purpose:</strong> The claim field that contains user roles or group memberships for authorization.</p>
+                      <p><strong>Configuration:</strong> Refer to your provider's documentation for the correct claim name.</p>
+                      <p><strong>Common examples:</strong> groups, roles, authorities</p>
+                    </div>
+                  }
+                  position="right"
+                >
                   <Button
                     variant="plain"
                     size="sm"
                     icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
                     aria-label="Role claim help"
                   />
-                </Tooltip>
+                </Popover>
               </FlexItem>
             </Flex>
             <TextInput
@@ -1013,9 +1031,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 onChange={(_event, value) => handleInputChange('externalOrganizationName', value)}
                 placeholder=""
               />
-              <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                Users from this provider will be assigned to this organization
-              </div>
             </FormGroup>
           )}
 
@@ -1030,9 +1045,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('claimPath', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Dot notation path to the claim (e.g., "groups", "custom_claims.org_id", ...)
-                </div>
               </FormGroup>
 
               <FormGroup label="Organization name prefix" fieldId="org-name-prefix">
@@ -1043,9 +1055,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNamePrefix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Optional prefix for the organization name
-                </div>
               </FormGroup>
 
               <FormGroup label="Organization name suffix" fieldId="org-name-suffix">
@@ -1056,9 +1065,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNameSuffix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Optional suffix for the organization name
-                </div>
               </FormGroup>
             </>
           )}
@@ -1073,9 +1079,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNamePrefix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Optional prefix for the user-specific organization name
-                </div>
               </FormGroup>
 
               <FormGroup label="Organization name suffix" fieldId="org-name-suffix-peruser">
@@ -1086,9 +1089,6 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   onChange={(_event, value) => handleInputChange('organizationNameSuffix', value)}
                   placeholder=""
                 />
-                <div style={{ fontSize: '0.875rem', color: '#6a6e73', marginTop: '4px', lineHeight: '1.5' }}>
-                  Optional suffix for the user-specific organization name
-                </div>
               </FormGroup>
             </>
           )}
@@ -1129,21 +1129,21 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 <>
                   <Alert variant="success" isInline title="Connection test successful" />
                   <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
-                    The connection test was successful. Find the details below for the discovered endpoints:
+                    Great! We successfully connected to your provider. Here's what we found:
                   </p>
                 </>
               ) : testConnectionStatus === 'partial' ? (
                 <>
-                  <Alert variant="warning" isInline title="Some validations failed" />
+                  <Alert variant="warning" isInline title="Connection partially successful" />
                   <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
-                    Some configuration issues were detected. Please review the details below:
+                    We found some issues with your configuration. Here's what needs your attention:
                   </p>
                 </>
               ) : (
                 <>
-                  <Alert variant="danger" isInline title="Connection test failed" />
+                  <Alert variant="danger" isInline title="Connection failed" />
                   <p style={{ marginTop: '1rem', color: '#6a6e73', fontSize: '0.875rem', lineHeight: '1.5' }}>
-                    The connection test failed. Please review the errors below and check your configuration:
+                    We couldn't connect to your provider. Check the details below and verify your settings:
                   </p>
                 </>
               )}
@@ -1200,7 +1200,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
         <ModalHeader title="Unsaved changes" />
         <ModalBody>
           <p style={{ fontSize: '0.875rem', lineHeight: '1.5', color: '#151515' }}>
-            You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            Your changes haven't been saved yet. To keep your work, save before leaving.
           </p>
         </ModalBody>
         <ModalFooter>
