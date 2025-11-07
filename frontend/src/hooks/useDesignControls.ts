@@ -20,12 +20,14 @@ const SETTINGS_CHANGE_EVENT = "rhem-design-controls-change";
 interface DesignControlsSettings {
   showPostRestoreBanner: boolean;
   showDevicesPendingApproval: boolean;
+  showAuthProvidersEmptyState: boolean;
   fillProviderForm: boolean;
 }
 
 const DEFAULT_SETTINGS: DesignControlsSettings = {
   showPostRestoreBanner: false,
   showDevicesPendingApproval: false,
+  showAuthProvidersEmptyState: false,
   fillProviderForm: false,
 };
 

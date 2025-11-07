@@ -131,6 +131,25 @@ const DesignControls: React.FC<DesignControlsProps> = ({ children }) => {
           </StackItem>
 
           <StackItem>
+            <Switch
+              id="auth-providers-empty-state-switch"
+              label="Authentication Providers Empty State"
+              isChecked={getSetting("showAuthProvidersEmptyState")}
+              onChange={(_event, checked) =>
+                setSetting("showAuthProvidersEmptyState", checked)
+              }
+            />
+            <HelperText>
+              <HelperTextItem
+                variant="indeterminate"
+                style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+              >
+                Shows the empty state for authentication providers page when no providers are configured.
+              </HelperTextItem>
+            </HelperText>
+          </StackItem>
+
+          <StackItem>
             <Title headingLevel="h3" size="md">
               Form Controls
             </Title>

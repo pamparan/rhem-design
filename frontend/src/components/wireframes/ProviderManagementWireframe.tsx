@@ -22,8 +22,11 @@ import {
   ModalFooter,
   TextInput,
   Alert,
-  Flex,
-  FlexItem
+  EmptyState,
+  EmptyStateVariant,
+  EmptyStateBody,
+  EmptyStateActions,
+  EmptyStateFooter
 } from '@patternfly/react-core';
 import {
   Table,
@@ -33,7 +36,8 @@ import {
   Tbody,
   Td
 } from '@patternfly/react-table';
-import { EllipsisVIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
+import { EllipsisVIcon, CubesIcon } from '@patternfly/react-icons';
+import { useDesignControls } from "../../hooks/useDesignControls";
 
 /**
  * Wireframe Component: Provider Management List View
@@ -71,6 +75,9 @@ interface ProviderManagementWireframeProps {
 }
 
 const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = ({ onAddProvider, onViewDetails, onEditProvider }) => {
+  const { getSetting } = useDesignControls();
+  const showEmptyState = getSetting("showAuthProvidersEmptyState");
+
   const [providers, setProviders] = useState<IdentityProvider[]>([
     {
       id: 'aap',
@@ -214,92 +221,110 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
         </Toolbar>
       </StackItem>
 
-      {/* Providers Table */}
+      {/* Providers Table or Empty State */}
       <StackItem>
         <Card>
           <CardBody>
-            <Table variant="compact">
-              <Thead>
-                <Tr>
-                  <Th>Name</Th>
-                  <Th>Type</Th>
-                  <Th>Issuer URL</Th>
-                  <Th>Status</Th>
-                  <Th></Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {providers.map((provider) => (
-                  <Tr key={provider.id}>
-                    <Td>
-                      <Button
-                        variant="link"
-                        onClick={() => handleViewDetails(provider.id)}
-                        style={{
-                          padding: 0,
-                          textAlign: 'left',
-                          fontWeight: 'bold',
-                          fontSize: 'inherit'
-                        }}
-                      >
-                        {provider.name}
-                      </Button>
-                    </Td>
-                    <Td>{provider.type}</Td>
-                    <Td>
-                      <span style={{ fontSize: '0.875rem', color: '#666' }}>
-                        {provider.issuerUrl}
-                      </span>
-                    </Td>
-                    <Td>{getStatusLabel(provider.status)}</Td>
-                    <Td>
-                      {!provider.isBuiltIn ? (
-                        <Dropdown
-                          isOpen={actionDropdownOpen === provider.id}
-                          onSelect={() => setActionDropdownOpen(null)}
-                          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                            <MenuToggle
-                              ref={toggleRef}
-                              variant="plain"
-                              onClick={() => toggleActionDropdown(provider.id)}
-                              isExpanded={actionDropdownOpen === provider.id}
-                              aria-label={`Actions for ${provider.name}`}
-                            >
-                              <EllipsisVIcon />
-                            </MenuToggle>
-                          )}
-                        >
-                          <DropdownList>
-                            <DropdownItem
-                              key="view-details"
-                              onClick={() => handleViewDetails(provider.id)}
-                            >
-                              View details
-                            </DropdownItem>
-                            <DropdownItem
-                              key="edit"
-                              onClick={() => handleEditProvider(provider.id)}
-                            >
-                              Edit
-                            </DropdownItem>
-                            <DropdownItem
-                              key="delete"
-                              onClick={() => handleDeleteProvider(provider.id)}
-                            >
-                              Delete
-                            </DropdownItem>
-                          </DropdownList>
-                        </Dropdown>
-                      ) : (
-                        <span style={{ color: '#666', fontSize: '0.875rem' }}>
-                          Built-in
-                        </span>
-                      )}
-                    </Td>
+            {showEmptyState ? (
+              <EmptyState variant={EmptyStateVariant.lg} icon={CubesIcon}>
+                <Title headingLevel="h4" size="lg">
+                  Add your first authentication provider
+                </Title>
+                <EmptyStateBody>
+                  Connect OIDC and OAuth2 providers to enable additional secure authentication options for your users.
+                </EmptyStateBody>
+                <EmptyStateFooter>
+                  <EmptyStateActions>
+                    <Button variant="primary" onClick={handleAddProvider}>
+                      Add Authentication Provider
+                    </Button>
+                  </EmptyStateActions>
+                </EmptyStateFooter>
+              </EmptyState>
+            ) : (
+              <Table variant="compact">
+                <Thead>
+                  <Tr>
+                    <Th>Name</Th>
+                    <Th>Type</Th>
+                    <Th>Issuer URL</Th>
+                    <Th>Status</Th>
+                    <Th></Th>
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
+                </Thead>
+                <Tbody>
+                  {providers.map((provider) => (
+                    <Tr key={provider.id}>
+                      <Td>
+                        <Button
+                          variant="link"
+                          onClick={() => handleViewDetails(provider.id)}
+                          style={{
+                            padding: 0,
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            fontSize: 'inherit'
+                          }}
+                        >
+                          {provider.name}
+                        </Button>
+                      </Td>
+                      <Td>{provider.type}</Td>
+                      <Td>
+                        <span style={{ fontSize: '0.875rem', color: '#666' }}>
+                          {provider.issuerUrl}
+                        </span>
+                      </Td>
+                      <Td>{getStatusLabel(provider.status)}</Td>
+                      <Td>
+                        {!provider.isBuiltIn ? (
+                          <Dropdown
+                            isOpen={actionDropdownOpen === provider.id}
+                            onSelect={() => setActionDropdownOpen(null)}
+                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                              <MenuToggle
+                                ref={toggleRef}
+                                variant="plain"
+                                onClick={() => toggleActionDropdown(provider.id)}
+                                isExpanded={actionDropdownOpen === provider.id}
+                                aria-label={`Actions for ${provider.name}`}
+                              >
+                                <EllipsisVIcon />
+                              </MenuToggle>
+                            )}
+                          >
+                            <DropdownList>
+                              <DropdownItem
+                                key="view-details"
+                                onClick={() => handleViewDetails(provider.id)}
+                              >
+                                View details
+                              </DropdownItem>
+                              <DropdownItem
+                                key="edit"
+                                onClick={() => handleEditProvider(provider.id)}
+                              >
+                                Edit
+                              </DropdownItem>
+                              <DropdownItem
+                                key="delete"
+                                onClick={() => handleDeleteProvider(provider.id)}
+                              >
+                                Delete
+                              </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        ) : (
+                          <span style={{ color: '#666', fontSize: '0.875rem' }}>
+                            Built-in
+                          </span>
+                        )}
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            )}
           </CardBody>
         </Card>
       </StackItem>
@@ -318,7 +343,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
         titleIconVariant="warning"
       />
       <ModalBody tabIndex={0} style={{ padding: '1.5rem' }}>
-        <Stack hasGutter spaceItems={{ default: 'spaceItemsLg' }}>
+        <Stack hasGutter>
           <StackItem>
             <p style={{ fontSize: '16px', lineHeight: '1.5', margin: '0 0 1.5rem 0' }}>
               This will permanently delete the authentication provider "{selectedProviderForDelete?.name}" and remove all associated configurations.
