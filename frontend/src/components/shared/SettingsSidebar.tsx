@@ -41,7 +41,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     },
     {
       id: 'authentication' as SettingsSection,
-      label: 'Authentication & security',
+      label: 'Authentication',
       icon: <ShieldAltIcon />
     },
     // TODO: Uncomment these when ready to implement Members and User roles features

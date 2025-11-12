@@ -33,7 +33,7 @@ const GeneralSettings: React.FC = () => {
 
   return (
     <PageSection style={{ height: 'fit-content' }}>
-      {/* Header section to match Authentication & Security style */}
+      {/* Header section to match Authentication style */}
       <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
         <Title headingLevel="h1" size="2xl">
           General Settings

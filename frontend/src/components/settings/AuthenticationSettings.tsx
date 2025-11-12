@@ -148,7 +148,7 @@ const AuthenticationSettings: React.FC<AuthenticationSettingsProps> = ({ onShowL
       {activeView === 'management' && (
         <div style={{ marginTop: '1rem', marginBottom: '1.5rem' }}>
           <Title headingLevel="h1" size="2xl">
-            Authentication & Security
+            Authentication
           </Title>
           <p style={{ marginTop: '0.5rem', color: '#6a6e73' }}>
             Manage authentication providers, security policies, and access controls.

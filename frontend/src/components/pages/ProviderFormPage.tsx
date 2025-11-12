@@ -8,6 +8,11 @@ import {
   TextInput,
   Switch,
   Radio,
+  Select,
+  SelectOption,
+  SelectList,
+  MenuToggle,
+  MenuToggleElement,
   ActionGroup,
   Alert,
   Divider,
@@ -44,6 +49,7 @@ import {
 import { NavigationItemId, NavigationParams, ViewType } from '../../types/app';
 import TagInput from '../shared/TagInput';
 import ScopeInput from '../shared/ScopeInput';
+import ClaimPathInput from '../shared/ClaimPathInput';
 import { useDesignControls } from '../../hooks/useDesignControls';
 
 interface ProviderFormPageProps {
@@ -59,6 +65,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
   // Form state
   const [formData, setFormData] = useState({
     name: isEdit && providerData ? providerData.name : '',
+    displayName: isEdit && providerData ? providerData.displayName : '',
     type: isEdit && providerData ? providerData.type : 'OIDC',
     enabled: isEdit && providerData ? providerData.enabled : false,
     clientId: isEdit && providerData ? providerData.clientId : '',
@@ -69,10 +76,15 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     userinfoUrl: isEdit && providerData ? (providerData.userinfoUrl || '') : '',
     scopes: isEdit && providerData ? providerData.scopes : [],
     usernameClaim: isEdit && providerData ? providerData.usernameClaim : '',
+    roleClaimType: isEdit && providerData ? (providerData.roleClaimType || 'Static') : 'Static',
     roleClaim: isEdit && providerData ? providerData.roleClaim : '',
+    staticRole: isEdit && providerData ? (providerData.staticRole || '') : '',
+    roleClaimPrefix: isEdit && providerData ? (providerData.roleClaimPrefix || '') : '',
+    roleClaimSuffix: isEdit && providerData ? (providerData.roleClaimSuffix || '') : '',
     organizationAssignment: isEdit && providerData ? providerData.organizationAssignment : 'Static',
     externalOrganizationName: isEdit && providerData ? (providerData.externalOrganizationName || '') : '',
     claimPath: isEdit && providerData ? (providerData.claimPath || '') : '',
+    claimPathSegments: isEdit && providerData ? (providerData.claimPathSegments || []) : [],
     organizationNamePrefix: isEdit && providerData ? (providerData.organizationNamePrefix || '') : '',
     organizationNameSuffix: isEdit && providerData ? (providerData.organizationNameSuffix || '') : '',
   });
@@ -90,9 +102,18 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+  const [isRoleSelectOpen, setIsRoleSelectOpen] = useState<boolean>(false);
 
   // Store initial form state to detect changes
   const [initialFormData] = useState(() => ({ ...formData }));
+
+  // Predefined role options for static role selection
+  const roleOptions = [
+    { value: 'admin', label: 'Administrator' },
+    { value: 'user', label: 'User' },
+    { value: 'viewer', label: 'Viewer' },
+    { value: 'guest', label: 'Guest' }
+  ];
 
   // Auto-fill form if toggle is enabled and this is a new provider (not edit mode)
   useEffect(() => {
@@ -100,6 +121,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
       setFormData(prev => ({
         ...prev,
         name: 'demo-oidc-provider',
+        displayName: 'Demo OIDC Provider',
         type: 'OIDC',
         enabled: true,
         issuerUrl: 'https://example.com/auth/realms/demo',
@@ -110,10 +132,15 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
         clientSecret: 'demo-client-secret',
         scopes: ['openid', 'profile', 'email'],
         usernameClaim: 'preferred_username',
+        roleClaimType: 'Static',
         roleClaim: 'groups',
+        staticRole: 'admin',
+        roleClaimPrefix: 'role_',
+        roleClaimSuffix: '_user',
         organizationAssignment: 'Dynamic',
         externalOrganizationName: 'demo-organization',
         claimPath: 'custom_claims.organization_id',
+        claimPathSegments: ['custom_claims', 'username'],
         organizationNamePrefix: 'org-',
         organizationNameSuffix: '-demo'
       }));
@@ -126,6 +153,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     if (isEdit && providerData) {
       setFormData({
         name: providerData.name || '',
+        displayName: providerData.displayName || '',
         type: providerData.type || 'OIDC',
         enabled: providerData.enabled || false,
         clientId: providerData.clientId || '',
@@ -136,10 +164,15 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
         userinfoUrl: providerData.userinfoUrl || '',
         scopes: providerData.scopes || [],
         usernameClaim: providerData.usernameClaim || '',
+        roleClaimType: providerData.roleClaimType || 'Static',
         roleClaim: providerData.roleClaim || '',
+        staticRole: providerData.staticRole || '',
+        roleClaimPrefix: providerData.roleClaimPrefix || '',
+        roleClaimSuffix: providerData.roleClaimSuffix || '',
         organizationAssignment: providerData.organizationAssignment || 'Static',
         externalOrganizationName: providerData.externalOrganizationName || '',
         claimPath: providerData.claimPath || '',
+        claimPathSegments: providerData.claimPathSegments || [],
         organizationNamePrefix: providerData.organizationNamePrefix || '',
         organizationNameSuffix: providerData.organizationNameSuffix || '',
       });
@@ -292,6 +325,12 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
     }
 
     return '';
+  };
+
+  // Handler for role selection dropdown
+  const handleRoleSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
+    handleInputChange('staticRole', value as string);
+    setIsRoleSelectOpen(false);
   };
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
@@ -577,7 +616,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
         return false;
       }
     } else if (formData.organizationAssignment === 'Dynamic') {
-      if (!formData.claimPath.trim()) {
+      if (!formData.claimPath?.trim()) {
         return false;
       }
     }
@@ -773,6 +812,13 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 </HelperTextItem>
               </HelperText>
             )}
+            {!isEdit && !nameError && (
+              <HelperText>
+                <HelperTextItem variant="indeterminate">
+                  This is a unique authentication provider identifier. This cannot be changed after it is created.
+                </HelperTextItem>
+              </HelperText>
+            )}
             {isEdit && (
               <HelperText>
                 <HelperTextItem variant="indeterminate">
@@ -780,6 +826,52 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                 </HelperTextItem>
               </HelperText>
             )}
+          </FormGroup>
+
+          {/* Display Name */}
+          <FormGroup fieldId="display-name">
+            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+              <FlexItem>
+                <label htmlFor="display-name" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                  Display name
+                </label>
+              </FlexItem>
+              <FlexItem>
+                <Popover
+                  triggerAction="hover"
+                  headerContent="Display Name"
+                  bodyContent={
+                    <div>
+                      <p><strong>Purpose:</strong> The name users will see on the login button.</p>
+                      <p><strong>Example:</strong> "Sign in with Google", "Company SSO", "Azure Active Directory"</p>
+                      <p><strong>Tip:</strong> Use a friendly name that users will recognize and understand.</p>
+                    </div>
+                  }
+                  position="right"
+                >
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
+                    aria-label="Display name help"
+                  />
+                </Popover>
+              </FlexItem>
+            </Flex>
+            <div style={{ marginTop: '16px' }}>
+              <TextInput
+                type="text"
+                id="display-name"
+                value={formData.displayName}
+                onChange={(_event, value) => handleInputChange('displayName', value)}
+                placeholder="e.g., Company SSO, Google, Azure AD"
+              />
+            </div>
+            <HelperText>
+              <HelperTextItem variant="indeterminate">
+                Users will see this name on the login button
+              </HelperTextItem>
+            </HelperText>
           </FormGroup>
 
           {/* Provider Type Radio Buttons */}
@@ -907,99 +999,119 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
             hasError={scopesError && hasInteractedWithScopes}
           />
 
-          {/* Username Claim */}
-          <FormGroup fieldId="username-claim" validated={usernameClaimError ? 'error' : 'default'}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+          {/* Username Claim Path */}
+          <ClaimPathInput
+            claimPathSegments={formData.claimPathSegments}
+            onClaimPathSegmentsChange={(segments) => handleInputChange('claimPathSegments', segments)}
+            isRequired={true}
+            hasError={false}
+          />
+
+          {/* Role Assignment */}
+          <Title headingLevel="h3" size="lg" style={{ marginBottom: '16px', fontWeight: '500' }}>
+            Role assignment
+          </Title>
+
+          <FormGroup fieldId="role-assignment">
+            <Flex spaceItems={{ default: 'spaceItemsLg' }}>
               <FlexItem>
-                <label htmlFor="username-claim" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
-                  Username claim
-                </label>
+                <Radio
+                  isChecked={formData.roleClaimType === 'Static'}
+                  name="role-assignment"
+                  onChange={() => handleInputChange('roleClaimType', 'Static')}
+                  label="Static"
+                  id="radio-static-role"
+                />
               </FlexItem>
               <FlexItem>
-                <Popover
-                  triggerAction="hover"
-                  headerContent="Username Claim"
-                  bodyContent={
-                    <div>
-                      <p><strong>Purpose:</strong> The claim field that contains the username.</p>
-                      <p><strong>Format:</strong> Use dot notation to access nested fields (e.g., 'custom_claims.user_id').</p>
-                      <p><strong>Requirements:</strong> Each segment must start with a letter or underscore and contain only letters, numbers, or underscores.</p>
-                    </div>
-                  }
-                  position="right"
-                >
-                  <Button
-                    variant="plain"
-                    size="sm"
-                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
-                    aria-label="Username claim help"
-                  />
-                </Popover>
+                <Radio
+                  isChecked={formData.roleClaimType === 'Dynamic'}
+                  name="role-assignment"
+                  onChange={() => handleInputChange('roleClaimType', 'Dynamic')}
+                  label="Dynamic"
+                  id="radio-dynamic-role"
+                />
               </FlexItem>
             </Flex>
-            <TextInput
-              type="text"
-              id="username-claim"
-              value={formData.usernameClaim}
-              onChange={(_event, value) => handleInputChange('usernameClaim', value)}
-              placeholder="e.g. preferred_username"
-              validated={usernameClaimError ? 'error' : 'default'}
-            />
-            {usernameClaimError && (
-              <HelperText>
-                <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
-                  {usernameClaimError}
-                </HelperTextItem>
-              </HelperText>
-            )}
           </FormGroup>
 
-          {/* Role Claim */}
-          <FormGroup fieldId="role-claim" validated={roleClaimError ? 'error' : 'default'}>
-            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
-              <FlexItem>
-                <label htmlFor="role-claim" style={{ fontWeight: '500', fontSize: '0.875rem' }}>
-                  Role claim
-                </label>
-              </FlexItem>
-              <FlexItem>
-                <Popover
-                  triggerAction="hover"
-                  headerContent="Role Claim"
-                  bodyContent={
-                    <div>
-                      <p><strong>Purpose:</strong> The claim field that contains user roles or group memberships for authorization.</p>
-                      <p><strong>Configuration:</strong> Refer to your provider's documentation for the correct claim name.</p>
-                      <p><strong>Common examples:</strong> groups, roles, authorities</p>
-                    </div>
-                  }
-                  position="right"
-                >
-                  <Button
-                    variant="plain"
-                    size="sm"
-                    icon={<InfoAltIcon style={{ color: '#6a6e73' }} />}
-                    aria-label="Role claim help"
-                  />
-                </Popover>
-              </FlexItem>
-            </Flex>
-            <TextInput
-              type="text"
-              id="role-claim"
-              value={formData.roleClaim}
-              onChange={(_event, value) => handleInputChange('roleClaim', value)}
-              placeholder="e.g., groups, roles, authorities"
-              validated={roleClaimError ? 'error' : 'default'}
-            />
-            {roleClaimError && (
-              <HelperText>
-                <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
-                  {roleClaimError}
-                </HelperTextItem>
-              </HelperText>
-            )}
-          </FormGroup>
+          {/* Conditional fields based on role assignment selection */}
+          {formData.roleClaimType === 'Static' && (
+            <FormGroup
+              label="Role"
+              isRequired
+              fieldId="static-role"
+            >
+              <Select
+                id="static-role"
+                isOpen={isRoleSelectOpen}
+                selected={formData.staticRole}
+                onSelect={handleRoleSelect}
+                onOpenChange={(isOpen) => setIsRoleSelectOpen(isOpen)}
+                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                  <MenuToggle
+                    ref={toggleRef}
+                    onClick={() => setIsRoleSelectOpen(!isRoleSelectOpen)}
+                    isExpanded={isRoleSelectOpen}
+                    style={{ width: '200px' }}
+                  >
+                    {formData.staticRole ? roleOptions.find(opt => opt.value === formData.staticRole)?.label : 'Select a role'}
+                  </MenuToggle>
+                )}
+              >
+                <SelectList>
+                  {roleOptions.map((option) => (
+                    <SelectOption key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectOption>
+                  ))}
+                </SelectList>
+              </Select>
+            </FormGroup>
+          )}
+
+          {formData.roleClaimType === 'Dynamic' && (
+            <>
+              <FormGroup label="Role claim field" isRequired fieldId="role-claim-field" validated={roleClaimError ? 'error' : 'default'}>
+                <TextInput
+                  isRequired
+                  type="text"
+                  id="role-claim-field"
+                  value={formData.roleClaim}
+                  onChange={(_event, value) => handleInputChange('roleClaim', value)}
+                  placeholder=""
+                  validated={roleClaimError ? 'error' : 'default'}
+                />
+                {roleClaimError && (
+                  <HelperText>
+                    <HelperTextItem variant="error" icon={<ExclamationCircleIcon />}>
+                      {roleClaimError}
+                    </HelperTextItem>
+                  </HelperText>
+                )}
+              </FormGroup>
+
+              <FormGroup label="Role prefix" fieldId="role-prefix-dynamic">
+                <TextInput
+                  type="text"
+                  id="role-prefix-dynamic"
+                  value={formData.roleClaimPrefix}
+                  onChange={(_event, value) => handleInputChange('roleClaimPrefix', value)}
+                  placeholder=""
+                />
+              </FormGroup>
+
+              <FormGroup label="Role suffix" fieldId="role-suffix-dynamic">
+                <TextInput
+                  type="text"
+                  id="role-suffix-dynamic"
+                  value={formData.roleClaimSuffix}
+                  onChange={(_event, value) => handleInputChange('roleClaimSuffix', value)}
+                  placeholder=""
+                />
+              </FormGroup>
+            </>
+          )}
 
           <Divider style={{ margin: '24px 0' }} />
 
@@ -1065,7 +1177,7 @@ const ProviderFormPage: React.FC<ProviderFormPageProps> = ({ onNavigate, provide
                   isRequired
                   type="text"
                   id="claim-path"
-                  value={formData.claimPath}
+                  value={formData.claimPath || ''}
                   onChange={(_event, value) => handleInputChange('claimPath', value)}
                   placeholder=""
                 />

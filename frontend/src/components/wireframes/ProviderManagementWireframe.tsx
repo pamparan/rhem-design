@@ -55,6 +55,7 @@ import { useDesignControls } from "../../hooks/useDesignControls";
 interface IdentityProvider {
   id: string;
   name: string;
+  displayName?: string;
   type: string;
   issuerUrl: string;
   status: boolean; // enabled/disabled
@@ -82,6 +83,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     {
       id: 'aap',
       name: 'enterprise-platform',
+      displayName: 'Enterprise Platform SSO',
       type: 'OAuth2',
       issuerUrl: 'https://aap.example.com/api/gateway/v1/social/',
       status: true,
@@ -97,6 +99,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     {
       id: 'google',
       name: 'google',
+      displayName: 'Google Workspace',
       type: 'OIDC',
       issuerUrl: 'https://accounts.google.com',
       status: true,
@@ -112,6 +115,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     {
       id: 'okta',
       name: 'customer-b-okta',
+      displayName: 'Customer B Okta',
       type: 'OIDC',
       issuerUrl: 'https://customer-b.okta.com/oauth2/default',
       status: false,
@@ -127,6 +131,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
     {
       id: 'kubernetes',
       name: 'k8s-cluster-auth',
+      displayName: 'Kubernetes Cluster Auth',
       type: 'OIDC',
       issuerUrl: 'https://k8s.cluster.local:6443',
       status: true,
@@ -246,6 +251,7 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
                 <Thead>
                   <Tr>
                     <Th>Name</Th>
+                    <Th>Display Name</Th>
                     <Th>Type</Th>
                     <Th>Issuer URL</Th>
                     <Th>Status</Th>
@@ -268,6 +274,11 @@ const ProviderManagementWireframe: React.FC<ProviderManagementWireframeProps> = 
                         >
                           {provider.name}
                         </Button>
+                      </Td>
+                      <Td>
+                        <span style={{ fontSize: '0.875rem' }}>
+                          {provider.displayName || '-'}
+                        </span>
                       </Td>
                       <Td>{provider.type}</Td>
                       <Td>

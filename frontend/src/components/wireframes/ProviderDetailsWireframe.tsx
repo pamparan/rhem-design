@@ -107,6 +107,7 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
     const providers = {
       'aap': {
         name: 'enterprise-platform',
+        displayName: 'Enterprise Platform SSO',
         type: 'OAuth2',
         enabled: true,
         authorizationUrl: 'https://aap.example.com/api/gateway/v1/social/authorize',
@@ -125,6 +126,7 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
       },
       'google': {
         name: 'google',
+        displayName: 'Google Workspace',
         type: 'OIDC',
         enabled: true,
         authorizationUrl: 'https://accounts.google.com/oauth2/v2/auth',
@@ -140,6 +142,7 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
       },
       'okta': {
         name: 'customer-b-okta',
+        displayName: 'Customer B Okta',
         type: 'OIDC',
         enabled: false,
         authorizationUrl: 'https://customer-b.okta.com/oauth2/default/v1/authorize',
@@ -157,6 +160,7 @@ const ProviderDetailsWireframe: React.FC<ProviderDetailsProps> = ({
       },
       'kubernetes': {
         name: 'k8s-cluster-auth',
+        displayName: 'Kubernetes Cluster Auth',
         type: 'OIDC',
         enabled: true,
         authorizationUrl: 'https://k8s.cluster.local:6443/oauth2/v1/authorize',
@@ -233,7 +237,7 @@ metadata:
     created: "${new Date().toISOString()}"
 spec:
   type: ${providerData.type}
-  enabled: ${providerData.enabled}
+  enabled: ${providerData.enabled}${(providerData as any).displayName ? `\n  displayName: "${(providerData as any).displayName}"` : ''}
   config:
 ${configFields}
     clientID: "${providerData.clientId}"
@@ -401,7 +405,7 @@ ${orgAssignmentConfig}
                           Provider Overview
                         </Title>
                         <Grid hasGutter>
-                          <GridItem span={4}>
+                          <GridItem span={3}>
                             <DescriptionList>
                               <DescriptionListGroup>
                                 <DescriptionListTerm>Name</DescriptionListTerm>
@@ -411,7 +415,17 @@ ${orgAssignmentConfig}
                               </DescriptionListGroup>
                             </DescriptionList>
                           </GridItem>
-                          <GridItem span={4}>
+                          <GridItem span={3}>
+                            <DescriptionList>
+                              <DescriptionListGroup>
+                                <DescriptionListTerm>Display Name</DescriptionListTerm>
+                                <DescriptionListDescription>
+                                  <strong>{(provider as any).displayName || '-'}</strong>
+                                </DescriptionListDescription>
+                              </DescriptionListGroup>
+                            </DescriptionList>
+                          </GridItem>
+                          <GridItem span={3}>
                             <DescriptionList>
                               <DescriptionListGroup>
                                 <DescriptionListTerm>Type</DescriptionListTerm>
@@ -421,7 +435,7 @@ ${orgAssignmentConfig}
                               </DescriptionListGroup>
                             </DescriptionList>
                           </GridItem>
-                          <GridItem span={4}>
+                          <GridItem span={3}>
                             <DescriptionList>
                               <DescriptionListGroup>
                                 <DescriptionListTerm>Status</DescriptionListTerm>
