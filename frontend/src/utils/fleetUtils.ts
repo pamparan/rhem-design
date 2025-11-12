@@ -15,7 +15,7 @@ export const deviceStatusItems: Record<DeviceStatus, { label: string, color: str
     PENDING_SYNC: { label: 'Pending Sync', color: '#2b9af3', icon: ClockIcon },
     DEGRADED: { label: 'Degraded', color: '#f0ab00', icon: ExclamationTriangleIcon },
     UNKNOWN: { label: 'Unknown', color: '#6a6e73', icon: ExclamationTriangleIcon },
-    REBOOTING: { label: 'Rebooting', color: '#2b9af3', icon: InProgressIcon },
+    REBOOTING: { label: 'Rebooting', color: '#147878', icon: InProgressIcon },
     POWERED_OFF: { label: 'Powered Off', color: '#2b9af3', icon: PowerOffIcon },
     ONLINE: { label: 'Online', color: '#3e8635', icon: CheckCircleIcon },
   };
@@ -29,7 +29,7 @@ export const applicationStatusItems: Record<ApplicationStatus, { label: string, 
   
 export const systemUpdateStatusItems: Record<SystemUpdateStatus, { label: string, color: string, icon: any }> = {
   OUT_OF_DATE: { label: 'Out-of-date', color: '#f0ab00', icon: ExclamationTriangleIcon },
-  UPDATING: { label: 'Updating', color: '#2b9af3', icon: InProgressIcon },
+  UPDATING: { label: 'Updating', color: '#147878', icon: InProgressIcon },
   UNKNOWN: { label: 'Unknown', color: '#6a6e73', icon: ExclamationTriangleIcon },
   UP_TO_DATE: { label: 'Up-to-date', color: '#3e8635', icon: CheckCircleIcon },
 };

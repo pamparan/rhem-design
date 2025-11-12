@@ -30,7 +30,7 @@ export const getStatusColor = (status: DeviceStatus | ApplicationStatus | System
     // System update statuses - matching dropdown filter colors exactly
     UP_TO_DATE: '#5cb85c',       // Green for success
     OUT_OF_DATE: '#f0ad4e',      // Orange for warning
-    UPDATING: '#337ab7',         // Blue for info/progress
+    UPDATING: '#147878',         // Teal for info/progress
     FAILED: '#d9534f',           // Red for error
     ROLLING_BACK: '#f0ad4e',     // Orange for warning
   };
@@ -46,10 +46,10 @@ export const getStatusLabelStyle = (status: DeviceStatus | ApplicationStatus | S
     ERROR: { backgroundColor: 'transparent', color: '#b1380b', borderColor: '#b1380b' }, // Danger
     DEGRADED: { backgroundColor: 'transparent', color: '#dca614', borderColor: '#dca614' }, // Warning
     UNKNOWN: { backgroundColor: 'transparent', color: '#6a6e73', borderColor: '#6a6e73' }, // Gray
-    REBOOTING: { backgroundColor: 'transparent', color: '#5e40be', borderColor: '#5e40be' }, // Info
-    POWERED_OFF: { backgroundColor: 'transparent', color: '#5e40be', borderColor: '#5e40be' }, // Info
+    REBOOTING: { backgroundColor: 'transparent', color: '#147878', borderColor: '#147878' }, // Info
+    POWERED_OFF: { backgroundColor: 'transparent', color: '#147878', borderColor: '#147878' }, // Info
     SUSPENDED: { backgroundColor: 'transparent', color: '#dca614', borderColor: '#dca614' }, // Warning
-    PENDING_SYNC: { backgroundColor: 'transparent', color: '#5e40be', borderColor: '#5e40be' }, // Info
+    PENDING_SYNC: { backgroundColor: 'transparent', color: '#147878', borderColor: '#147878' }, // Info
 
     // Application statuses - using PatternFly 6 outlined label status colors
     HEALTHY: { backgroundColor: 'transparent', color: '#3d7317', borderColor: '#3d7317' }, // Success
@@ -57,7 +57,7 @@ export const getStatusLabelStyle = (status: DeviceStatus | ApplicationStatus | S
     // System update statuses - using PatternFly 6 outlined label status colors
     UP_TO_DATE: { backgroundColor: 'transparent', color: '#3d7317', borderColor: '#3d7317' }, // Success
     OUT_OF_DATE: { backgroundColor: 'transparent', color: '#dca614', borderColor: '#dca614' }, // Warning
-    UPDATING: { backgroundColor: 'transparent', color: '#5e40be', borderColor: '#5e40be' }, // Info
+    UPDATING: { backgroundColor: 'transparent', color: '#147878', borderColor: '#147878' }, // Info
     FAILED: { backgroundColor: 'transparent', color: '#b1380b', borderColor: '#b1380b' }, // Danger
     ROLLING_BACK: { backgroundColor: 'transparent', color: '#dca614', borderColor: '#dca614' }, // Warning
   };
