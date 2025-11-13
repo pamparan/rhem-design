@@ -458,7 +458,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                     <div style={{ marginBottom: '16px' }}>
                       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
                         <FlexItem>
-                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Application health</span>
+                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Application status</span>
                         </FlexItem>
                         <FlexItem>
                           <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
