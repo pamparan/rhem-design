@@ -95,9 +95,11 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   const [isNetworkExpanded, setIsNetworkExpanded] = useState(false);
   const [isConfigExpanded, setIsConfigExpanded] = useState(false);
   const [isApplicationsExpanded, setIsApplicationsExpanded] = useState(false);
+  const [isCustomDataExpanded, setIsCustomDataExpanded] = useState(false);
+  const [isLabelsExpanded, setIsLabelsExpanded] = useState(false);
 
-  // Label management states
-  const [labels, setLabels] = useState<string[]>(['device=test']);
+  // Label management states - realistic fitting room device labels
+  const [labels, setLabels] = useState<string[]>(['location=fitting-room', 'store=madrid-flagship', 'brand=zara']);
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabelInput, setNewLabelInput] = useState('');
 
@@ -145,40 +147,97 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
   // Enhanced mock data matching staging environment
   const deviceInfo = {
-    name: 'orange-device',
+    name: 'gbp0sn6574270a1f',
     shortName: 'gbp0sn...0574270',
-    fleetName: 'Fitting Room Device',
+    fleetName: 'fitting-room-devices', // Use consistent fleet name from mockData
     architecture: 'amd64',
     operatingSystem: 'linux',
-    distro: 'CentOS Stream 9',
-    hostname: 'localhost.localdomain',
+    distro: 'Red Hat Enterprise Linux 9.3',
+    hostname: 'madrid-fitting-room-01.local',
     kernel: '5.14.0-570.el9.x86_64',
     netInterfaceDefault: 'enp1s0',
     netMACDefault: '52:54:00:2c:99:3e',
-    productName: 'Standard PC (Q35 + ICH9, 2009)',
+    productName: 'Dell OptiPlex 7090 Ultra',
     bootID: '6a8a4653-e383-488f-82d8-0c7d3356cffc',
     netIPDefault: '192.168.122.93/24',
     productUUID: '13c4629c-fedc-4314-a616-65cb62526fe2',
-    agentVersion: 'v1.0.0-main-92-ge92789ef',
+    agentVersion: 'v1.2.4-stable-104-g8f92c1ef',
     systemImage: 'quay.io/redhat/rhde:9.3',
   };
 
-  // Mock applications data (matching the reference images)
+  // Mock custom data - realistic retail fitting room device
+  const mockCustomData = {
+    serialNumber: 'DLL7090ULT240315001',
+    manufacturingDate: '2024-03-15',
+    warrantyExpiry: '2027-03-15',
+    location: {
+      building: 'Zara Flagship Store Madrid',
+      floor: '2nd Floor',
+      zone: 'Premium Fitting Room Section'
+    },
+    maintenance: {
+      lastService: '2024-09-15',
+      nextService: '2024-12-15',
+      serviceContract: 'Dell ProSupport Plus'
+    },
+    customFields: {
+      businessUnit: 'Retail Technology',
+      costCenter: 'RC-ES-MAD-001',
+      assetTag: 'ZARA-FTR-MAD-001'
+    }
+  };
+
+  // Application Status Enums - complete list
+  const ApplicationStatus = {
+    PREPARING: 'Preparing',
+    STARTING: 'Starting',
+    RUNNING: 'Running',
+    ERROR: 'Error',
+    UNKNOWN: 'Unknown',
+    COMPLETED: 'Completed'
+  };
+
+  // Mock applications data - realistic retail fitting room applications
   const mockApplications = [
-    { name: 'Robot Controller v1', status: 'Running', ready: 'V1', restarts: '1', type: 'Embedded' },
-    { name: 'Robot Brain v2', status: 'Updating', ready: '2/4', restarts: '0', type: 'Embedded' },
-    { name: 'I- Inference Server', status: 'Running', ready: '', restarts: '0', type: '' },
-    { name: 'I- Model', status: 'Downloading', ready: '', restarts: '0', type: '' },
-    { name: 'I- Memory', status: 'Running', ready: '', restarts: '0', type: '' },
-    { name: '|- Kill Switch', status: 'Degraded', ready: '', restarts: '0', type: '' },
-    { name: 'Speech Subsystem v1', status: 'Running', ready: 'V1', restarts: '0', type: 'User-installed' },
+    { name: 'Zara Smart Mirror', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '2', type: 'Core Application', critical: false },
+    { name: 'Fashion AI Recommender', status: ApplicationStatus.RUNNING, ready: '3/3', restarts: '0', type: 'AI Service', critical: false },
+    { name: 'Customer Analytics Engine', status: ApplicationStatus.STARTING, ready: '2/4', restarts: '0', type: 'Analytics', critical: false },
+    { name: 'Inventory Sync Service', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '5', type: 'Integration', critical: false },
+    { name: 'Camera Feed Processor', status: ApplicationStatus.PREPARING, ready: '0/2', restarts: '0', type: 'Media Processing', critical: false },
+    { name: 'Emergency Alert System', status: ApplicationStatus.ERROR, ready: '0/1', restarts: '12', type: 'Safety Critical', critical: true },
+    { name: 'Store WiFi Portal', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '1', type: 'Network Service', critical: false },
   ];
 
-  // Mock system services data
+  // Mock system services data - enhanced for fleetless device management
   const mockSystemServices = [
-    { name: 'microshift.service', enabled: true, active: 'Active (Running)' },
-    { name: 'crio.service', enabled: true, active: 'Active (Running)' },
-    { name: 'logrotate.timer', enabled: false, active: 'Disabled' },
+    {
+      name: 'microshift.service',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'running'
+    },
+    {
+      name: 'crio.service',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'running'
+    },
+    {
+      name: 'logrotate.timer',
+      enabled: false,
+      loadState: 'loaded',
+      activeState: 'inactive',
+      subState: 'dead'
+    },
+    {
+      name: 'flightctl-agent.service',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'running'
+    },
   ];
 
   // Mock resource status data matching staging
@@ -188,13 +247,13 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
     memoryPressure: { status: 'Within limits', severity: 'success' },
   };
 
-  // Mock system status
+  // Mock system status - realistic fitting room device status
   const mockSystemStatus = {
-    applicationStatus: 'Unknown',
-    deviceStatus: 'Unknown',
-    updateStatus: 'Unknown',
-    integrityStatus: 'Unknown',
-    lastSeen: '2 days ago'
+    applicationStatus: 'Degraded',
+    deviceStatus: 'Online',
+    updateStatus: 'Pending',
+    integrityStatus: 'Verified',
+    lastSeen: '2 minutes ago'
   };
 
   // Mock configurations
@@ -218,43 +277,78 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
   const renderApplicationStatusIcon = (status: string) => {
     switch (status) {
-      case 'Running':
+      case ApplicationStatus.RUNNING:
         return <CheckCircleIcon style={{ color: '#3d7317' }} />;
-      case 'Updating':
+      case ApplicationStatus.STARTING:
         return <InProgressIcon style={{ color: '#147878' }} />;
-      case 'Downloading':
-        return <InfoCircleIcon style={{ color: '#2b9af3' }} />;
-      case 'Degraded':
-        return <ExclamationTriangleIcon style={{ color: '#f0ab00' }} />;
-      case 'Starting':
-        return <InfoCircleIcon style={{ color: '#5e40be' }} />;
+      case ApplicationStatus.PREPARING:
+        return <DownloadIcon style={{ color: '#2b9af3' }} />;
+      case ApplicationStatus.ERROR:
+        return <TimesCircleIcon style={{ color: '#c9190b' }} />;
+      case ApplicationStatus.UNKNOWN:
+        return <InfoCircleIcon style={{ color: '#6a6e73' }} />;
+      case ApplicationStatus.COMPLETED:
+        return <CheckCircleIcon style={{ color: '#3e8635' }} />;
       default:
-        return <TimesCircleIcon style={{ color: '#b1380b' }} />;
+        return <InfoCircleIcon style={{ color: '#6a6e73' }} />;
     }
   };
 
-  const getApplicationStatusColor = (status: string) => {
+  const getApplicationStatusColor = (status: string): string => {
     switch (status) {
-      case 'Running':
-        return 'green';
-      case 'Updating':
-        return 'blue';
-      case 'Downloading':
-        return 'blue';
-      case 'Degraded':
-        return 'orange';
+      case ApplicationStatus.RUNNING:
+        return 'success';
+      case ApplicationStatus.STARTING:
+        return 'info';
+      case ApplicationStatus.PREPARING:
+        return 'info';
+      case ApplicationStatus.ERROR:
+        return 'danger';
+      case ApplicationStatus.UNKNOWN:
+        return 'grey';
+      case ApplicationStatus.COMPLETED:
+        return 'success';
       default:
-        return 'red';
+        return 'grey';
     }
   };
 
+  // SystemD status handling utilities
+  const getSystemdStatusIcon = (serviceName: string) => {
+    if (serviceName.endsWith('.service')) {
+      return <CogIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    } else if (serviceName.endsWith('.timer')) {
+      return <ClockIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    }
+    return null;
+  };
+
+  const formatSystemdStatus = (status: string): string => {
+    // Preserve casing for now as suggested in feedback
+    return status;
+  };
+
+  const getSystemdStatusColor = (activeState: string, subState: string) => {
+    if (activeState === 'active' && subState === 'running') {
+      return 'success';
+    } else if (activeState === 'failed') {
+      return 'danger';
+    } else if (activeState === 'activating' || activeState === 'deactivating') {
+      return 'warning';
+    } else if (activeState === 'inactive') {
+      return undefined; // Grey/default
+    }
+    return undefined;
+  };
+
+  // Labels - consistent with the fitting-room-devices fleet theme
   const deviceLabels = [
-    'store=madrid',
     'location=fitting-room',
+    'store=madrid-flagship',
     'brand=zara',
     'country=spain',
-    'type=camera',
-    'production line=1'
+    'floor=2nd',
+    'zone=premium-section'
   ];
 
   return (
@@ -347,8 +441,84 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
         </Tabs>
 
         <TabContent eventKey="details" id="details-tab" hidden={activeTab !== 'details'}>
-          <TabContentBody>
-            {/* Top Row - Full Width Device Information */}
+          <TabContentBody style={{ marginTop: '24px' }}>
+            {/* System Status - Full Width at Top */}
+            <Card style={{ marginBottom: '32px' }}>
+              <CardTitle>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>System Status</h3>
+                  <div style={{ fontSize: '12px', color: '#6a6e73', marginTop: '4px' }}>
+                    Last seen {mockSystemStatus.lastSeen}
+                  </div>
+                </div>
+              </CardTitle>
+              <CardBody style={{ padding: '24px' }}>
+                <Grid hasGutter>
+                  <GridItem span={3}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                        <FlexItem>
+                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Application health</span>
+                        </FlexItem>
+                        <FlexItem>
+                          <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                        </FlexItem>
+                      </Flex>
+                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                        {mockSystemStatus.applicationStatus}
+                      </Label>
+                    </div>
+                  </GridItem>
+                  <GridItem span={3}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                        <FlexItem>
+                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Device status</span>
+                        </FlexItem>
+                        <FlexItem>
+                          <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                        </FlexItem>
+                      </Flex>
+                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                        {mockSystemStatus.deviceStatus}
+                      </Label>
+                    </div>
+                  </GridItem>
+                  <GridItem span={3}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                        <FlexItem>
+                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Update status</span>
+                        </FlexItem>
+                        <FlexItem>
+                          <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                        </FlexItem>
+                      </Flex>
+                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                        {mockSystemStatus.updateStatus}
+                      </Label>
+                    </div>
+                  </GridItem>
+                  <GridItem span={3}>
+                    <div style={{ marginBottom: '16px' }}>
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
+                        <FlexItem>
+                          <span style={{ fontSize: '14px', fontWeight: '600' }}>Integrity status</span>
+                        </FlexItem>
+                        <FlexItem>
+                          <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
+                        </FlexItem>
+                      </Flex>
+                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                        {mockSystemStatus.integrityStatus}
+                      </Label>
+                    </div>
+                  </GridItem>
+                </Grid>
+              </CardBody>
+            </Card>
+
+            {/* Device Information - Full Width */}
             <Card style={{ marginBottom: '32px' }}>
               <CardTitle>
                 <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
@@ -384,9 +554,19 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                       <DescriptionListGroup>
+                        <DescriptionListTerm>Agent version</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              {deviceInfo.agentVersion}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
                         <DescriptionListTerm>Architecture</DescriptionListTerm>
                         <DescriptionListDescription>
-                          <Label status="info" variant="filled" isCompact>
+                          <Label variant="outline" isCompact>
                             {deviceInfo.architecture}
                           </Label>
                         </DescriptionListDescription>
@@ -402,24 +582,14 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                       <DescriptionListGroup>
                         <DescriptionListTerm>Distro</DescriptionListTerm>
                         <DescriptionListDescription>
-                          <Label status="info" variant="outline" isCompact>
+                          <Label variant="outline" isCompact>
                             {deviceInfo.distro}
                           </Label>
                         </DescriptionListDescription>
                       </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Agent version</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Content>
-                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                              {deviceInfo.agentVersion}
-                            </span>
-                          </Content>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
                     </DescriptionList>
                   </GridItem>
-                  <GridItem span={3}>
+                  <GridItem span={6}>
                     <DescriptionList isCompact>
                       <DescriptionListGroup>
                         <DescriptionListTerm>Product name</DescriptionListTerm>
@@ -441,79 +611,75 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                       </DescriptionListGroup>
                     </DescriptionList>
                   </GridItem>
-                  <GridItem span={3}>
-                    <DescriptionList isCompact>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Labels</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Flex spaceItems={{ default: 'spaceItemsXs' }} style={{ flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
-                            {labels.map((label, index) => (
-                              <FlexItem key={index}>
-                                <Label
-                                  variant="outline"
-                                  isCompact
-                                  onClose={() => handleRemoveLabel(label)}
-                                >
-                                  {label}
-                                </Label>
-                              </FlexItem>
-                            ))}
-                            <FlexItem>
-                              {isAddingLabel ? (
-                                <InputGroup>
-                                  <InputGroupItem isFill>
-                                    <TextInput
-                                      type="text"
-                                      placeholder="key=value"
-                                      value={newLabelInput}
-                                      onChange={(_event, value) => setNewLabelInput(value)}
-                                      onKeyDown={handleKeyDown}
-                                      style={{ fontSize: '12px', minWidth: '120px' }}
-                                      autoFocus
-                                    />
-                                  </InputGroupItem>
-                                  <InputGroupItem>
-                                    <Button
-                                      variant="plain"
-                                      aria-label="Save label"
-                                      onClick={handleSaveLabel}
-                                      isDisabled={!newLabelInput.trim()}
-                                      style={{ padding: '4px' }}
-                                    >
-                                      <CheckIcon style={{ fontSize: '12px', color: '#3e8635' }} />
-                                    </Button>
-                                  </InputGroupItem>
-                                  <InputGroupItem>
-                                    <Button
-                                      variant="plain"
-                                      aria-label="Cancel add label"
-                                      onClick={handleCancelAddLabel}
-                                      style={{ padding: '4px' }}
-                                    >
-                                      <TimesIcon style={{ fontSize: '12px', color: '#c9190b' }} />
-                                    </Button>
-                                  </InputGroupItem>
-                                </InputGroup>
-                              ) : (
-                                <Button
-                                  variant="link"
-                                  style={{ padding: 0, fontSize: '12px' }}
-                                  onClick={handleAddLabel}
-                                  icon={<PlusIcon style={{ fontSize: '10px', marginRight: '4px' }} />}
-                                >
-                                  Add label
-                                </Button>
-                              )}
-                            </FlexItem>
-                          </Flex>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
                 </Grid>
 
-                {/* Expandable Technical Specifications */}
+                {/* Labels - Main section */}
                 <div style={{ marginTop: '24px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Labels ({labels.length})</h4>
+                  <Flex spaceItems={{ default: 'spaceItemsSm' }} style={{ flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    {labels.map((label, index) => (
+                      <FlexItem key={index}>
+                        <Label
+                          variant="outline"
+                          isCompact
+                          onClose={() => handleRemoveLabel(label)}
+                        >
+                          {label}
+                        </Label>
+                      </FlexItem>
+                    ))}
+                    <FlexItem>
+                      {isAddingLabel ? (
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <TextInput
+                              type="text"
+                              placeholder="key=value"
+                              value={newLabelInput}
+                              onChange={(_event, value) => setNewLabelInput(value)}
+                              onKeyDown={handleKeyDown}
+                              style={{ fontSize: '14px', minWidth: '200px' }}
+                              autoFocus
+                            />
+                          </FlexItem>
+                          <FlexItem>
+                            <Button
+                              variant="plain"
+                              aria-label="Save label"
+                              onClick={handleSaveLabel}
+                              isDisabled={!newLabelInput.trim()}
+                              style={{ padding: '4px' }}
+                            >
+                              <CheckIcon style={{ fontSize: '14px', color: '#3e8635' }} />
+                            </Button>
+                          </FlexItem>
+                          <FlexItem>
+                            <Button
+                              variant="plain"
+                              aria-label="Cancel add label"
+                              onClick={handleCancelAddLabel}
+                              style={{ padding: '4px' }}
+                            >
+                              <TimesIcon style={{ fontSize: '14px', color: '#c9190b' }} />
+                            </Button>
+                          </FlexItem>
+                        </Flex>
+                      ) : (
+                        <Button
+                          variant="link"
+                          style={{ padding: 0, fontSize: '14px' }}
+                          onClick={handleAddLabel}
+                          icon={<PlusIcon style={{ fontSize: '12px', marginRight: '4px' }} />}
+                        >
+                          Add label
+                        </Button>
+                      )}
+                    </FlexItem>
+                  </Flex>
+                </div>
+
+                {/* Expandable Technical Specifications */}
+                <div style={{ marginTop: '16px' }}>
                   <ExpandableSection
                     toggleText="Technical specifications"
                     toggleTextExpanded="Hide technical specifications"
@@ -630,15 +796,102 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               </CardBody>
             </Card>
 
-            {/* Bottom Row - Device Status (2/3 width) and stacked System Status + System Configuration (1/3 width) */}
+            {/* Custom Data - Standalone Section */}
+            <Card style={{ marginBottom: '32px' }}>
+              <CardTitle>
+                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                  <FlexItem>
+                    <CubeIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
+                  </FlexItem>
+                  <FlexItem>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Custom Data</h3>
+                  </FlexItem>
+                </Flex>
+              </CardTitle>
+              <CardBody>
+                <Grid hasGutter>
+                  <GridItem span={4}>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Device Information</h5>
+                    <DescriptionList isHorizontal>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Serial Number</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                              {mockCustomData.serialNumber}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Manufacturing Date</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.manufacturingDate}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Warranty Expiry</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.warrantyExpiry}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                  <GridItem span={4}>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Location Details</h5>
+                    <DescriptionList isHorizontal>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Building</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.location.building}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Floor</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.location.floor}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Zone</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.location.zone}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                  <GridItem span={4}>
+                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Maintenance & Business</h5>
+                    <DescriptionList isHorizontal>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Business Unit</DescriptionListTerm>
+                        <DescriptionListDescription>{mockCustomData.customFields.businessUnit}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Cost Center</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                              {mockCustomData.customFields.costCenter}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Asset Tag</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Content>
+                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                              {mockCustomData.customFields.assetTag}
+                            </span>
+                          </Content>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                </Grid>
+              </CardBody>
+            </Card>
+
+            {/* Device Status (2/3) and System Configuration (1/3) - Side by Side */}
             <Grid hasGutter style={{ marginBottom: '32px' }}>
-              {/* Left Column - Device Status (Resource Status + System Services) - 2/3 width */}
+              {/* Device Status - 2/3 Width */}
               <GridItem span={8}>
-                <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Card style={{ height: '100%' }}>
                   <CardTitle>
                     <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Device Status</h3>
                   </CardTitle>
-                  <CardBody style={{ flex: 1, padding: '24px' }}>
+                  <CardBody style={{ padding: '24px' }}>
                     {/* Resource Status Section */}
                     <div style={{ marginBottom: '24px' }}>
                       <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>Resource Status</h4>
@@ -679,164 +932,92 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                         <FlexItem>
                           <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>System Services</h4>
                         </FlexItem>
-                        <FlexItem>
-                          <Button variant="link" style={{ padding: 0, fontSize: '14px', color: '#2b9af3' }}>
-                            Track SystemD services
-                          </Button>
-                        </FlexItem>
+                        {!deviceInfo.fleetName && (
+                          <FlexItem>
+                            <Button variant="link" style={{ padding: 0, fontSize: '14px', color: '#2b9af3' }}>
+                              Track SystemD services
+                            </Button>
+                          </FlexItem>
+                        )}
                       </Flex>
-                      <Table aria-label="System services table" variant="compact">
-                        <Thead>
-                          <Tr>
-                            <Th>Service</Th>
-                            <Th>Status</Th>
-                            <Th>State</Th>
-                            <Th>Sub-state</Th>
-                          </Tr>
-                        </Thead>
-                        <Tbody>
-                          {mockSystemServices.map((service, index) => (
-                            <Tr key={index}>
-                              <Td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  {service.name.endsWith('.service') ? (
-                                    <CogIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                                  ) : service.name.endsWith('.timer') ? (
-                                    <ClockIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                                  ) : null}
-                                  <span style={{ fontSize: '14px' }}>
-                                    {service.name}
-                                  </span>
-                                </div>
-                              </Td>
-                              <Td>
-                                <Label
-                                  status={service.enabled ? 'success' : undefined}
-                                  color={service.enabled ? undefined : 'grey'}
-                                  variant="outline"
-                                  icon={service.enabled ? <CheckCircleIcon /> : <TimesCircleIcon />}
-                                >
-                                  {service.enabled ? 'Enabled' : 'Disabled'}
-                                </Label>
-                              </Td>
-                              <Td>
-                                {service.active === 'Active (Running)' ? (
-                                  <Label status="success" variant="outline">
-                                    Active
-                                  </Label>
-                                ) : (
-                                  '—'
-                                )}
-                              </Td>
-                              <Td>
-                                {service.active === 'Active (Running)' ? (
-                                  <Label status="success" variant="outline">
-                                    Running
-                                  </Label>
-                                ) : (
-                                  '—'
-                                )}
-                              </Td>
+                      {mockSystemServices.length > 0 ? (
+                        <Table aria-label="System services table" variant="compact">
+                          <Thead>
+                            <Tr>
+                              <Th>Service</Th>
+                              <Th>Load State</Th>
+                              <Th>Active State</Th>
+                              <Th>Sub State</Th>
                             </Tr>
-                          ))}
-                        </Tbody>
-                      </Table>
+                          </Thead>
+                          <Tbody>
+                            {mockSystemServices.map((service, index) => (
+                              <Tr key={index}>
+                                <Td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {getSystemdStatusIcon(service.name)}
+                                    <span style={{ fontSize: '14px' }}>
+                                      {service.name}
+                                    </span>
+                                  </div>
+                                </Td>
+                                <Td>
+                                  <Label
+                                    color="blue"
+                                    variant="outline"
+                                  >
+                                    {formatSystemdStatus(service.loadState)}
+                                  </Label>
+                                </Td>
+                                <Td>
+                                  <Label
+                                    color="blue"
+                                    variant="outline"
+                                  >
+                                    {formatSystemdStatus(service.activeState)}
+                                  </Label>
+                                </Td>
+                                <Td>
+                                  <Label
+                                    color="blue"
+                                    variant="outline"
+                                  >
+                                    {formatSystemdStatus(service.subState)}
+                                  </Label>
+                                </Td>
+                              </Tr>
+                            ))}
+                          </Tbody>
+                        </Table>
+                      ) : (
+                        <div style={{ textAlign: 'center', padding: '32px', color: '#6a6e73' }}>
+                          <p style={{ margin: 0, fontSize: '14px' }}>
+                            No system services found
+                          </p>
+                          <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
+                            System services can be configured via the device specification
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </CardBody>
                 </Card>
               </GridItem>
 
-              {/* Right Column - Stacked System Status and System Configuration - 1/3 width */}
+              {/* System Configuration - 1/3 Width */}
               <GridItem span={4}>
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '24px' }}>
-                  {/* System Status */}
-                  <Card style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <CardTitle>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>System Status</h3>
-                        <div style={{ fontSize: '12px', color: '#6a6e73', marginTop: '4px' }}>
-                          Last seen {mockSystemStatus.lastSeen}
-                        </div>
-                      </div>
-                    </CardTitle>
-                    <CardBody style={{ flex: 1, padding: '24px' }}>
-                      <Grid hasGutter>
-                        <GridItem span={6}>
-                          <div style={{ marginBottom: '16px' }}>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
-                              <FlexItem>
-                                <span style={{ fontSize: '14px', fontWeight: '600' }}>Application status</span>
-                              </FlexItem>
-                              <FlexItem>
-                                <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                              </FlexItem>
-                            </Flex>
-                            <Label status="warning" variant="outline">
-                              {mockSystemStatus.applicationStatus}
-                            </Label>
-                          </div>
-                        </GridItem>
-                        <GridItem span={6}>
-                          <div style={{ marginBottom: '16px' }}>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
-                              <FlexItem>
-                                <span style={{ fontSize: '14px', fontWeight: '600' }}>Device status</span>
-                              </FlexItem>
-                              <FlexItem>
-                                <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                              </FlexItem>
-                            </Flex>
-                            <Label status="warning" variant="outline">
-                              {mockSystemStatus.deviceStatus}
-                            </Label>
-                          </div>
-                        </GridItem>
-                        <GridItem span={6}>
-                          <div style={{ marginBottom: '16px' }}>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
-                              <FlexItem>
-                                <span style={{ fontSize: '14px', fontWeight: '600' }}>Update status</span>
-                              </FlexItem>
-                              <FlexItem>
-                                <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                              </FlexItem>
-                            </Flex>
-                            <Label status="warning" variant="outline">
-                              {mockSystemStatus.updateStatus}
-                            </Label>
-                          </div>
-                        </GridItem>
-                        <GridItem span={6}>
-                          <div style={{ marginBottom: '16px' }}>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '8px' }}>
-                              <FlexItem>
-                                <span style={{ fontSize: '14px', fontWeight: '600' }}>Integrity status</span>
-                              </FlexItem>
-                              <FlexItem>
-                                <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
-                              </FlexItem>
-                            </Flex>
-                            <Label status="warning" variant="outline">
-                              {mockSystemStatus.integrityStatus}
-                            </Label>
-                          </div>
-                        </GridItem>
-                      </Grid>
-                    </CardBody>
-                  </Card>
-
-                  {/* System Configuration */}
-                  <Card style={{ flex: 1, display: 'flex', flexDirection: 'column', border: '1px solid #d2d2d2', borderRadius: '8px' }}>
-                    <CardTitle>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>System Configuration</h3>
-                        <Label status="custom" variant="outline" icon={<InProgressIcon />}>
-                          Updating
-                        </Label>
-                      </div>
-                    </CardTitle>
-                    <CardBody style={{ flex: 1 }}>
-                      <DescriptionList isCompact>
+                <Card style={{ height: '100%', border: '1px solid #d2d2d2', borderRadius: '8px' }}>
+                  <CardTitle>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>System Configuration</h3>
+                      <Label status="info" variant="outline" icon={<SyncAltIcon />}>
+                        Configuration sync in progress
+                      </Label>
+                    </div>
+                  </CardTitle>
+                  <CardBody>
+                    <DescriptionList isCompact>
+                      {deviceInfo.fleetName ? (
                         <DescriptionListGroup>
                           <DescriptionListTerm>Fleet name</DescriptionListTerm>
                           <DescriptionListDescription>
@@ -845,31 +1026,42 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                             </Button>
                           </DescriptionListDescription>
                         </DescriptionListGroup>
+                      ) : (
                         <DescriptionListGroup>
-                          <DescriptionListTerm>System image (running)</DescriptionListTerm>
+                          <DescriptionListTerm>Fleet assignment</DescriptionListTerm>
                           <DescriptionListDescription>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                              <FlexItem>
-                                <Content>
-                                  <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-                                    {deviceInfo.systemImage}
-                                  </span>
-                                </Content>
-                              </FlexItem>
-                              <FlexItem>
-                                <ExclamationTriangleIcon style={{ fontSize: '14px', color: '#f0ab00' }} />
-                              </FlexItem>
-                            </Flex>
+                            <Label variant="outline" color="grey">
+                              No fleet assigned
+                            </Label>
                           </DescriptionListDescription>
                         </DescriptionListGroup>
-                        <DescriptionListGroup>
-                          <DescriptionListTerm>Sources (1)</DescriptionListTerm>
-                          <DescriptionListDescription>App_definition</DescriptionListDescription>
-                        </DescriptionListGroup>
-                      </DescriptionList>
-                    </CardBody>
-                  </Card>
-                </div>
+                      )}
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>System image (running)</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <FlexItem>
+                              <Content>
+                                <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                                  {deviceInfo.systemImage}
+                                </span>
+                              </Content>
+                            </FlexItem>
+                            <FlexItem>
+                              <ExclamationTriangleIcon style={{ fontSize: '14px', color: '#f0ab00' }} />
+                            </FlexItem>
+                          </Flex>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>Sources ({deviceInfo.fleetName ? '1' : '0'})</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {deviceInfo.fleetName ? 'App_definition' : 'No sources configured'}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </CardBody>
+                </Card>
               </GridItem>
             </Grid>
 
@@ -898,36 +1090,27 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                   toggleContent={
                     <div style={{ padding: '12px', backgroundColor: '#f0f0f0', borderRadius: '8px', border: '1px solid #d2d2d2', width: '100%' }}>
                       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                        <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                            <FlexItem>
-                              <CheckCircleIcon style={{ fontSize: '14px', color: '#3d7317' }} />
+                        {(() => {
+                          const statusCounts = mockApplications.reduce((acc, app) => {
+                            acc[app.status] = (acc[app.status] || 0) + 1;
+                            return acc;
+                          }, {} as Record<string, number>);
+
+                          return Object.entries(statusCounts).map(([status, count]) => (
+                            <FlexItem key={status}>
+                              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                                <FlexItem>
+                                  {renderApplicationStatusIcon(status)}
+                                </FlexItem>
+                                <FlexItem>
+                                  <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                                    {count} {status}
+                                  </span>
+                                </FlexItem>
+                              </Flex>
                             </FlexItem>
-                            <FlexItem>
-                              <span style={{ fontSize: '14px', fontWeight: '600' }}>5 Running</span>
-                            </FlexItem>
-                          </Flex>
-                        </FlexItem>
-                        <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                            <FlexItem>
-                              <InProgressIcon style={{ fontSize: '14px', color: '#147878' }} />
-                            </FlexItem>
-                            <FlexItem>
-                              <span style={{ fontSize: '14px', fontWeight: '600' }}>1 Updating</span>
-                            </FlexItem>
-                          </Flex>
-                        </FlexItem>
-                        <FlexItem>
-                          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                            <FlexItem>
-                              <ExclamationTriangleIcon style={{ fontSize: '14px', color: '#f0ab00' }} />
-                            </FlexItem>
-                            <FlexItem>
-                              <span style={{ fontSize: '14px', fontWeight: '600' }}>1 Degraded</span>
-                            </FlexItem>
-                          </Flex>
-                        </FlexItem>
+                          ));
+                        })()}
                       </Flex>
                     </div>
                   }
@@ -948,115 +1131,37 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {/* Robot Applications */}
-                    <Tr>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>Robot Controller v1</span>
-                      </Td>
-                      <Td>
-                        <Label status="success" variant="outline">Running</Label>
-                      </Td>
-                      <Td>
-                        V1
-                      </Td>
-                      <Td>1</Td>
-                      <Td>
-                        <Label variant="outline">Embedded</Label>
-                      </Td>
-                    </Tr>
-                    <Tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>Robot Brain v2</span>
-                      </Td>
-                      <Td>
-                        <div>
-                          <Label status="custom" variant="outline" icon={<InProgressIcon />}>Updating</Label>
-                          <div style={{ marginTop: '4px', fontSize: '11px', color: '#6a6e73' }}>
-                            ⓘ Update in progress - 2 of 4 components ready
-                          </div>
-                        </div>
-                      </Td>
-                      <Td>
-                        2/4
-                      </Td>
-                      <Td>0</Td>
-                      <Td>
-                        <Label variant="outline">Embedded</Label>
-                      </Td>
-                    </Tr>
-
-                    {/* AI/ML Components */}
-                    <Tr>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>I- Inference Server</span>
-                      </Td>
-                      <Td>
-                        <Label status="success" variant="outline">Running</Label>
-                      </Td>
-                      <Td>—</Td>
-                      <Td>0</Td>
-                      <Td>—</Td>
-                    </Tr>
-                    <Tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>I- Model</span>
-                      </Td>
-                      <Td>
-                        <div>
-                          <Label status="info" variant="outline" icon={<DownloadIcon />}>Downloading</Label>
-                          <div style={{ marginTop: '2px', fontSize: '11px', color: '#6a6e73' }}>
-                            ⓘ Model download in progress
-                          </div>
-                        </div>
-                      </Td>
-                      <Td>—</Td>
-                      <Td>0</Td>
-                      <Td>—</Td>
-                    </Tr>
-                    <Tr>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>I- Memory</span>
-                      </Td>
-                      <Td>
-                        <Label status="success" variant="outline">Running</Label>
-                      </Td>
-                      <Td>—</Td>
-                      <Td>0</Td>
-                      <Td>—</Td>
-                    </Tr>
-                    <Tr style={{ backgroundColor: '#fff9e6', border: '1px solid #f0ab00' }}>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>|- Kill Switch</span>
-                      </Td>
-                      <Td>
-                        <div>
-                          <Label status="warning" variant="outline">Degraded</Label>
-                          <div style={{ marginTop: '4px', fontSize: '11px', color: '#b77b00' }}>
-                            ⚠ Critical safety component requires attention
-                          </div>
-                        </div>
-                      </Td>
-                      <Td>—</Td>
-                      <Td>0</Td>
-                      <Td>—</Td>
-                    </Tr>
-
-                    {/* User Applications */}
-                    <Tr>
-                      <Td>
-                        <span style={{ fontSize: '14px' }}>Speech Subsystem v1</span>
-                      </Td>
-                      <Td>
-                        <Label status="success" variant="outline">Running</Label>
-                      </Td>
-                      <Td>
-                        V1
-                      </Td>
-                      <Td>0</Td>
-                      <Td>
-                        <Label variant="outline">User-installed</Label>
-                      </Td>
-                    </Tr>
+                    {mockApplications.map((app, index) => (
+                      <Tr
+                        key={index}
+                        style={{
+                          backgroundColor: app.critical && app.status === ApplicationStatus.ERROR ? '#fef2f2' : index % 2 === 1 ? '#f8f9fa' : 'transparent',
+                          border: app.critical && app.status === ApplicationStatus.ERROR ? '1px solid #fca5a5' : 'none'
+                        }}
+                      >
+                        <Td>
+                          <span style={{ fontSize: '14px' }}>{app.name}</span>
+                        </Td>
+                        <Td>
+                          <Label
+                            status={getApplicationStatusColor(app.status) as any}
+                            variant="outline"
+                            icon={renderApplicationStatusIcon(app.status)}
+                          >
+                            {app.status}
+                          </Label>
+                        </Td>
+                        <Td>
+                          {app.ready || '—'}
+                        </Td>
+                        <Td>{app.restarts}</Td>
+                        <Td>
+                          {app.type ? (
+                            <Label variant="outline">{app.type}</Label>
+                          ) : '—'}
+                        </Td>
+                      </Tr>
+                    ))}
                   </Tbody>
                 </Table>
                   </div>
@@ -1067,7 +1172,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
         </TabContent>
 
         <TabContent id="yaml" eventKey="yaml" hidden={activeTab !== 'yaml'}>
-          <TabContentBody>
+          <TabContentBody style={{ marginTop: '24px' }}>
             <Card>
               <CardBody>
                 <Title headingLevel="h2" size="lg">YAML Configuration</Title>
@@ -1085,26 +1190,41 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 {`apiVersion: v1alpha1
 kind: Device
 metadata:
-  name: orange-device
+  name: gbp0sn6574270a1f
   namespace: default
   labels:
-    device: test
+    location: fitting-room
+    store: madrid-flagship
+    brand: zara
+    country: spain
+    floor: 2nd
+    zone: premium-section
 spec:
-  fleetName: ""
+  fleetName: "fitting-room-devices"
   systemImage:
-    image: quay.io/rh_ee_camadorg/centos-bootc-flightctl-local/local-rpm-v1
-  applications: []
-  resources: []
+    image: quay.io/redhat/rhde:9.3
+  applications:
+    - name: zara-smart-mirror
+      image: quay.io/zara/smart-mirror:v1.2.3
+    - name: fashion-ai-recommender
+      image: quay.io/zara/fashion-ai:v2.1.0
+  resources:
+    - name: camera-config
+      type: ConfigMap
   systemd:
-    units: []
+    units:
+      - name: flightctl-agent.service
+        enabled: true
 status:
   phase: Online
-  lastSeen: "2024-10-22T19:30:00Z"
+  lastSeen: "2024-11-12T14:28:00Z"
   systemInfo:
     architecture: amd64
     operatingSystem: linux
     kernelVersion: 5.14.0-570.el9.x86_64
-    bootID: 6a8a4653-e383-488f-82d8-0c7d3356cffc`}
+    bootID: 6a8a4653-e383-488f-82d8-0c7d3356cffc
+    productName: Dell OptiPlex 7090 Ultra
+    hostname: madrid-fitting-room-01.local`}
                 </div>
               </CardBody>
             </Card>
@@ -1112,7 +1232,7 @@ status:
         </TabContent>
 
         <TabContent eventKey="terminal" id="terminal-tab" hidden={activeTab !== 'terminal'}>
-          <TabContentBody>
+          <TabContentBody style={{ marginTop: '24px' }}>
             <Card>
               <CardBody>
                 <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>
@@ -1162,7 +1282,7 @@ status:
         </TabContent>
 
         <TabContent eventKey="events" id="events-tab" hidden={activeTab !== 'events'}>
-          <TabContentBody>
+          <TabContentBody style={{ marginTop: '24px' }}>
             <Card>
               <CardBody>
                 <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '16px' }}>

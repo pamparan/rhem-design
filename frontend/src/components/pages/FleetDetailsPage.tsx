@@ -195,7 +195,8 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
           <Tab eventKey="yaml" title={<TabTitleText>YAML</TabTitleText>} />
         </Tabs>
         <TabContent id="details" eventKey="details" activeKey={activeTabKey} hidden={activeTabKey !== 'details'}>
-          <Grid hasGutter>
+          <div style={{ marginTop: '24px' }}>
+            <Grid hasGutter>
             {/* Left Column - Details and Fleet Devices */}
             <GridItem span={8}>
               {/* Details Section */}
@@ -441,10 +442,12 @@ const FleetDetailsPage: React.FC<FleetDetailsPageProps> = ({
               </Card>
             </GridItem>
           </Grid>
+          </div>
         </TabContent>
 
         <TabContent id="yaml" eventKey="yaml" activeKey={activeTabKey} hidden={activeTabKey !== 'yaml'}>
-          <Card>
+          <div style={{ marginTop: '24px' }}>
+            <Card>
             <CardBody>
               <div style={{
                 fontFamily: 'monospace',
@@ -476,6 +479,7 @@ spec:
               </div>
             </CardBody>
           </Card>
+          </div>
         </TabContent>
       </PageSection>
     </>
