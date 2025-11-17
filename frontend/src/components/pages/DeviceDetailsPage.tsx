@@ -56,9 +56,6 @@ import {
   CopyIcon,
   ChevronDownIcon,
   EditIcon,
-  ServerIcon,
-  NetworkIcon,
-  CubeIcon,
   ClipboardIcon,
   ClockIcon,
   CogIcon,
@@ -67,6 +64,11 @@ import {
   TimesIcon,
   SyncAltIcon,
   DownloadIcon,
+  NewProcessIcon,
+  NetworkIcon,
+  DatabaseIcon,
+  FolderIcon,
+  ConnectedIcon,
 } from '@patternfly/react-icons';
 import ResumeDeviceModal from '../shared/ResumeDeviceModal';
 import DeviceSuspendedBanner from '../shared/DeviceSuspendedBanner';
@@ -102,6 +104,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   const [labels, setLabels] = useState<string[]>(['location=fitting-room', 'store=madrid-flagship', 'brand=zara']);
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabelInput, setNewLabelInput] = useState('');
+
 
   const handleResumeDevice = () => {
     setIsResumeModalOpen(true);
@@ -165,27 +168,14 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
     systemImage: 'quay.io/redhat/rhde:9.3',
   };
 
-  // Mock custom data - realistic retail fitting room device
-  const mockCustomData = {
-    serialNumber: 'DLL7090ULT240315001',
-    manufacturingDate: '2024-03-15',
-    warrantyExpiry: '2027-03-15',
-    location: {
-      building: 'Zara Flagship Store Madrid',
-      floor: '2nd Floor',
-      zone: 'Premium Fitting Room Section'
-    },
-    maintenance: {
-      lastService: '2024-09-15',
-      nextService: '2024-12-15',
-      serviceContract: 'Dell ProSupport Plus'
-    },
-    customFields: {
-      businessUnit: 'Retail Technology',
-      costCenter: 'RC-ES-MAD-001',
-      assetTag: 'ZARA-FTR-MAD-001'
-    }
-  };
+  // Mock custom data - simple key-value pairs as they would exist in practice
+  const mockCustomData = [
+    { key: 'location', value: 'madrid-flagship-fr-02' },
+    { key: 'environment', value: 'production' },
+    { key: 'cost-center', value: 'RC-ES-MAD-001' },
+    { key: 'asset-tag', value: 'ZARA-FTR-001' },
+    { key: 'owner', value: 'retail-ops' }
+  ];
 
   // Application Status Enums - complete list
   const ApplicationStatus = {
@@ -199,13 +189,13 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
   // Mock applications data - realistic retail fitting room applications
   const mockApplications = [
-    { name: 'Zara Smart Mirror', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '2', type: 'Core Application', critical: false },
-    { name: 'Fashion AI Recommender', status: ApplicationStatus.RUNNING, ready: '3/3', restarts: '0', type: 'AI Service', critical: false },
-    { name: 'Customer Analytics Engine', status: ApplicationStatus.STARTING, ready: '2/4', restarts: '0', type: 'Analytics', critical: false },
-    { name: 'Inventory Sync Service', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '5', type: 'Integration', critical: false },
-    { name: 'Camera Feed Processor', status: ApplicationStatus.PREPARING, ready: '0/2', restarts: '0', type: 'Media Processing', critical: false },
-    { name: 'Emergency Alert System', status: ApplicationStatus.ERROR, ready: '0/1', restarts: '12', type: 'Safety Critical', critical: true },
-    { name: 'Store WiFi Portal', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '1', type: 'Network Service', critical: false },
+    { name: 'Zara Smart Mirror', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '2', type: 'Compose', critical: false },
+    { name: 'Fashion AI Recommender', status: ApplicationStatus.RUNNING, ready: '3/3', restarts: '0', type: 'Container', critical: false },
+    { name: 'Customer Analytics Engine', status: ApplicationStatus.STARTING, ready: '2/4', restarts: '0', type: 'Quadlet', critical: false },
+    { name: 'Inventory Sync Service', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '5', type: 'Container', critical: false },
+    { name: 'Camera Feed Processor', status: ApplicationStatus.PREPARING, ready: '0/2', restarts: '0', type: 'Compose', critical: false },
+    { name: 'Emergency Alert System', status: ApplicationStatus.ERROR, ready: '0/1', restarts: '12', type: 'Container', critical: true },
+    { name: 'Store WiFi Portal', status: ApplicationStatus.RUNNING, ready: '1/1', restarts: '1', type: 'Quadlet', critical: false },
   ];
 
   // Mock system services data - enhanced for fleetless device management
@@ -232,6 +222,34 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       subState: 'dead'
     },
     {
+      name: 'docker.socket',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'listening'
+    },
+    {
+      name: 'var-lib-containers.mount',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'mounted'
+    },
+    {
+      name: 'multi-user.target',
+      enabled: true,
+      loadState: 'loaded',
+      activeState: 'active',
+      subState: 'active'
+    },
+    {
+      name: 'systemd-ask-password-console.path',
+      enabled: false,
+      loadState: 'loaded',
+      activeState: 'inactive',
+      subState: 'dead'
+    },
+    {
       name: 'flightctl-agent.service',
       enabled: true,
       loadState: 'loaded',
@@ -249,11 +267,29 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
   // Mock system status - realistic fitting room device status
   const mockSystemStatus = {
-    applicationStatus: 'Degraded',
-    deviceStatus: 'Online',
+    applicationStatus: 'Healthy',
+    deviceStatus: 'Healthy',
     updateStatus: 'Pending',
     integrityStatus: 'Verified',
     lastSeen: '2 minutes ago'
+  };
+
+  // Helper function to get status styling based on status value
+  const getStatusLabelProps = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'healthy':
+      case 'verified':
+        return { status: 'success' as const, icon: <CheckCircleIcon /> };
+      case 'pending':
+        return { status: 'warning' as const, icon: <InProgressIcon /> };
+      case 'degraded':
+      case 'error':
+        return { status: 'danger' as const, icon: <ExclamationTriangleIcon /> };
+      case 'unknown':
+        return { status: 'info' as const, icon: <InfoCircleIcon /> };
+      default:
+        return { variant: 'outline' as const, color: 'grey' as const, icon: <InfoCircleIcon /> };
+    }
   };
 
   // Mock configurations
@@ -278,36 +314,36 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
   const renderApplicationStatusIcon = (status: string) => {
     switch (status) {
       case ApplicationStatus.RUNNING:
-        return <CheckCircleIcon style={{ color: '#3d7317' }} />;
+        return <CheckCircleIcon style={{ color: '#2b9af3' }} />; // Blue
       case ApplicationStatus.STARTING:
-        return <InProgressIcon style={{ color: '#147878' }} />;
+        return <InProgressIcon style={{ color: '#6a6e73' }} />; // Grey
       case ApplicationStatus.PREPARING:
-        return <DownloadIcon style={{ color: '#2b9af3' }} />;
+        return <NewProcessIcon style={{ color: '#6a6e73' }} />; // Grey
       case ApplicationStatus.ERROR:
-        return <TimesCircleIcon style={{ color: '#c9190b' }} />;
+        return <TimesCircleIcon style={{ color: '#c9190b' }} />; // Red
       case ApplicationStatus.UNKNOWN:
-        return <InfoCircleIcon style={{ color: '#6a6e73' }} />;
+        return <InfoCircleIcon style={{ color: '#6a6e73' }} />; // Grey
       case ApplicationStatus.COMPLETED:
-        return <CheckCircleIcon style={{ color: '#3e8635' }} />;
+        return <CheckCircleIcon style={{ color: '#2b9af3' }} />; // Blue
       default:
-        return <InfoCircleIcon style={{ color: '#6a6e73' }} />;
+        return <InfoCircleIcon style={{ color: '#6a6e73' }} />; // Grey
     }
   };
 
   const getApplicationStatusColor = (status: string): string => {
     switch (status) {
       case ApplicationStatus.RUNNING:
-        return 'success';
+        return 'blue';
       case ApplicationStatus.STARTING:
-        return 'info';
+        return 'grey';
       case ApplicationStatus.PREPARING:
-        return 'info';
+        return 'grey';
       case ApplicationStatus.ERROR:
-        return 'danger';
+        return 'red';
       case ApplicationStatus.UNKNOWN:
         return 'grey';
       case ApplicationStatus.COMPLETED:
-        return 'success';
+        return 'blue';
       default:
         return 'grey';
     }
@@ -319,6 +355,14 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
       return <CogIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
     } else if (serviceName.endsWith('.timer')) {
       return <ClockIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    } else if (serviceName.endsWith('.socket')) {
+      return <ConnectedIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    } else if (serviceName.endsWith('.mount')) {
+      return <DatabaseIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    } else if (serviceName.endsWith('.target')) {
+      return <NetworkIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
+    } else if (serviceName.endsWith('.path')) {
+      return <FolderIcon style={{ fontSize: '14px', color: '#6a6e73' }} />;
     }
     return null;
   };
@@ -330,7 +374,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
 
   const getSystemdStatusColor = (activeState: string, subState: string) => {
     if (activeState === 'active' && subState === 'running') {
-      return 'success';
+      return 'blue';
     } else if (activeState === 'failed') {
       return 'danger';
     } else if (activeState === 'activating' || activeState === 'deactivating') {
@@ -464,7 +508,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                           <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
                         </FlexItem>
                       </Flex>
-                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                      <Label {...getStatusLabelProps(mockSystemStatus.applicationStatus)}>
                         {mockSystemStatus.applicationStatus}
                       </Label>
                     </div>
@@ -479,7 +523,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                           <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
                         </FlexItem>
                       </Flex>
-                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                      <Label {...getStatusLabelProps(mockSystemStatus.deviceStatus)}>
                         {mockSystemStatus.deviceStatus}
                       </Label>
                     </div>
@@ -494,7 +538,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                           <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
                         </FlexItem>
                       </Flex>
-                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                      <Label {...getStatusLabelProps(mockSystemStatus.updateStatus)}>
                         {mockSystemStatus.updateStatus}
                       </Label>
                     </div>
@@ -509,7 +553,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                           <InfoCircleIcon style={{ fontSize: '14px', color: '#6a6e73' }} />
                         </FlexItem>
                       </Flex>
-                      <Label variant="outline" color="grey" icon={<InfoCircleIcon />}>
+                      <Label {...getStatusLabelProps(mockSystemStatus.integrityStatus)}>
                         {mockSystemStatus.integrityStatus}
                       </Label>
                     </div>
@@ -518,19 +562,166 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               </CardBody>
             </Card>
 
+            {/* Application Status - Full Width */}
+            <Card className="pf-v6-u-mb-xl">
+              <CardTitle>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Application status</h3>
+                  <div style={{ fontSize: '12px', color: '#6a6e73', marginTop: '4px' }}>
+                    Applications (7)
+                  </div>
+                </div>
+              </CardTitle>
+              <CardBody>
+
+                {/* Expandable Applications Section */}
+                <ExpandableSection
+                  style={{ backgroundColor: '#ffffff' }}
+                  toggleContent={
+                    <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }} className="pf-v6-u-p-md">
+                      {(() => {
+                        const statusCounts = mockApplications.reduce((acc, app) => {
+                          acc[app.status] = (acc[app.status] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                        return Object.entries(statusCounts).map(([status, count]) => (
+                          <FlexItem key={status}>
+                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <FlexItem>
+                                {renderApplicationStatusIcon(status)}
+                              </FlexItem>
+                              <FlexItem>
+                                <span className="pf-v6-u-font-size-sm pf-v6-u-font-weight-bold">
+                                  {count} {status}
+                                </span>
+                              </FlexItem>
+                            </Flex>
+                          </FlexItem>
+                        ));
+                      })()}
+                    </Flex>
+                  }
+                  isExpanded={isApplicationsExpanded}
+                  onToggle={(_event, isExpanded) => setIsApplicationsExpanded(isExpanded)}
+                  displaySize="lg"
+                  className="pf-v6-u-mb-lg"
+                >
+                  <div className="pf-v6-u-mt-md">
+                    <Table aria-label="Applications table" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th>Name</Th>
+                      <Th>Status</Th>
+                      <Th>Ready</Th>
+                      <Th>Restarts</Th>
+                      <Th>Type</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {mockApplications.map((app, index) => (
+                      <Tr key={index}>
+                        <Td>
+                          <span className="pf-v6-u-font-size-sm">{app.name}</span>
+                        </Td>
+                        <Td>
+                          <Label
+                            color={getApplicationStatusColor(app.status)}
+                            variant="outline"
+                            icon={renderApplicationStatusIcon(app.status)}
+                          >
+                            {app.status}
+                          </Label>
+                        </Td>
+                        <Td>
+                          {app.ready || '—'}
+                        </Td>
+                        <Td>{app.restarts}</Td>
+                        <Td>
+                          {app.type ? (
+                            <Label variant="outline">{app.type}</Label>
+                          ) : '—'}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+                  </div>
+                </ExpandableSection>
+              </CardBody>
+            </Card>
+
             {/* Device Information - Full Width */}
             <Card style={{ marginBottom: '32px' }}>
               <CardTitle>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                  <FlexItem>
-                    <ServerIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
-                  </FlexItem>
-                  <FlexItem>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Device Information</h3>
-                  </FlexItem>
-                </Flex>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Device Information</h3>
               </CardTitle>
               <CardBody>
+                {/* Labels - Main section at top */}
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Labels ({labels.length})</h4>
+                  <Flex spaceItems={{ default: 'spaceItemsSm' }} style={{ flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    {labels.map((label, index) => (
+                      <FlexItem key={index}>
+                        <Label
+                          variant="outline"
+                          isCompact
+                          onClose={() => handleRemoveLabel(label)}
+                        >
+                          {label}
+                        </Label>
+                      </FlexItem>
+                    ))}
+                    <FlexItem>
+                      {isAddingLabel ? (
+                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                          <FlexItem>
+                            <TextInput
+                              type="text"
+                              placeholder="key=value"
+                              value={newLabelInput}
+                              onChange={(_event, value) => setNewLabelInput(value)}
+                              onKeyDown={handleKeyDown}
+                              style={{ fontSize: '14px', minWidth: '200px' }}
+                              autoFocus
+                            />
+                          </FlexItem>
+                          <FlexItem>
+                            <Button
+                              variant="plain"
+                              aria-label="Save label"
+                              onClick={handleSaveLabel}
+                              isDisabled={!newLabelInput.trim()}
+                              style={{ padding: '4px' }}
+                            >
+                              <CheckIcon style={{ fontSize: '14px', color: '#3e8635' }} />
+                            </Button>
+                          </FlexItem>
+                          <FlexItem>
+                            <Button
+                              variant="plain"
+                              aria-label="Cancel add label"
+                              onClick={handleCancelAddLabel}
+                              style={{ padding: '4px' }}
+                            >
+                              <TimesIcon style={{ fontSize: '14px', color: '#c9190b' }} />
+                            </Button>
+                          </FlexItem>
+                        </Flex>
+                      ) : (
+                        <Button
+                          variant="link"
+                          style={{ padding: 0, fontSize: '14px' }}
+                          onClick={handleAddLabel}
+                          icon={<PlusIcon style={{ fontSize: '12px', marginRight: '4px' }} />}
+                        >
+                          Add label
+                        </Button>
+                      )}
+                    </FlexItem>
+                  </Flex>
+                </div>
+
                 <Grid hasGutter>
                   <GridItem span={3}>
                     <DescriptionList isCompact>
@@ -613,71 +804,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                   </GridItem>
                 </Grid>
 
-                {/* Labels - Main section */}
-                <div style={{ marginTop: '24px' }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Labels ({labels.length})</h4>
-                  <Flex spaceItems={{ default: 'spaceItemsSm' }} style={{ flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                    {labels.map((label, index) => (
-                      <FlexItem key={index}>
-                        <Label
-                          variant="outline"
-                          isCompact
-                          onClose={() => handleRemoveLabel(label)}
-                        >
-                          {label}
-                        </Label>
-                      </FlexItem>
-                    ))}
-                    <FlexItem>
-                      {isAddingLabel ? (
-                        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                          <FlexItem>
-                            <TextInput
-                              type="text"
-                              placeholder="key=value"
-                              value={newLabelInput}
-                              onChange={(_event, value) => setNewLabelInput(value)}
-                              onKeyDown={handleKeyDown}
-                              style={{ fontSize: '14px', minWidth: '200px' }}
-                              autoFocus
-                            />
-                          </FlexItem>
-                          <FlexItem>
-                            <Button
-                              variant="plain"
-                              aria-label="Save label"
-                              onClick={handleSaveLabel}
-                              isDisabled={!newLabelInput.trim()}
-                              style={{ padding: '4px' }}
-                            >
-                              <CheckIcon style={{ fontSize: '14px', color: '#3e8635' }} />
-                            </Button>
-                          </FlexItem>
-                          <FlexItem>
-                            <Button
-                              variant="plain"
-                              aria-label="Cancel add label"
-                              onClick={handleCancelAddLabel}
-                              style={{ padding: '4px' }}
-                            >
-                              <TimesIcon style={{ fontSize: '14px', color: '#c9190b' }} />
-                            </Button>
-                          </FlexItem>
-                        </Flex>
-                      ) : (
-                        <Button
-                          variant="link"
-                          style={{ padding: 0, fontSize: '14px' }}
-                          onClick={handleAddLabel}
-                          icon={<PlusIcon style={{ fontSize: '12px', marginRight: '4px' }} />}
-                        >
-                          Add label
-                        </Button>
-                      )}
-                    </FlexItem>
-                  </Flex>
-                </div>
-
                 {/* Expandable Technical Specifications */}
                 <div style={{ marginTop: '16px' }}>
                   <ExpandableSection
@@ -742,14 +868,7 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                     displaySize="lg"
                   >
                     <div style={{ marginTop: '16px' }}>
-                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }} style={{ marginBottom: '16px' }}>
-                        <FlexItem>
-                          <NetworkIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
-                        </FlexItem>
-                        <FlexItem>
-                          <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>Default Interface</h4>
-                        </FlexItem>
-                      </Flex>
+                      <h4 style={{ margin: '0 0 16px 0', fontSize: '14px', fontWeight: '600' }}>Default Interface</h4>
                       <Grid hasGutter>
                         <GridItem span={6}>
                           <DescriptionList isHorizontal>
@@ -796,92 +915,6 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               </CardBody>
             </Card>
 
-            {/* Custom Data - Standalone Section */}
-            <Card style={{ marginBottom: '32px' }}>
-              <CardTitle>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                  <FlexItem>
-                    <CubeIcon style={{ fontSize: '16px', color: '#6a6e73' }} />
-                  </FlexItem>
-                  <FlexItem>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Custom Data</h3>
-                  </FlexItem>
-                </Flex>
-              </CardTitle>
-              <CardBody>
-                <Grid hasGutter>
-                  <GridItem span={4}>
-                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Device Information</h5>
-                    <DescriptionList isHorizontal>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Serial Number</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Content>
-                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-                              {mockCustomData.serialNumber}
-                            </span>
-                          </Content>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Manufacturing Date</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.manufacturingDate}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Warranty Expiry</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.warrantyExpiry}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
-                  <GridItem span={4}>
-                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Location Details</h5>
-                    <DescriptionList isHorizontal>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Building</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.location.building}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Floor</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.location.floor}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Zone</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.location.zone}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
-                  <GridItem span={4}>
-                    <h5 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>Maintenance & Business</h5>
-                    <DescriptionList isHorizontal>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Business Unit</DescriptionListTerm>
-                        <DescriptionListDescription>{mockCustomData.customFields.businessUnit}</DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Cost Center</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Content>
-                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-                              {mockCustomData.customFields.costCenter}
-                            </span>
-                          </Content>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>Asset Tag</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Content>
-                            <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
-                              {mockCustomData.customFields.assetTag}
-                            </span>
-                          </Content>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                    </DescriptionList>
-                  </GridItem>
-                </Grid>
-              </CardBody>
-            </Card>
 
             {/* Device Status (2/3) and System Configuration (1/3) - Side by Side */}
             <Grid hasGutter style={{ marginBottom: '32px' }}>
@@ -945,9 +978,9 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                           <Thead>
                             <Tr>
                               <Th>Service</Th>
+                              <Th>Enable</Th>
                               <Th>Load State</Th>
-                              <Th>Active State</Th>
-                              <Th>Sub State</Th>
+                              <Th>Status</Th>
                             </Tr>
                           </Thead>
                           <Tbody>
@@ -963,6 +996,14 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                                 </Td>
                                 <Td>
                                   <Label
+                                    color={service.enabled ? 'blue' : 'grey'}
+                                    variant="outline"
+                                  >
+                                    {service.enabled ? 'enabled' : 'disabled'}
+                                  </Label>
+                                </Td>
+                                <Td>
+                                  <Label
                                     color="blue"
                                     variant="outline"
                                   >
@@ -971,18 +1012,10 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
                                 </Td>
                                 <Td>
                                   <Label
-                                    color="blue"
+                                    color={getSystemdStatusColor(service.activeState, service.subState)}
                                     variant="outline"
                                   >
-                                    {formatSystemdStatus(service.activeState)}
-                                  </Label>
-                                </Td>
-                                <Td>
-                                  <Label
-                                    color="blue"
-                                    variant="outline"
-                                  >
-                                    {formatSystemdStatus(service.subState)}
+                                    {`${formatSystemdStatus(service.activeState)} (${formatSystemdStatus(service.subState)})`}
                                   </Label>
                                 </Td>
                               </Tr>
@@ -1065,109 +1098,27 @@ const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({
               </GridItem>
             </Grid>
 
-            {/* Application Status - Full Width */}
+            {/* Custom Data - Standalone Section */}
             <Card style={{ marginBottom: '32px' }}>
               <CardTitle>
-                <div>
-                  <div style={{ marginBottom: '16px' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Application status</h3>
-                  </div>
-                  <div>
-                    <Label status="success" variant="filled" icon={<CheckCircleIcon />}>
-                      Healthy
-                    </Label>
-                  </div>
-                </div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Custom Data</h3>
               </CardTitle>
               <CardBody>
-                {/* Applications List with Enhanced Hierarchy */}
-                <div style={{ marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Applications (7)</h4>
-                </div>
-
-                {/* Expandable Applications Section */}
-                <ExpandableSection
-                  toggleContent={
-                    <div style={{ padding: '12px', backgroundColor: '#f0f0f0', borderRadius: '8px', border: '1px solid #d2d2d2', width: '100%' }}>
-                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                        {(() => {
-                          const statusCounts = mockApplications.reduce((acc, app) => {
-                            acc[app.status] = (acc[app.status] || 0) + 1;
-                            return acc;
-                          }, {} as Record<string, number>);
-
-                          return Object.entries(statusCounts).map(([status, count]) => (
-                            <FlexItem key={status}>
-                              <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
-                                <FlexItem>
-                                  {renderApplicationStatusIcon(status)}
-                                </FlexItem>
-                                <FlexItem>
-                                  <span style={{ fontSize: '14px', fontWeight: '600' }}>
-                                    {count} {status}
-                                  </span>
-                                </FlexItem>
-                              </Flex>
-                            </FlexItem>
-                          ));
-                        })()}
-                      </Flex>
-                    </div>
-                  }
-                  isExpanded={isApplicationsExpanded}
-                  onToggle={(_event, isExpanded) => setIsApplicationsExpanded(isExpanded)}
-                  displaySize="lg"
-                  style={{ marginBottom: '20px' }}
-                >
-                  <div style={{ marginTop: '16px' }}>
-                    <Table aria-label="Applications table" variant="compact">
-                  <Thead>
-                    <Tr>
-                      <Th>Name</Th>
-                      <Th>Status</Th>
-                      <Th>Ready</Th>
-                      <Th>Restarts</Th>
-                      <Th>Type</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {mockApplications.map((app, index) => (
-                      <Tr
-                        key={index}
-                        style={{
-                          backgroundColor: app.critical && app.status === ApplicationStatus.ERROR ? '#fef2f2' : index % 2 === 1 ? '#f8f9fa' : 'transparent',
-                          border: app.critical && app.status === ApplicationStatus.ERROR ? '1px solid #fca5a5' : 'none'
-                        }}
-                      >
-                        <Td>
-                          <span style={{ fontSize: '14px' }}>{app.name}</span>
-                        </Td>
-                        <Td>
-                          <Label
-                            status={getApplicationStatusColor(app.status) as any}
-                            variant="outline"
-                            icon={renderApplicationStatusIcon(app.status)}
-                          >
-                            {app.status}
-                          </Label>
-                        </Td>
-                        <Td>
-                          {app.ready || '—'}
-                        </Td>
-                        <Td>{app.restarts}</Td>
-                        <Td>
-                          {app.type ? (
-                            <Label variant="outline">{app.type}</Label>
-                          ) : '—'}
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-                  </div>
-                </ExpandableSection>
+                <DescriptionList isHorizontal>
+                  {mockCustomData.map((item, index) => (
+                    <DescriptionListGroup key={index}>
+                      <DescriptionListTerm>{item.key}</DescriptionListTerm>
+                      <DescriptionListDescription>
+                        <span style={{ fontFamily: 'monospace', fontSize: '14px' }}>
+                          {item.value}
+                        </span>
+                      </DescriptionListDescription>
+                    </DescriptionListGroup>
+                  ))}
+                </DescriptionList>
               </CardBody>
             </Card>
+
           </TabContentBody>
         </TabContent>
 

@@ -8,7 +8,8 @@ import {
   QuestionCircleIcon,
   PowerOffIcon,
   InProgressIcon,
-  TimesCircleIcon
+  TimesCircleIcon,
+  PendingIcon
 } from '@patternfly/react-icons';
 
 export const getStatusColor = (status: DeviceStatus | ApplicationStatus | SystemUpdateStatus): string => {
@@ -103,7 +104,7 @@ export const getStatusIcon = (status: DeviceStatus | ApplicationStatus | SystemU
     REBOOTING: InProgressIcon,
     POWERED_OFF: PowerOffIcon,
     SUSPENDED: PauseCircleIcon,
-    PENDING_SYNC: ClockIcon,
+    PENDING_SYNC: PendingIcon,
 
     // Application statuses - matching dropdown filter icons exactly
     HEALTHY: CheckCircleIcon,

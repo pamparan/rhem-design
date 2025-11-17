@@ -6,6 +6,7 @@ import AppMasthead from './components/layout/Masthead';
 import AppSidebar from './components/layout/Sidebar';
 import SubNav from './components/layout/SubNav';
 import DesignControls from './components/shared/DesignControls';
+import SystemdStatesPanel from './components/shared/SystemdStatesPanel';
 
 // Import page components
 import OverviewPage from './components/pages/OverviewPage';
@@ -93,6 +94,7 @@ const FlightControlApp: React.FC = () => {
 
   return (
     <DesignControls>
+      <SystemdStatesPanel>
       {/* Main Application - hidden when login, cli-auth, or kubernetes-token-login is active */}
       {currentView !== 'login' && currentView !== 'cli-auth' && currentView !== 'kubernetes-token-login' && (
         <Page masthead={masthead} sidebar={sidebar}>
@@ -193,6 +195,7 @@ const FlightControlApp: React.FC = () => {
         />
       )}
 
+      </SystemdStatesPanel>
     </DesignControls>
   );
 };
