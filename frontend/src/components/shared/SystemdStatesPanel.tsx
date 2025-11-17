@@ -244,7 +244,7 @@ const SystemdStatesPanel: React.FC<SystemdStatesPanelProps> = ({ children }) => 
           <DrawerCloseButton onClick={() => setIsExpanded(false)} />
         </DrawerActions>
       </DrawerHead>
-      <DrawerContentBody>
+      <DrawerContentBody style={{ maxHeight: '100vh', overflowY: 'auto', padding: '16px' }}>
         <Stack hasGutter>
           <StackItem>
             <HelperText>
