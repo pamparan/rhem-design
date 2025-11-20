@@ -772,8 +772,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
         applicationName: 'nginx-web-server',
         applicationImage: 'docker.io/nginx:1.21',
         ports: ['8080:80', '8443:443'],
-        environment: [{ name: 'ENV', value: 'production' }],
-        volumes: []
+        environmentVariables: [
+          { key: 'ENV', value: 'production', completed: true },
+          { key: 'SERVER_NAME', value: 'nginx-web', completed: true }
+        ],
+        fileDefinitions: [],
+        volumes: [],
+        expanded: true  // Set expanded state so accordion can be opened
       },
       {
         id: nextApplicationId + 1,
@@ -781,8 +786,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
         applicationName: 'monitoring-agent',
         sourceType: 'OCI Artifact',
         ociArtifactUrl: 'quay.io/monitoring/agent:latest',
-        environment: [{ name: 'LOG_LEVEL', value: 'info' }],
-        volumes: []
+        environmentVariables: [
+          { key: 'LOG_LEVEL', value: 'info', completed: true },
+          { key: 'METRICS_PORT', value: '9090', completed: true }
+        ],
+        fileDefinitions: [],
+        volumes: [],
+        expanded: true  // Set expanded state so accordion can be opened
       }
     ];
 
@@ -883,20 +893,11 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     const hasConfigExtension = configExtensions.some(ext => lowercasePath.endsWith(ext));
     const hasSystemdExtension = systemdExtensions.some(ext => lowercasePath.endsWith(ext));
 
-    // Success validation for recommended extensions
-    if (hasQuadletExtension) {
+    // Skip showing success messages for recommended extensions
+    if (hasQuadletExtension || hasConfigExtension || hasSystemdExtension) {
       return {
         isValid: true,
-        message: 'Excellent! Using recommended Quadlet extension',
-        variant: 'success' as const
-      };
-    }
-
-    // Good validation for config files
-    if (hasConfigExtension || hasSystemdExtension) {
-      return {
-        isValid: true,
-        message: 'Good choice! This is a supported configuration file type',
+        message: '',
         variant: 'default' as const
       };
     }
@@ -1106,7 +1107,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
             <FormHelperText style={{ marginTop: '0.25rem' }}>
               <HelperText>
                 <HelperTextItem>
-                  Optional: Add labels to organize and categorize this fleet.
+                  Add labels to organize and categorize this fleet.
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
@@ -1179,7 +1180,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
             <FormHelperText style={{ marginTop: '0.25rem' }}>
               <HelperText>
                 <HelperTextItem>
-                  Optional: Add labels to select which devices will be included in this fleet.
+                  Add labels to select which devices will be included in this fleet.
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
@@ -1796,8 +1797,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                       onToggle={() => toggleApplicationExpanded(application.id)}
                       style={{ margin: 0 }}
                     >
-                      {application.expanded && (
-                        <div style={{ marginTop: '1rem', padding: '1.5rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                      <div style={{ marginTop: '1rem', padding: '1.5rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
                           {/* Application name */}
                           <FormGroup
                             label="Application name"
@@ -3206,7 +3206,6 @@ Configs, scripts, YAML, Containerfiles"
                           )}
                           </div>
                         </div>
-                      )}
                     </ExpandableSection>
                   </div>
                 </StackItem>
