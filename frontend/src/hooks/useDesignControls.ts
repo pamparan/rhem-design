@@ -22,6 +22,7 @@ interface DesignControlsSettings {
   showDevicesPendingApproval: boolean;
   showAuthProvidersEmptyState: boolean;
   fillProviderForm: boolean;
+  fillFleetForm: boolean;
 }
 
 const DEFAULT_SETTINGS: DesignControlsSettings = {
@@ -29,6 +30,7 @@ const DEFAULT_SETTINGS: DesignControlsSettings = {
   showDevicesPendingApproval: false,
   showAuthProvidersEmptyState: false,
   fillProviderForm: false,
+  fillFleetForm: false,
 };
 
 type SettingKey = keyof DesignControlsSettings;

@@ -175,8 +175,41 @@ const DesignControls: React.FC<DesignControlsProps> = ({ children }) => {
           </StackItem>
 
           <StackItem>
+            <Switch
+              id="fill-fleet-form-switch"
+              label="Auto-fill Fleet Form"
+              isChecked={getSetting("fillFleetForm")}
+              onChange={(_event, checked) =>
+                setSetting("fillFleetForm", checked)
+              }
+            />
+            <HelperText>
+              <HelperTextItem
+                variant="indeterminate"
+                style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+              >
+                When enabled, automatically fills the create fleet form with sample data including advanced configurations for easier testing.
+              </HelperTextItem>
+            </HelperText>
+          </StackItem>
+
+          <StackItem>
             <Button variant="secondary" onClick={resetAll} isBlock>
               Reset All to Defaults
+            </Button>
+          </StackItem>
+
+          <StackItem>
+            <Button
+              variant="link"
+              onClick={() => {
+                // Dispatch a custom event to clear fleet form
+                window.dispatchEvent(new CustomEvent('clear-fleet-form'));
+              }}
+              isBlock
+              style={{ color: '#0066CC', textDecoration: 'underline' }}
+            >
+              Clear Fleet Form
             </Button>
           </StackItem>
         </Stack>

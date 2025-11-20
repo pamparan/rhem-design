@@ -20,6 +20,8 @@ import LoginPage from './components/pages/LoginPage';
 import CLIAuthPage from './components/pages/CLIAuthPage';
 import SystemSettingsPage from './components/pages/SystemSettingsPage';
 import KubernetesTokenLoginPage from './components/pages/KubernetesTokenLoginPage';
+// Import CreateFleetWizard - Clean implementation following flowchart
+import CreateFleetWizard from './components/pages/CreateFleetWizardClean';
 import DeviceModal from './components/shared/DeviceModal';
 
 import { mockDevicesPendingApproval } from './data/mockData';
@@ -61,15 +63,7 @@ const FlightControlApp: React.FC = () => {
     setSelectedDeviceId(params?.deviceId || null);
   };
 
-  const handleDeviceClick = (deviceId: string) => {
-    setSelectedDeviceId(deviceId);
-    setCurrentView('device-details');
-  };
-
-  const handleFleetClick = (fleetId: string) => {
-    setSelectedFleetId(fleetId);
-    setCurrentView('fleet-details');
-  };
+  // Removed unused handlers - using handleNavigate instead
 
   const handleShowLoginInterface = () => {
     setCurrentView('login');
@@ -137,6 +131,11 @@ const FlightControlApp: React.FC = () => {
                   <RepositoriesPage onNavigate={handleNavigate} />
                 )}
               </>
+            )}
+
+            {/* Create Fleet Wizard */}
+            {currentView === 'create-fleet' && (
+              <CreateFleetWizard onNavigate={handleNavigate} />
             )}
 
             {/* Resume Suspended Devices Page */}
