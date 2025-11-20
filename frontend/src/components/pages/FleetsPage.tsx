@@ -93,7 +93,12 @@ const FleetsPage: React.FC<FleetsPageProps> = ({
                 </ToolbarGroup>
                 <ToolbarGroup align={{ default: 'alignEnd' }}>
                   <ToolbarItem>
-                    <Button variant="primary">Create fleet</Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => onNavigate('create-fleet', 'fleets')}
+                    >
+                      Create fleet
+                    </Button>
                   </ToolbarItem>
                   <ToolbarItem>
                     <Button variant="secondary">Import fleets</Button>
