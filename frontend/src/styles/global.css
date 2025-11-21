@@ -192,3 +192,33 @@ html, body {
   background-color: var(--pf-v6-global--palette--blue-50) !important;
 }
 
+/* Remove any generated content from form group labels */
+.pf-v6-c-form__group-label::before,
+.pf-v6-c-form__group-label::after {
+  display: none !important;
+  content: none !important;
+  visibility: hidden !important;
+}
+
+.pf-v6-c-form__group-label > *::before,
+.pf-v6-c-form__group-label > *::after {
+  display: none !important;
+  content: none !important;
+  visibility: hidden !important;
+}
+
+/* Ensure no whitespace content appears on form labels and remove bottom spacing */
+.pf-v6-c-form__group-label {
+  white-space: normal !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.pf-v6-c-form__group-label::before {
+  content: "" !important;
+}
+
+.pf-v6-c-form__group-label::after {
+  content: "" !important;
+}
+

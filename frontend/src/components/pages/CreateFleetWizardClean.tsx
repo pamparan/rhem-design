@@ -162,6 +162,17 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
   const [hostConfigurations, setHostConfigurations] = useState<HostConfiguration[]>([]);
   const [nextConfigId, setNextConfigId] = useState(1);
 
+  // Volume management interface
+  interface Volume {
+    id: number;
+    name: string;
+    volumeType: string;
+    imageReference: string;
+    pullPolicy: string;
+    mountPath: string;
+    expanded?: boolean;
+  }
+
   // Applications management
   interface Application {
     id: number;
@@ -172,13 +183,11 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     // Single container application fields
     applicationImage: string;
     ports: string[];
+    newHostPort: string;
+    newContainerPort: string;
     cpuValue: string;
     memoryValue: string;
-    selectedVolume: string;
-    // Volume-specific fields
-    imageReference: string;
-    pullPolicy: string;
-    mountPath: string;
+    volumes: Volume[];
     // Compose application fields
     filePath: string;
     contentIsBase64: boolean;
@@ -190,6 +199,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
   }
   const [applications, setApplications] = useState<Application[]>([]);
   const [nextApplicationId, setNextApplicationId] = useState(1);
+  const [nextVolumeId, setNextVolumeId] = useState(1);
 
   // Host configuration dropdown states - each config has its own dropdown states
   const [configDropdowns, setConfigDropdowns] = useState<Record<number, Record<string, boolean>>>({});
@@ -557,13 +567,11 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
       // Single container application fields
       applicationImage: '',
       ports: [],
+      newHostPort: '',
+      newContainerPort: '',
       cpuValue: '',
       memoryValue: '',
-      selectedVolume: 'Select',
-      // Volume-specific fields
-      imageReference: '',
-      pullPolicy: 'Select',
-      mountPath: 'Select',
+      volumes: [],
       // Compose application fields
       filePath: '',
       contentIsBase64: false,
@@ -591,7 +599,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     ));
   };
 
-  const updateApplicationField = (applicationId: number, field: string, value: string | string[]) => {
+  const updateApplicationField = (applicationId: number, field: string, value: any) => {
     setApplications(applications.map(app =>
       app.id === applicationId ? { ...app, [field]: value } : app
     ));
@@ -612,20 +620,45 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
   };
 
   // Port management for specific applications
-  const addApplicationPort = (applicationId: number, port: string) => {
-    const application = applications.find(app => app.id === applicationId);
-    if (application && port.trim()) {
+  const addApplicationPort = (applicationId: number, hostPort?: string, containerPort?: string) => {
+    setApplications(prevApplications => {
+      const application = prevApplications.find(app => app.id === applicationId);
+      if (!application) return prevApplications;
+
+      // Use provided values or get from application state
+      const host = hostPort || application.newHostPort;
+      const container = containerPort || application.newContainerPort;
+
+      if (!host.trim() || !container.trim()) {
+        setError(`app_${applicationId}_newPort`, 'Both host and container ports are required');
+        return prevApplications;
+      }
+
+      const port = `${host.trim()}:${container.trim()}`;
       const portError = validatePort(port);
       if (portError) {
         setError(`app_${applicationId}_newPort`, portError);
-        return false;
+        return prevApplications;
       }
-      const newPorts = [...application.ports, port.trim()];
-      updateApplicationField(applicationId, 'ports', newPorts);
+
+      // Create new applications array with updated ports
+      const updatedApplications = prevApplications.map(app =>
+        app.id === applicationId
+          ? {
+              ...app,
+              ports: [...app.ports, port],
+              newHostPort: '',
+              newContainerPort: ''
+            }
+          : app
+      );
+
+      // Clear error after successful addition
       clearError(`app_${applicationId}_newPort`);
-      return true;
-    }
-    return false;
+      return updatedApplications;
+    });
+
+    return true;
   };
 
   const removeApplicationPort = (applicationId: number, portToRemove: string) => {
@@ -633,6 +666,53 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     if (application) {
       const newPorts = application.ports.filter(port => port !== portToRemove);
       updateApplicationField(applicationId, 'ports', newPorts);
+    }
+  };
+
+  // Volume management functions
+  const addApplicationVolume = (applicationId: number) => {
+    const application = applications.find(app => app.id === applicationId);
+    if (application) {
+      const newVolume: Volume = {
+        id: nextVolumeId,
+        name: `Volume${nextVolumeId}`,
+        volumeType: 'Select',
+        imageReference: '',
+        pullPolicy: 'Select',
+        mountPath: '',
+        expanded: true
+      };
+      const newVolumes = [...application.volumes, newVolume];
+      updateApplicationField(applicationId, 'volumes', newVolumes);
+      setNextVolumeId(nextVolumeId + 1);
+    }
+  };
+
+  const removeApplicationVolume = (applicationId: number, volumeId: number) => {
+    const application = applications.find(app => app.id === applicationId);
+    if (application) {
+      const newVolumes = application.volumes.filter(volume => volume.id !== volumeId);
+      updateApplicationField(applicationId, 'volumes', newVolumes);
+    }
+  };
+
+  const updateApplicationVolume = (applicationId: number, volumeId: number, field: string, value: string | boolean) => {
+    const application = applications.find(app => app.id === applicationId);
+    if (application) {
+      const newVolumes = application.volumes.map(volume =>
+        volume.id === volumeId ? { ...volume, [field]: value } : volume
+      );
+      updateApplicationField(applicationId, 'volumes', newVolumes);
+    }
+  };
+
+  const toggleVolumeExpansion = (applicationId: number, volumeId: number) => {
+    const application = applications.find(app => app.id === applicationId);
+    if (application) {
+      const newVolumes = application.volumes.map(volume =>
+        volume.id === volumeId ? { ...volume, expanded: !volume.expanded } : volume
+      );
+      updateApplicationField(applicationId, 'volumes', newVolumes);
     }
   };
 
@@ -780,12 +860,35 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
         applicationName: 'nginx-web-server',
         applicationImage: 'docker.io/nginx:1.21',
         ports: ['8080:80', '8443:443'],
+        newHostPort: '',
+        newContainerPort: '',
+        cpuValue: '500m',
+        memoryValue: '512Mi',
         environmentVariables: [
           { key: 'ENV', value: 'production', completed: true },
           { key: 'SERVER_NAME', value: 'nginx-web', completed: true }
         ],
         fileDefinitions: [],
-        volumes: [],
+        volumes: [
+          {
+            id: 1,
+            name: 'nginx-config',
+            volumeType: 'Mount Volume',
+            imageReference: '',
+            pullPolicy: 'Select',
+            mountPath: '/etc/nginx/conf.d',
+            expanded: true
+          },
+          {
+            id: 2,
+            name: 'web-content',
+            volumeType: 'Image Mount Volume',
+            imageReference: 'quay.io/nginx/content:v1.0',
+            pullPolicy: 'Always',
+            mountPath: '/usr/share/nginx/html',
+            expanded: true
+          }
+        ],
         expanded: true  // Set expanded state so accordion can be opened
       },
       {
@@ -794,6 +897,10 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
         applicationName: 'monitoring-agent',
         sourceType: 'OCI Reference',
         ociArtifactUrl: 'quay.io/monitoring/agent:latest',
+        newHostPort: '',
+        newContainerPort: '',
+        cpuValue: '',
+        memoryValue: '',
         environmentVariables: [
           { key: 'LOG_LEVEL', value: 'info', completed: true },
           { key: 'METRICS_PORT', value: '9090', completed: true }
@@ -806,6 +913,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
 
     setApplications(sampleApps);
     setNextApplicationId(nextApplicationId + 2);
+    setNextVolumeId(3); // Set next volume ID after sample volumes
   };
 
   // Auto-fill form data when component mounts if setting is enabled
@@ -864,6 +972,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
       // Reset other state
       setApplications([]);
       setNextApplicationId(1);
+      setNextVolumeId(1);
       setNextBatchId(1);
       setCurrentStep(1);
       setErrors({});
@@ -881,13 +990,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     const lowercasePath = filePath.toLowerCase();
 
     // Error validation - forbidden/unsupported extensions
-    const forbiddenExtensions = ['.build', '.kube'];
+    const forbiddenExtensions = ['.build', '.kube', '.artifact'];
     const hasForbiddenExtension = forbiddenExtensions.some(ext => lowercasePath.includes(ext));
 
     if (hasForbiddenExtension) {
       return {
         isValid: false,
-        message: 'Files with .build or .kube extensions are not supported and will be rejected',
+        message: 'Files with .build, .kube, or .artifact extensions are not supported and will be rejected',
         variant: 'error' as const
       };
     }
@@ -913,7 +1022,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     // Warning for experimental or non-standard extensions
     return {
       isValid: true,
-      message: 'Experimental extension. Consider using recommended types: .container, .volume, .pod, .image, .network',
+      message: 'Unknown extension. Consider using recommended types: .container, .volume, .pod, .image, .network',
       variant: 'warning' as const
     };
   };
@@ -1868,11 +1977,18 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                             isOpen={getApplicationDropdownState(application.id, 'applicationType')}
                             selected={application.applicationType}
                             onSelect={(_event, selection) => {
-                              updateApplicationField(application.id, 'applicationType', selection as string);
-                              // Set default sourceType when Compose Application is selected
-                              if (selection === 'Compose Application') {
-                                updateApplicationField(application.id, 'sourceType', 'OCI Reference');
-                              }
+                              // Use functional state update for more reliable updates
+                              setApplications(prevApplications =>
+                                prevApplications.map(app =>
+                                  app.id === application.id
+                                    ? {
+                                        ...app,
+                                        applicationType: selection as string,
+                                        sourceType: selection === 'Compose Application' ? 'OCI Reference' : app.sourceType
+                                      }
+                                    : app
+                                )
+                              );
                               toggleApplicationDropdown(application.id, 'applicationType', false);
                               clearError(`app_${application.id}_applicationType`);
                             }}
@@ -2163,6 +2279,233 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   </FormGroup>
                                 </div>
                               )}
+
+                              {/* Inline Scenario */}
+                              {application.sourceType === 'Inline' && (
+                                <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
+                                  {/* File Definitions */}
+                                  <FormGroup
+                                    label="File Definitions"
+                                    labelHelp={
+                                      <Popover
+                                        triggerAction="hover"
+                                        headerContent="File Definitions"
+                                        bodyContent="Create compose files and related configurations directly in this interface. Define your docker-compose.yml files, environment files, or supporting configuration files. Multiple files can be defined to create complex compose applications with multiple services."
+                                        hasClose={false}
+                                      >
+                                        <FormGroupLabelHelp aria-label="More info for file definitions field" />
+                                      </Popover>
+                                    }
+                                    fieldId={`file-definitions-${application.id}`}
+                                    style={{ marginBottom: '1.5rem' }}
+                                  >
+                                    <Stack hasGutter>
+                                      {application.fileDefinitions.map((fileDef, index) => {
+                                        const fileDefKey = `file-def-${application.id}-${index}`;
+                                        const isExpanded = fileDef.expanded !== false; // Default to expanded
+
+                                        return (
+                                          <StackItem key={index}>
+                                            <div style={{ position: 'relative' }}>
+                                              <Button
+                                                variant="plain"
+                                                onClick={() => {
+                                                  const newFileDefs = application.fileDefinitions.filter((_, i) => i !== index);
+                                                  updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                }}
+                                                aria-label="Remove file definition"
+                                                style={{
+                                                  position: 'absolute',
+                                                  top: '22px',
+                                                  right: '12px',
+                                                  transform: 'translateY(-50%)',
+                                                  padding: '4px',
+                                                  color: '#0066cc',
+                                                  zIndex: 2
+                                                }}
+                                              >
+                                                <MinusCircleIcon title="Remove file definition" />
+                                              </Button>
+                                              <div
+                                                style={{
+                                                  border: '1px solid #D2D2D2',
+                                                  borderRadius: '8px',
+                                                  marginBottom: '1rem'
+                                                }}
+                                              >
+                                                {/* Custom header with inline edit functionality */}
+                                                <div
+                                                  style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    padding: '12px 16px',
+                                                    cursor: 'pointer'
+                                                  }}
+                                                  onClick={(e) => {
+                                                    // Only toggle if we're not clicking on edit elements
+                                                    if (!(e.target as HTMLElement).closest('.edit-controls')) {
+                                                      const newFileDefs = [...application.fileDefinitions];
+                                                      newFileDefs[index] = { ...newFileDefs[index], expanded: !isExpanded };
+                                                      updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                    }
+                                                  }}
+                                                >
+                                                  {/* Expand/Collapse icon */}
+                                                  <Button
+                                                    variant="plain"
+                                                    style={{
+                                                      marginRight: '8px',
+                                                      padding: '2px',
+                                                      minWidth: 'auto',
+                                                      color: '#0066cc'
+                                                    }}
+                                                  >
+                                                    {isExpanded ?
+                                                      <AngleDownIcon style={{ fontSize: '14px' }} /> :
+                                                      <AngleRightIcon style={{ fontSize: '14px' }} />
+                                                    }
+                                                  </Button>
+
+                                                  {/* Title */}
+                                                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, paddingRight: '48px' }}>
+                                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                                      {fileDef.name || (fileDef.filePath ? fileDef.filePath.split('/').pop() : `Compose File ${index + 1}`)}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                                {isExpanded && (
+                                                  <div style={{
+                                                    padding: '1rem',
+                                                    backgroundColor: '#FAFAFA'
+                                                  }}>
+                                                    <Stack hasGutter>
+                                                      <StackItem>
+                                                        <FormGroup
+                                                          label="File name"
+                                                          labelHelp={
+                                                            <Popover
+                                                              triggerAction="hover"
+                                                              headerContent="File name Guidelines"
+                                                              bodyContent={
+                                                                <div>
+                                                                  <p><strong>Common Compose Files:</strong></p>
+                                                                  <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
+                                                                    <li><code>docker-compose.yml</code> - Main compose file</li>
+                                                                    <li><code>docker-compose.override.yml</code> - Override configurations</li>
+                                                                    <li><code>.env</code> - Environment variables file</li>
+                                                                    <li><code>config.yml</code> - Application configuration</li>
+                                                                  </ul>
+                                                                  <p><strong>Also Supported:</strong></p>
+                                                                  <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
+                                                                    <li><code>.yaml, .json, .conf</code> - Config files</li>
+                                                                    <li><code>.sh</code> - Shell scripts</li>
+                                                                  </ul>
+                                                                </div>
+                                                              }
+                                                              hasClose={false}
+                                                            >
+                                                              <FormGroupLabelHelp aria-label="File name guidelines" />
+                                                            </Popover>
+                                                          }
+                                                          fieldId={`file-path-${application.id}-${index}`}
+                                                        >
+                                                          <Split hasGutter>
+                                                            <SplitItem isFilled>
+                                                              <TextInput
+                                                                type="text"
+                                                                id={`file-path-${application.id}-${index}`}
+                                                                value={fileDef.filePath || ''}
+                                                                onChange={(_event, value) => {
+                                                                  const newFileDefs = [...application.fileDefinitions];
+                                                                  newFileDefs[index] = { ...newFileDefs[index], filePath: value };
+                                                                  updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                                }}
+                                                                placeholder="docker-compose.yml"
+                                                                aria-label="File name"
+                                                                autoComplete="off"
+                                                              />
+                                                            </SplitItem>
+                                                          </Split>
+
+                                                          {/* Base helper text always shown */}
+                                                          <FormHelperText>
+                                                            <HelperText>
+                                                              <HelperTextItem>
+                                                                Common files: <strong>docker-compose.yml</strong>, <strong>.env</strong>, <strong>config.yml</strong>
+                                                              </HelperTextItem>
+                                                            </HelperText>
+                                                          </FormHelperText>
+                                                        </FormGroup>
+                                                      </StackItem>
+                                                      <StackItem>
+                                                        <FormGroup
+                                                          label="Content"
+                                                          fieldId={`file-content-${application.id}-${index}`}
+                                                        >
+                                                          <FileUpload
+                                                            id={`file-content-${application.id}-${index}`}
+                                                            type="text"
+                                                            value={fileDef.content}
+                                                            filename={fileDef.filename || ''}
+                                                            filenamePlaceholder="Drag and drop a file or upload one"
+                                                            onFileInputChange={(_, file: File) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], filename: file.name };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onDataChange={(_, value: string) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], content: value };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onTextChange={(_, value: string) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], content: value };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onClearClick={() => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], filename: '', content: '' };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            allowEditingUploadedText={true}
+                                                            browseButtonText="Upload"
+                                                          >
+                                                            <FileUploadHelperText>
+                                                              <HelperText>
+                                                                <HelperTextItem>
+                                                                  Upload a file or paste content. Supported files: docker-compose.yml, .env, config files
+                                                                </HelperTextItem>
+                                                              </HelperText>
+                                                            </FileUploadHelperText>
+                                                          </FileUpload>
+                                                        </FormGroup>
+                                                      </StackItem>
+                                                    </Stack>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </StackItem>
+                                        );
+                                      })}
+                                      <StackItem>
+                                        <Button
+                                          variant="link"
+                                          onClick={() => {
+                                            const newFileDefs = [...application.fileDefinitions, { name: '', filePath: '', content: '', expanded: true }];
+                                            updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                          }}
+                                          icon={<PlusIcon />}
+                                          style={{ padding: 0 }}
+                                        >
+                                          Add file definition
+                                        </Button>
+                                      </StackItem>
+                                    </Stack>
+                                  </FormGroup>
+                                </div>
+                              )}
                             </>
                           )}
 
@@ -2217,7 +2560,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   <Popover
                                     triggerAction="hover"
                                     headerContent="Port mappings"
-                                    bodyContent="Map ports from the device host to your container application. Use the format 'hostPort:containerPort' (e.g., '8080:80' maps device port 8080 to container port 80). Multiple port mappings can be added. Consider port availability on target devices and potential conflicts with other applications."
+                                    bodyContent="Map ports from the device host to your container application. Provide host port and container port separately. Multiple port mappings can be added. Consider port availability on target devices and potential conflicts with other applications."
                                     hasClose={false}
                                   >
                                     <FormGroupLabelHelp aria-label="More info for ports field" />
@@ -2234,24 +2577,47 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   </HelperText>
                                 </FormHelperText>
 
-                                <Split hasGutter>
-                                  <SplitItem isFilled>
+                                <Split hasGutter style={{ alignItems: 'center' }}>
+                                  <SplitItem>
                                     <TextInput
-                                      id={`port-input-${application.id}`}
-                                      placeholder="e.g., 8080:80"
+                                      id={`host-port-input-${application.id}`}
+                                      placeholder="Host Port"
+                                      value={application.newHostPort}
                                       validated={errors[`app_${application.id}_newPort`] ? 'error' : 'default'}
+                                      style={{ width: '180px' }}
                                       onKeyPress={(event) => {
                                         if (event.key === 'Enter') {
-                                          const target = event.target as HTMLInputElement;
-                                          if (target.value.trim()) {
-                                            const success = addApplicationPort(application.id, target.value.trim());
-                                            if (success) {
-                                              target.value = '';
-                                            }
-                                          }
+                                          addApplicationPort(application.id);
                                         }
                                       }}
-                                      onChange={() => {
+                                      onChange={(_event, value) => {
+                                        updateApplicationField(application.id, 'newHostPort', value);
+                                        clearError(`app_${application.id}_newPort`);
+                                      }}
+                                    />
+                                  </SplitItem>
+                                  <SplitItem style={{
+                                    fontSize: '16px',
+                                    fontWeight: 600,
+                                    color: '#6a6e73',
+                                    padding: '0 8px'
+                                  }}>
+                                    :
+                                  </SplitItem>
+                                  <SplitItem>
+                                    <TextInput
+                                      id={`container-port-input-${application.id}`}
+                                      placeholder="Container port"
+                                      value={application.newContainerPort}
+                                      validated={errors[`app_${application.id}_newPort`] ? 'error' : 'default'}
+                                      style={{ width: '180px' }}
+                                      onKeyPress={(event) => {
+                                        if (event.key === 'Enter') {
+                                          addApplicationPort(application.id);
+                                        }
+                                      }}
+                                      onChange={(_event, value) => {
+                                        updateApplicationField(application.id, 'newContainerPort', value);
                                         clearError(`app_${application.id}_newPort`);
                                       }}
                                     />
@@ -2259,15 +2625,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   <SplitItem>
                                     <Button
                                       variant="control"
-                                      onClick={() => {
-                                        const input = document.getElementById(`port-input-${application.id}`) as HTMLInputElement;
-                                        if (input?.value.trim()) {
-                                          const success = addApplicationPort(application.id, input.value.trim());
-                                          if (success) {
-                                            input.value = '';
-                                          }
-                                        }
-                                      }}
+                                      onClick={() => addApplicationPort(application.id)}
                                     >
                                       →
                                     </Button>
@@ -2275,16 +2633,25 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                 </Split>
 
                                 {application.ports.length > 0 && (
-                                  <div style={{ marginTop: '1rem' }}>
-                                    <span style={{ fontSize: '14px', color: '#6a6e73', marginRight: '1rem' }}>
-                                      Added ports
+                                  <div style={{
+                                    marginTop: '1rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '12px',
+                                    flexWrap: 'wrap'
+                                  }}>
+                                    <span style={{
+                                      fontSize: '14px',
+                                      color: '#6a6e73',
+                                      whiteSpace: 'nowrap'
+                                    }}>
+                                      Added ports:
                                     </span>
                                     {application.ports.map((port, index) => (
                                       <Label
                                         key={index}
                                         onClose={() => removeApplicationPort(application.id, port)}
                                         closeBtnAriaLabel={`Remove ${port}`}
-                                        style={{ marginRight: '0.5rem' }}
                                       >
                                         {port}
                                       </Label>
@@ -2407,6 +2774,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                     <p><strong>Volume Types:</strong></p>
                                     <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
                                       <li><strong>Mount Volume</strong> - Mount existing device directories into the container</li>
+                                      <li><strong>Image Mount Volume</strong> - Mount data from container images</li>
                                     </ul>
                                     <p><strong>💾 Benefits:</strong> Persistent storage that survives container restarts and updates.</p>
                                   </div>
@@ -2419,224 +2787,226 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                               fieldId={`volumes-${application.id}`}
                               style={{ marginBottom: '1.5rem' }}
                             >
-                            <Select
-                            id={`volumes-${application.id}`}
-                            isOpen={getApplicationDropdownState(application.id, 'selectedVolume')}
-                            selected={application.selectedVolume}
-                            onSelect={(_event, selection) => {
-                              updateApplicationField(application.id, 'selectedVolume', selection as string);
-                              toggleApplicationDropdown(application.id, 'selectedVolume', false);
-                            }}
-                            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                onClick={() => toggleApplicationDropdown(application.id, 'selectedVolume', !getApplicationDropdownState(application.id, 'selectedVolume'))}
-                                isExpanded={getApplicationDropdownState(application.id, 'selectedVolume')}
-                                style={{ width: '100%' }}
-                              >
-                                {application.selectedVolume}
-                              </MenuToggle>
-                            )}
-                          >
-                            <SelectList>
-                              <SelectOption value="Select">Select</SelectOption>
-                              <SelectOption value="Mount Volume">Mount Volume</SelectOption>
-                              <SelectOption value="Image Mount Volume">Image Mount Volume</SelectOption>
-                            </SelectList>
-                          </Select>
+                            <Stack hasGutter>
+                              {/* Existing volumes */}
+                              {application.volumes.map((volume) => (
+                                <StackItem key={volume.id}>
+                                  <div style={{
+                                    border: '1px solid #d2d2d2',
+                                    borderRadius: '4px',
+                                    position: 'relative'
+                                  }}>
+                                    {/* Volume Header */}
+                                    <div style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      padding: '12px 16px',
+                                      borderBottom: volume.expanded ? '1px solid #e8e8e8' : 'none',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => toggleVolumeExpansion(application.id, volume.id)}>
+                                      <Button
+                                        variant="plain"
+                                        style={{
+                                          padding: '4px',
+                                          marginRight: '8px',
+                                          transform: volume.expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                          transition: 'transform 0.2s ease'
+                                        }}
+                                        aria-label={volume.expanded ? "Collapse volume" : "Expand volume"}
+                                      >
+                                        <AngleRightIcon />
+                                      </Button>
+
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{
+                                          fontWeight: 600,
+                                          fontSize: '14px',
+                                          marginBottom: volume.expanded ? 0 : '2px'
+                                        }}>
+                                          {volume.name || 'Unnamed Volume'}
+                                        </div>
+                                        {!volume.expanded && (
+                                          <div style={{
+                                            fontSize: '12px',
+                                            color: '#6a6e73',
+                                            display: 'flex',
+                                            gap: '8px',
+                                            flexWrap: 'wrap'
+                                          }}>
+                                            <span>{volume.volumeType !== 'Select' ? volume.volumeType : 'No type selected'}</span>
+                                            {volume.mountPath && <span>→ {volume.mountPath}</span>}
+                                            {volume.volumeType === 'Image Mount Volume' && volume.imageReference && (
+                                              <span>({volume.imageReference})</span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <Button
+                                        variant="plain"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeApplicationVolume(application.id, volume.id);
+                                        }}
+                                        style={{
+                                          padding: '4px',
+                                          color: '#0066cc',
+                                          marginLeft: '8px'
+                                        }}
+                                        aria-label="Remove volume"
+                                      >
+                                        <MinusCircleIcon title="Remove volume" />
+                                      </Button>
+                                    </div>
+
+                                    {/* Volume Details (only when expanded) */}
+                                    {volume.expanded && (
+                                      <div style={{ padding: '16px' }}>
+                                        <Stack hasGutter>
+                                          {/* Volume Name */}
+                                          <StackItem>
+                                            <FormGroup
+                                              label="Name"
+                                              fieldId={`volume-name-${volume.id}`}
+                                            >
+                                              <TextInput
+                                                type="text"
+                                                id={`volume-name-${volume.id}`}
+                                                value={volume.name}
+                                                onChange={(_event, value) => updateApplicationVolume(application.id, volume.id, 'name', value)}
+                                                placeholder="e.g., data-volume"
+                                              />
+                                            </FormGroup>
+                                          </StackItem>
+
+                                          {/* Volume Type Selection */}
+                                          <StackItem>
+                                            <FormGroup
+                                              label="Volume type"
+                                              fieldId={`volume-type-${volume.id}`}
+                                            >
+                                              <Select
+                                                id={`volume-type-${volume.id}`}
+                                                isOpen={getApplicationDropdownState(volume.id, 'volumeType')}
+                                                selected={volume.volumeType}
+                                                onSelect={(_event, selection) => {
+                                                  updateApplicationVolume(application.id, volume.id, 'volumeType', selection as string);
+                                                  toggleApplicationDropdown(volume.id, 'volumeType', false);
+                                                }}
+                                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                                  <MenuToggle
+                                                    ref={toggleRef}
+                                                    onClick={() => toggleApplicationDropdown(volume.id, 'volumeType', !getApplicationDropdownState(volume.id, 'volumeType'))}
+                                                    isExpanded={getApplicationDropdownState(volume.id, 'volumeType')}
+                                                    style={{ width: '100%' }}
+                                                  >
+                                                    {volume.volumeType}
+                                                  </MenuToggle>
+                                                )}
+                                              >
+                                                <SelectList>
+                                                  <SelectOption value="Select">Select</SelectOption>
+                                                  <SelectOption value="Mount Volume">Mount Volume</SelectOption>
+                                                  <SelectOption value="Image Mount Volume">Image Mount Volume</SelectOption>
+                                                </SelectList>
+                                              </Select>
+                                            </FormGroup>
+                                          </StackItem>
+
+                                          {/* Conditional fields based on volume type */}
+                                          {volume.volumeType === 'Image Mount Volume' && (
+                                            <StackItem>
+                                              <FormGroup
+                                                label="Image reference"
+                                                fieldId={`volume-image-ref-${volume.id}`}
+                                              >
+                                                <TextInput
+                                                  type="text"
+                                                  id={`volume-image-ref-${volume.id}`}
+                                                  value={volume.imageReference}
+                                                  onChange={(_event, value) => updateApplicationVolume(application.id, volume.id, 'imageReference', value)}
+                                                  placeholder="quay.io/myself/myimage"
+                                                />
+                                              </FormGroup>
+                                            </StackItem>
+                                          )}
+
+                                          {volume.volumeType === 'Image Mount Volume' && (
+                                            <StackItem>
+                                              <FormGroup
+                                                label="Pull policy"
+                                                fieldId={`volume-pull-policy-${volume.id}`}
+                                              >
+                                                <Select
+                                                  id={`volume-pull-policy-${volume.id}`}
+                                                  isOpen={getApplicationDropdownState(volume.id, 'pullPolicy')}
+                                                  selected={volume.pullPolicy}
+                                                  onSelect={(_event, selection) => {
+                                                    updateApplicationVolume(application.id, volume.id, 'pullPolicy', selection as string);
+                                                    toggleApplicationDropdown(volume.id, 'pullPolicy', false);
+                                                  }}
+                                                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                                                    <MenuToggle
+                                                      ref={toggleRef}
+                                                      onClick={() => toggleApplicationDropdown(volume.id, 'pullPolicy', !getApplicationDropdownState(volume.id, 'pullPolicy'))}
+                                                      isExpanded={getApplicationDropdownState(volume.id, 'pullPolicy')}
+                                                      style={{ width: '100%' }}
+                                                    >
+                                                      {volume.pullPolicy}
+                                                    </MenuToggle>
+                                                  )}
+                                                >
+                                                  <SelectList>
+                                                    <SelectOption value="Select">Select</SelectOption>
+                                                    <SelectOption value="Always">Always</SelectOption>
+                                                    <SelectOption value="If not present">If not present</SelectOption>
+                                                    <SelectOption value="Never">Never</SelectOption>
+                                                  </SelectList>
+                                                </Select>
+                                              </FormGroup>
+                                            </StackItem>
+                                          )}
+
+                                          {/* Mount path - shown for both volume types */}
+                                          {(volume.volumeType === 'Mount Volume' || volume.volumeType === 'Image Mount Volume') && (
+                                            <StackItem>
+                                              <FormGroup
+                                                label="Mount path"
+                                                fieldId={`volume-mount-path-${volume.id}`}
+                                              >
+                                                <TextInput
+                                                  type="text"
+                                                  id={`volume-mount-path-${volume.id}`}
+                                                  value={volume.mountPath}
+                                                  onChange={(_event, value) => updateApplicationVolume(application.id, volume.id, 'mountPath', value)}
+                                                  placeholder="/path/to/somewhere"
+                                                />
+                                              </FormGroup>
+                                            </StackItem>
+                                          )}
+                                        </Stack>
+                                      </div>
+                                    )}
+                                  </div>
+                                </StackItem>
+                              ))}
+
+                              {/* Add Volume button */}
+                              <StackItem>
+                                <Button
+                                  variant="link"
+                                  onClick={() => addApplicationVolume(application.id)}
+                                  icon={<PlusIcon />}
+                                  style={{ padding: '8px 0', color: '#0066cc' }}
+                                >
+                                  Add volume
+                                </Button>
+                              </StackItem>
+                            </Stack>
                           </FormGroup>
                           )}
 
-
-                          {/* Conditional fields for Mount Volume */}
-                          {application.selectedVolume === 'Mount Volume' && (
-                            <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
-                              <FormGroup
-                                label="Name"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Name"
-                                    bodyContent="Provide a descriptive name for this volume. This name will be used to identify the volume in your configuration. Choose a meaningful name that describes the purpose or content of the volume."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for volume name field" />
-                                  </Popover>
-                                }
-                                fieldId={`volume-name-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`volume-name-${application.id}`}
-                                  value={application.volumeName || ''}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'volumeName', value)}
-                                  placeholder="e.g., data-volume"
-                                />
-                              </FormGroup>
-
-                              <FormGroup
-                                label="Mount path"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Mount path"
-                                    bodyContent="Enter the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for mount path field" />
-                                  </Popover>
-                                }
-                                fieldId={`mount-path-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`mount-path-${application.id}`}
-                                  value={application.mountPath}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'mountPath', value)}
-                                  placeholder="/path/to/somewhere"
-                                />
-                              </FormGroup>
-                            </div>
-                          )}
-
-                          {/* Conditional fields for Image Mount Volume */}
-                          {application.selectedVolume === 'Image Mount Volume' && (
-                            <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
-                              <FormGroup
-                                label="Name"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Name"
-                                    bodyContent="Provide a descriptive name for this volume. This name will be used to identify the volume in your configuration. Choose a meaningful name that describes the purpose or content of the volume."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for volume name field" />
-                                  </Popover>
-                                }
-                                fieldId={`volume-name-image-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`volume-name-image-${application.id}`}
-                                  value={application.volumeName || ''}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'volumeName', value)}
-                                  placeholder="e.g., config-volume"
-                                />
-                              </FormGroup>
-
-                              <FormGroup
-                                label="Image reference"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Image reference"
-                                    bodyContent="Specify the container image that contains the data you want to mount as a volume. This image will be pulled and its contents will be available to your application container at the specified mount path. Use this for images that contain static data, configuration files, or other assets your application needs."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for image reference field" />
-                                  </Popover>
-                                }
-                                fieldId={`image-reference-mount-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`image-reference-mount-${application.id}`}
-                                  value={application.imageReference}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'imageReference', value)}
-                                  placeholder="quay.io/myself/myimage"
-                                />
-                                <FormHelperText>
-                                  <HelperText>
-                                    <HelperTextItem>
-                                      Provide a valid container image reference for the volume.
-                                    </HelperTextItem>
-                                  </HelperText>
-                                </FormHelperText>
-                              </FormGroup>
-
-                              <FormGroup
-                                label="Pull policy"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Pull policy"
-                                    bodyContent={
-                                    <div>
-                                      <p><strong>Pull Options:</strong></p>
-                                      <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
-                                        <li><strong>Always</strong> - Pull on every restart (latest version, more bandwidth)</li>
-                                        <li><strong>If not present</strong> - Pull only if missing locally (efficient)</li>
-                                        <li><strong>Never</strong> - Use cached images only (fastest, may fail)</li>
-                                      </ul>
-                                      <p><strong>💡 Trade-off:</strong> Freshness vs. bandwidth efficiency.</p>
-                                    </div>
-                                  }
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for pull policy field" />
-                                  </Popover>
-                                }
-                                fieldId={`pull-policy-mount-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <Select
-                                id={`pull-policy-mount-${application.id}`}
-                                isOpen={getApplicationDropdownState(application.id, 'pullPolicyMount')}
-                                selected={application.pullPolicy}
-                                onSelect={(_event, selection) => {
-                                  updateApplicationField(application.id, 'pullPolicy', selection as string);
-                                  toggleApplicationDropdown(application.id, 'pullPolicyMount', false);
-                                }}
-                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                  <MenuToggle
-                                    ref={toggleRef}
-                                    onClick={() => toggleApplicationDropdown(application.id, 'pullPolicyMount', !getApplicationDropdownState(application.id, 'pullPolicyMount'))}
-                                    isExpanded={getApplicationDropdownState(application.id, 'pullPolicyMount')}
-                                    style={{ width: '100%' }}
-                                  >
-                                    {application.pullPolicy}
-                                  </MenuToggle>
-                                )}
-                              >
-                                <SelectList>
-                                  <SelectOption value="Select">Select</SelectOption>
-                                  <SelectOption value="Always">Always</SelectOption>
-                                  <SelectOption value="If not present">If not present</SelectOption>
-                                  <SelectOption value="Never">Never</SelectOption>
-                                </SelectList>
-                              </Select>
-                              </FormGroup>
-
-                              <FormGroup
-                                label="Mount path"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Mount path"
-                                    bodyContent="Enter the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for mount path field" />
-                                  </Popover>
-                                }
-                                fieldId={`mount-path-image-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`mount-path-image-${application.id}`}
-                                  value={application.mountPath}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'mountPath', value)}
-                                  placeholder="/path/to/somewhere"
-                                />
-                              </FormGroup>
-                            </div>
-                          )}
 
                             </>
                           )}
@@ -3084,7 +3454,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                                     <li><code>.service, .timer, .socket</code> - SystemD units</li>
                                                                     <li><code>.yaml, .yml, .json, .toml</code> - Config files</li>
                                                                   </ul>
-                                                                  <p><strong>⚠️ Unsupported:</strong> <code>.build</code>, <code>.kube</code> files</p>
+                                                                  <p><strong>⚠️ Unsupported:</strong> <code>.build</code>, <code>.kube</code>, <code>.artifact</code> files</p>
                                                                 </div>
                                                               }
                                                               hasClose={false}
@@ -3190,7 +3560,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                             <FileUploadHelperText>
                                                               <HelperText>
                                                                 <HelperTextItem>
-                                                                  Upload a file or paste content. Configs, scripts, YAML, Containerfiles
+                                                                  Upload a file or paste content. Supported extensions: .container, .volume, .pod, .image, .network
                                                                 </HelperTextItem>
                                                               </HelperText>
                                                             </FileUploadHelperText>

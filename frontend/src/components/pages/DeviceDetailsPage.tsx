@@ -1211,17 +1211,17 @@ status:
                   </div>
                   <div style={{ marginTop: '8px', color: '#4ec9b0' }}>
                     ● chronyd.service - NTP client/server<br/>
-                    &nbsp;&nbsp;&nbsp;Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)<br/>
-                    &nbsp;&nbsp;&nbsp;Active: <span style={{ color: '#00ff00' }}>active (running)</span> since Tue 2024-10-22 19:30:12 UTC; 2 days ago<br/>
-                    &nbsp;&nbsp;&nbsp;Docs: man:chronyd(8)<br/>
-                    &nbsp;&nbsp;&nbsp;Main PID: 1234 (chronyd)<br/>
-                    &nbsp;&nbsp;&nbsp;Tasks: 1 (limit: 4915)<br/>
-                    &nbsp;&nbsp;&nbsp;Memory: 2.1M<br/>
-                    &nbsp;&nbsp;&nbsp;CGroup: /system.slice/chronyd.service<br/>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─1234 /usr/sbin/chronyd
+                    Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)<br/>
+                    Active: <span style={{ color: '#00ff00' }}>active (running)</span> since Tue 2024-10-22 19:30:12 UTC; 2 days ago<br/>
+                    Docs: man:chronyd(8)<br/>
+                    Main PID: 1234 (chronyd)<br/>
+                    Tasks: 1 (limit: 4915)<br/>
+                    Memory: 2.1M<br/>
+                    CGroup: /system.slice/chronyd.service<br/>
+                    └─1234 /usr/sbin/chronyd
                   </div>
                   <div style={{ marginTop: '16px', color: '#569cd6' }}>
-                    [root@orange-device ~]# <span style={{ animation: 'blink 1s infinite', borderRight: '2px solid #d4d4d4' }}>&nbsp;</span>
+                    [root@orange-device ~]# <span style={{ animation: 'blink 1s infinite', borderRight: '2px solid #d4d4d4' }}> </span>
                   </div>
                 </div>
                 <div style={{ marginTop: '12px', fontSize: '14px', color: '#6a6e73' }}>
