@@ -47,6 +47,8 @@ import {
   MultipleFileUploadStatus,
   MultipleFileUploadStatusItem,
   DropEvent,
+  FileUpload,
+  FileUploadHelperText,
   Radio,
   TextArea
 } from '@patternfly/react-core';
@@ -177,14 +179,14 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
     imageReference: string;
     pullPolicy: string;
     mountPath: string;
-    // Inline application fields
+    // Compose application fields
     filePath: string;
     contentIsBase64: boolean;
     // Quadlet application fields
     sourceType: string;
     ociArtifactUrl: string;
     environmentVariables: { key: string; value: string }[];
-    fileDefinitions: { name: string; filePath: string; content: string; expanded?: boolean }[];
+    fileDefinitions: { name: string; filePath: string; content: string; filename?: string; expanded?: boolean }[];
   }
   const [applications, setApplications] = useState<Application[]>([]);
   const [nextApplicationId, setNextApplicationId] = useState(1);
@@ -322,6 +324,12 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
 
       // Validate applications
       applications.forEach((app, index) => {
+        // Application type is required
+        if (!app.applicationType || app.applicationType === 'Select') {
+          newErrors[`app_${app.id}_applicationType`] = 'Application type is required';
+          isValid = false;
+        }
+
         if (app.applicationType === 'Single container application') {
           const appImageError = validateApplicationImage(app.applicationImage);
           if (appImageError) {
@@ -339,14 +347,14 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
           });
         }
 
-        if (app.applicationType === 'Inline application' && !app.filePath.trim()) {
-          newErrors[`app_${app.id}_filePath`] = 'File path is required for inline applications';
+        if (app.applicationType === 'Compose Application' && !app.filePath.trim()) {
+          newErrors[`app_${app.id}_filePath`] = 'File path is required for compose applications';
           isValid = false;
         }
 
         if (app.applicationType === 'Quadlets application') {
-          if (app.sourceType === 'OCI Artifact' && !app.ociArtifactUrl.trim()) {
-            newErrors[`app_${app.id}_ociUrl`] = 'OCI Artifact URL is required';
+          if (app.sourceType === 'OCI Reference' && !app.ociArtifactUrl.trim()) {
+            newErrors[`app_${app.id}_ociUrl`] = 'OCI Reference URL is required';
             isValid = false;
           }
         }
@@ -556,7 +564,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
       imageReference: '',
       pullPolicy: 'Select',
       mountPath: 'Select',
-      // Inline application fields
+      // Compose application fields
       filePath: '',
       contentIsBase64: false,
       // Quadlet application fields
@@ -784,7 +792,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
         id: nextApplicationId + 1,
         applicationType: 'Quadlets application' as const,
         applicationName: 'monitoring-agent',
-        sourceType: 'OCI Artifact',
+        sourceType: 'OCI Reference',
         ociArtifactUrl: 'quay.io/monitoring/agent:latest',
         environmentVariables: [
           { key: 'LOG_LEVEL', value: 'info', completed: true },
@@ -1745,7 +1753,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                   <p><strong>Application Types:</strong></p>
                   <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
                     <li><strong>Single container</strong> - Simple deployments with image specifications</li>
-                    <li><strong>Inline applications</strong> - Custom file-based workloads</li>
+                    <li><strong>Compose applications</strong> - Custom file-based workloads</li>
                     <li><strong>Quadlet applications</strong> - Advanced systemd integration</li>
                   </ul>
                   <p><strong>Configuration Options:</strong></p>
@@ -1825,7 +1833,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
 
                           {/* Application type */}
                           <FormGroup
-                            label="Application type"
+                            label={
+                              <span>
+                                Application type
+                                <span style={{ color: 'red', marginLeft: '4px' }}>*</span>
+                              </span>
+                            }
+                            validated={errors[`app_${application.id}_applicationType`] ? 'error' : 'default'}
                             labelHelp={
                               <Popover
                                 triggerAction="hover"
@@ -1835,8 +1849,8 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   <p><strong>Deployment Methods:</strong></p>
                                   <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
                                     <li><strong>Single container application</strong> - Basic containerized services with image and resource specs</li>
-                                    <li><strong>Inline application</strong> - Custom file-based deployments with direct file uploads</li>
-                                    <li><strong>Quadlet application</strong> - Advanced systemd-managed containers with OCI artifacts</li>
+                                    <li><strong>Compose application</strong> - Custom file-based deployments with direct file uploads</li>
+                                    <li><strong>Quadlet application</strong> - Advanced systemd-managed containers with OCI references</li>
                                   </ul>
                                   <p><strong>⚠️ Important:</strong> This choice cannot be changed after creation.</p>
                                 </div>
@@ -1855,7 +1869,12 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                             selected={application.applicationType}
                             onSelect={(_event, selection) => {
                               updateApplicationField(application.id, 'applicationType', selection as string);
+                              // Set default sourceType when Compose Application is selected
+                              if (selection === 'Compose Application') {
+                                updateApplicationField(application.id, 'sourceType', 'OCI Reference');
+                              }
                               toggleApplicationDropdown(application.id, 'applicationType', false);
+                              clearError(`app_${application.id}_applicationType`);
                             }}
                             toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
                               <MenuToggle
@@ -1870,15 +1889,15 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                           >
                             <SelectList>
                               <SelectOption value="Select">Select</SelectOption>
-                              <SelectOption value="Inline application">Inline application</SelectOption>
-                              <SelectOption value="Quadlets application">Quadlets application</SelectOption>
                               <SelectOption value="Single container application">Single container application</SelectOption>
+                              <SelectOption value="Quadlets application">Quadlets application</SelectOption>
+                              <SelectOption value="Compose Application">Compose Application</SelectOption>
                             </SelectList>
                           </Select>
                           <FormHelperText>
                             <HelperText>
-                              <HelperTextItem>
-                                This selection cannot be changed after initial creation as the configuration structure is fundamentally different for each application type.
+                              <HelperTextItem variant={errors[`app_${application.id}_applicationType`] ? 'error' : 'default'}>
+                                {errors[`app_${application.id}_applicationType`] || 'This selection cannot be changed after initial creation as the configuration structure is fundamentally different for each application type.'}
                               </HelperTextItem>
                             </HelperText>
                           </FormHelperText>
@@ -1888,113 +1907,262 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                           <div style={{ marginLeft: '24px', borderLeft: '2px solid #f0f0f0', paddingLeft: '16px' }}>
 
                           {/* Conditional fields based on application type */}
-                          {application.applicationType === 'Inline application' && (
+                          {application.applicationType === 'Compose Application' && (
                             <>
-                              {/* File path on the device */}
+                              {/* Definition Source */}
                               <FormGroup
-                                label="File path on the device"
+                                label="Definition Source"
                                 labelHelp={
                                   <Popover
                                     triggerAction="hover"
-                                    headerContent="File path"
-                                    bodyContent="Specify the complete path where the application file will be placed on the device's filesystem. Use absolute paths starting with '/' (e.g., '/opt/app/main.py', '/usr/local/bin/script.sh'). Ensure the directory exists or will be created, and consider file permissions for the application's functionality."
+                                    headerContent="Definition Source"
+                                    bodyContent={
+                                    <div>
+                                      <p><strong>Configuration Sources:</strong></p>
+                                      <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
+                                        <li><strong>OCI Reference</strong> - Pull compose definitions from container registry (reusable, versioned)</li>
+                                        <li><strong>Inline</strong> - Define compose files directly in this interface (custom, one-off)</li>
+                                      </ul>
+                                    </div>
+                                  }
                                     hasClose={false}
                                   >
-                                    <FormGroupLabelHelp aria-label="More info for file path field" />
+                                    <FormGroupLabelHelp aria-label="More info for definition source field" />
                                   </Popover>
                                 }
-                                fieldId={`file-path-${application.id}`}
+                                fieldId={`definition-source-${application.id}`}
                                 style={{ marginBottom: '1.5rem' }}
                               >
-                                <TextInput
-                                  type="text"
-                                  id={`file-path-${application.id}`}
-                                  value={application.filePath}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'filePath', value)}
-                                  placeholder="/opt/app/main.py"
-                                />
-                              </FormGroup>
-
-                              {/* Content */}
-                              <FormGroup
-                                label="Content"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Content"
-                                    bodyContent="Upload application files that will be deployed to your devices. Supported formats include scripts, configuration files, manifests, and other text-based application assets. Files should be in text format (YAML, JSON, XML, scripts) with a maximum size of 1MB each. These files will be transferred to the device at the specified file path."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for content field" />
-                                  </Popover>
-                                }
-                                fieldId={`content-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <div style={{
-                                  width: '100%',
-                                  display: 'flex',
-                                  flexDirection: 'column'
-                                }}>
-                                  <MultipleFileUpload
-                                    onFileDrop={(event, droppedFiles) => handleMultipleFilesDrop(application.id, droppedFiles)}
-                                    onFileInputChange={(event, file) => {
-                                      if (file) {
-                                        handleMultipleFilesDrop(application.id, [file]);
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                  <Radio
+                                    isChecked={application.sourceType === 'OCI Reference'}
+                                    name={`definition-source-${application.id}`}
+                                    onChange={() => updateApplicationField(application.id, 'sourceType', 'OCI Reference')}
+                                    label="OCI Reference"
+                                    id={`oci-reference-${application.id}`}
+                                  />
+                                  <Radio
+                                    isChecked={application.sourceType === 'Inline'}
+                                    name={`definition-source-${application.id}`}
+                                    onChange={() => {
+                                      updateApplicationField(application.id, 'sourceType', 'Inline');
+                                      // Add a default file definition if none exist
+                                      if (application.fileDefinitions.length === 0) {
+                                        updateApplicationField(application.id, 'fileDefinitions', [{ name: '', filePath: '', content: '', expanded: true }]);
                                       }
                                     }}
-                                    dropzoneProps={{
-                                      accept: {
-                                        'text/*': ['.txt', '.yml', '.yaml', '.json', '.xml', '.md'],
-                                        'application/json': ['.json'],
-                                        'application/yaml': ['.yml', '.yaml']
-                                      }
-                                    }}
-                                    isHorizontal
-                                    style={{
-                                      width: '100%'
-                                    }}
-                                  >
-                                    <MultipleFileUploadMain
-                                      titleIcon={<UploadIcon />}
-                                      titleText="Drag and drop files here or upload"
-                                      infoText="Accepted file types: text files, JSON, YAML. Max file size: 1mb per file"
-                                    />
-                                    {applicationFiles[application.id] && applicationFiles[application.id].length > 0 && (
-                                      <MultipleFileUploadStatus
-                                        statusToggleText={(() => {
-                                          const files = applicationFiles[application.id] || [];
-                                          const successCount = files.filter(f => f.uploadStatus === 'success').length;
-                                          const totalCount = files.length;
-                                          return `${successCount} of ${totalCount} Files uploaded`;
-                                        })()}
-                                        statusToggleIcon="success"
-                                      >
-                                        {applicationFiles[application.id].map((file, index) => (
-                                          <MultipleFileUploadStatusItem
-                                            key={index}
-                                            file={file.file}
-                                            onClearClick={() => handleFileRemove(application.id, file.name)}
-                                            progressValue={file.uploadProgress}
-                                            progressVariant={
-                                              file.uploadStatus === 'error' ? 'danger' :
-                                              file.uploadStatus === 'success' ? 'success' : undefined
-                                            }
-                                          />
-                                        ))}
-                                      </MultipleFileUploadStatus>
-                                    )}
-                                  </MultipleFileUpload>
+                                    label="Inline"
+                                    id={`inline-${application.id}`}
+                                  />
                                 </div>
                               </FormGroup>
 
-                              {/* Content is base64 checkbox */}
-                              <Checkbox
-                                label="Content is base64"
-                                isChecked={application.contentIsBase64}
-                                onChange={(_event, checked) => updateApplicationField(application.id, 'contentIsBase64', checked)}
-                                id={`base64-${application.id}`}
-                              />
+                              {/* OCI Reference Scenario */}
+                              {application.sourceType === 'OCI Reference' && (
+                                <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
+                                  {/* OCI Reference URL */}
+                                  <FormGroup
+                                    label="OCI Reference URL"
+                                    labelHelp={
+                                      <Popover
+                                        triggerAction="hover"
+                                        headerContent="OCI Reference URL"
+                                        bodyContent="Specify the full URL to the OCI reference containing your compose application definition. Use the format 'oci://registry.example.com/path/to/reference:tag'. The reference should contain compose files and related configurations packaged as an OCI reference. Ensure your devices have access to the specified registry."
+                                        hasClose={false}
+                                      >
+                                        <FormGroupLabelHelp aria-label="More info for OCI reference URL field" />
+                                      </Popover>
+                                    }
+                                    fieldId={`oci-url-${application.id}`}
+                                    style={{ marginBottom: '1.5rem' }}
+                                  >
+                                    <TextInput
+                                      type="text"
+                                      id={`oci-url-${application.id}`}
+                                      value={application.ociArtifactUrl}
+                                      onChange={(_event, value) => updateApplicationField(application.id, 'ociArtifactUrl', value)}
+                                      placeholder="oci://registry.example.com/my-quadlet:latest"
+                                    />
+                                    <FormHelperText>
+                                      <HelperText>
+                                        <HelperTextItem>
+                                          Provide a valid OCI reference URL (e.g., "oci://registry.example.com/my-quadlet:latest")
+                                        </HelperTextItem>
+                                      </HelperText>
+                                    </FormHelperText>
+                                  </FormGroup>
+
+                                  {/* Environment Variables */}
+                                  <FormGroup
+                                    label="Environment Variables"
+                                    labelHelp={
+                                      <Popover
+                                        triggerAction="hover"
+                                        headerContent="Environment Variables"
+                                        bodyContent="Define key-value pairs that will be available as environment variables inside your compose application containers. Use this to configure application behavior, API keys (use secrets for sensitive data), database URLs, feature flags, and other runtime configuration. Environment variables are essential for making applications configurable across different deployment environments."
+                                        hasClose={false}
+                                      >
+                                        <FormGroupLabelHelp aria-label="More info for environment variables field" />
+                                      </Popover>
+                                    }
+                                    fieldId={`env-vars-${application.id}`}
+                                    style={{ marginBottom: '1.5rem' }}
+                                  >
+                                    <Stack hasGutter>
+                                      {/* Display existing environment variables as labels */}
+                                      {application.environmentVariables.filter(env => env.completed).length > 0 && (
+                                        <StackItem>
+                                          <LabelGroup>
+                                            {application.environmentVariables
+                                              .filter(env => env.completed)
+                                              .map((envVar, index) => (
+                                                <Label
+                                                  key={index}
+                                                  onClose={() => {
+                                                    const newEnvVars = application.environmentVariables.filter(env =>
+                                                      !(env.key === envVar.key && env.value === envVar.value)
+                                                    );
+                                                    updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                                  }}
+                                                  closeBtnAriaLabel={`Remove ${envVar.key}=${envVar.value}`}
+                                                >
+                                                  {envVar.key}={envVar.value}
+                                                </Label>
+                                              ))}
+                                          </LabelGroup>
+                                        </StackItem>
+                                      )}
+
+                                      {/* Show input row only for incomplete variables (new ones being added) */}
+                                      {application.environmentVariables
+                                        .filter(env => !env.completed)
+                                        .map((envVar, index) => {
+                                          const actualIndex = application.environmentVariables.findIndex(env =>
+                                            env === envVar
+                                          );
+
+                                          const handleAddVariable = () => {
+                                            if (envVar.key.trim() && envVar.value.trim()) {
+                                              const newEnvVars = [...application.environmentVariables];
+                                              newEnvVars[actualIndex] = {
+                                                ...newEnvVars[actualIndex],
+                                                key: envVar.key.trim(),
+                                                value: envVar.value.trim(),
+                                                completed: true
+                                              };
+                                              updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                            }
+                                          };
+
+                                          const handleKeyPress = (event: React.KeyboardEvent) => {
+                                            if (event.key === 'Enter') {
+                                              handleAddVariable();
+                                            }
+                                          };
+
+                                          return (
+                                            <StackItem key={`input-${actualIndex}`}>
+                                              <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                maxWidth: '600px'
+                                              }}>
+                                                <TextInput
+                                                  placeholder="key"
+                                                  value={envVar.key || ''}
+                                                  onChange={(_event, value) => {
+                                                    const newEnvVars = [...application.environmentVariables];
+                                                    newEnvVars[actualIndex] = { ...newEnvVars[actualIndex], key: value };
+                                                    updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                                  }}
+                                                  onKeyDown={handleKeyPress}
+                                                  style={{
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #D2D2D2',
+                                                    minWidth: '120px',
+                                                    flex: '1'
+                                                  }}
+                                                />
+                                                <span style={{
+                                                  color: '#151515',
+                                                  fontWeight: '400',
+                                                  fontSize: '14px'
+                                                }}>
+                                                  =
+                                                </span>
+                                                <TextInput
+                                                  placeholder="value"
+                                                  value={envVar.value || ''}
+                                                  onChange={(_event, value) => {
+                                                    const newEnvVars = [...application.environmentVariables];
+                                                    newEnvVars[actualIndex] = { ...newEnvVars[actualIndex], value: value };
+                                                    updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                                  }}
+                                                  onKeyDown={handleKeyPress}
+                                                  style={{
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #D2D2D2',
+                                                    minWidth: '120px',
+                                                    flex: '1'
+                                                  }}
+                                                />
+                                                <Button
+                                                  variant="primary"
+                                                  onClick={handleAddVariable}
+                                                  isDisabled={!envVar.key?.trim() || !envVar.value?.trim()}
+                                                  style={{
+                                                    borderRadius: '20px',
+                                                    backgroundColor: (envVar.key?.trim() && envVar.value?.trim()) ? '#0066CC' : '#A3A3A3',
+                                                    border: 'none',
+                                                    padding: '6px 16px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '400'
+                                                  }}
+                                                >
+                                                  Add
+                                                </Button>
+                                                <Button
+                                                  variant="plain"
+                                                  onClick={() => {
+                                                    const newEnvVars = application.environmentVariables.filter((_, i) => i !== actualIndex);
+                                                    updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                                  }}
+                                                  style={{
+                                                    minWidth: 'auto',
+                                                    padding: '4px',
+                                                    fontSize: '18px',
+                                                    color: '#6A6E73',
+                                                    background: 'transparent',
+                                                    border: 'none'
+                                                  }}
+                                                >
+                                                  ×
+                                                </Button>
+                                              </div>
+                                            </StackItem>
+                                          );
+                                        })}
+
+                                      {/* Add Environment Variables button */}
+                                      <StackItem>
+                                        <Button
+                                          variant="link"
+                                          onClick={() => {
+                                            // Add an empty environment variable to trigger input mode
+                                            const newEnvVars = [...application.environmentVariables, { key: '', value: '', completed: false }];
+                                            updateApplicationField(application.id, 'environmentVariables', newEnvVars);
+                                          }}
+                                          icon={<PlusIcon />}
+                                          style={{ padding: 0 }}
+                                        >
+                                          Add environment variable
+                                        </Button>
+                                      </StackItem>
+                                    </Stack>
+                                  </FormGroup>
+                                </div>
+                              )}
                             </>
                           )}
 
@@ -2102,12 +2270,6 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                       }}
                                     >
                                       →
-                                    </Button>
-                                  </SplitItem>
-                                  <SplitItem>
-                                    <Button variant="secondary" onClick={() => setIsFileUploadModalOpen(true)}>
-                                      <UploadIcon style={{ marginRight: '8px' }} />
-                                      Upload file
                                     </Button>
                                   </SplitItem>
                                 </Split>
@@ -2244,9 +2406,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   <div>
                                     <p><strong>Volume Types:</strong></p>
                                     <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
-                                      <li><strong>Image Volume</strong> - Mount data from container images</li>
-                                      <li><strong>Mount Volume</strong> - Mount existing device directories</li>
-                                      <li><strong>Image Mount Volume</strong> - Combine both approaches</li>
+                                      <li><strong>Mount Volume</strong> - Mount existing device directories into the container</li>
                                     </ul>
                                     <p><strong>💾 Benefits:</strong> Persistent storage that survives container restarts and updates.</p>
                                   </div>
@@ -2280,7 +2440,6 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                           >
                             <SelectList>
                               <SelectOption value="Select">Select</SelectOption>
-                              <SelectOption value="Image Volume">Image Volume</SelectOption>
                               <SelectOption value="Mount Volume">Mount Volume</SelectOption>
                               <SelectOption value="Image Mount Volume">Image Mount Volume</SelectOption>
                             </SelectList>
@@ -2288,105 +2447,41 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                           </FormGroup>
                           )}
 
-                          {/* Conditional fields for Image Volume */}
-                          {application.selectedVolume === 'Image Volume' && (
-                            <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
-                              <FormGroup
-                                label="Image reference"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Image reference"
-                                    bodyContent="Specify the container image that contains the data you want to mount as a volume. This image will be pulled and its contents will be available to your application container at the specified mount path. Use this for images that contain static data, configuration files, or other assets your application needs."
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for image reference field" />
-                                  </Popover>
-                                }
-                                fieldId={`image-reference-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <TextInput
-                                  type="text"
-                                  id={`image-reference-${application.id}`}
-                                  value={application.imageReference}
-                                  onChange={(_event, value) => updateApplicationField(application.id, 'imageReference', value)}
-                                  placeholder="quay.io/nginx/nginx:latest"
-                                />
-                                <FormHelperText>
-                                  <HelperText>
-                                    <HelperTextItem>
-                                      Provide a valid container image reference for the volume.
-                                    </HelperTextItem>
-                                  </HelperText>
-                                </FormHelperText>
-                              </FormGroup>
-
-                              <FormGroup
-                                label="Pull policy"
-                                labelHelp={
-                                  <Popover
-                                    triggerAction="hover"
-                                    headerContent="Pull policy"
-                                    bodyContent={
-                                    <div>
-                                      <p><strong>Pull Options:</strong></p>
-                                      <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
-                                        <li><strong>Always</strong> - Pull on every restart (latest version, more bandwidth)</li>
-                                        <li><strong>If not present</strong> - Pull only if missing locally (efficient)</li>
-                                        <li><strong>Never</strong> - Use cached images only (fastest, may fail)</li>
-                                      </ul>
-                                      <p><strong>💡 Trade-off:</strong> Freshness vs. bandwidth efficiency.</p>
-                                    </div>
-                                  }
-                                    hasClose={false}
-                                  >
-                                    <FormGroupLabelHelp aria-label="More info for pull policy field" />
-                                  </Popover>
-                                }
-                                fieldId={`pull-policy-${application.id}`}
-                                style={{ marginBottom: '1.5rem' }}
-                              >
-                                <Select
-                                id={`pull-policy-${application.id}`}
-                                isOpen={getApplicationDropdownState(application.id, 'pullPolicy')}
-                                selected={application.pullPolicy}
-                                onSelect={(_event, selection) => {
-                                  updateApplicationField(application.id, 'pullPolicy', selection as string);
-                                  toggleApplicationDropdown(application.id, 'pullPolicy', false);
-                                }}
-                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                  <MenuToggle
-                                    ref={toggleRef}
-                                    onClick={() => toggleApplicationDropdown(application.id, 'pullPolicy', !getApplicationDropdownState(application.id, 'pullPolicy'))}
-                                    isExpanded={getApplicationDropdownState(application.id, 'pullPolicy')}
-                                    style={{ width: '100%' }}
-                                  >
-                                    {application.pullPolicy}
-                                  </MenuToggle>
-                                )}
-                              >
-                                <SelectList>
-                                  <SelectOption value="Select">Select</SelectOption>
-                                  <SelectOption value="Always">Always</SelectOption>
-                                  <SelectOption value="If not present">If not present</SelectOption>
-                                  <SelectOption value="Never">Never</SelectOption>
-                                </SelectList>
-                              </Select>
-                              </FormGroup>
-                            </div>
-                          )}
 
                           {/* Conditional fields for Mount Volume */}
                           {application.selectedVolume === 'Mount Volume' && (
                             <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
+                              <FormGroup
+                                label="Name"
+                                labelHelp={
+                                  <Popover
+                                    triggerAction="hover"
+                                    headerContent="Name"
+                                    bodyContent="Provide a descriptive name for this volume. This name will be used to identify the volume in your configuration. Choose a meaningful name that describes the purpose or content of the volume."
+                                    hasClose={false}
+                                  >
+                                    <FormGroupLabelHelp aria-label="More info for volume name field" />
+                                  </Popover>
+                                }
+                                fieldId={`volume-name-${application.id}`}
+                                style={{ marginBottom: '1.5rem' }}
+                              >
+                                <TextInput
+                                  type="text"
+                                  id={`volume-name-${application.id}`}
+                                  value={application.volumeName || ''}
+                                  onChange={(_event, value) => updateApplicationField(application.id, 'volumeName', value)}
+                                  placeholder="e.g., data-volume"
+                                />
+                              </FormGroup>
+
                               <FormGroup
                                 label="Mount path"
                                 labelHelp={
                                   <Popover
                                     triggerAction="hover"
                                     headerContent="Mount path"
-                                    bodyContent="Choose the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
+                                    bodyContent="Enter the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
                                     hasClose={false}
                                   >
                                     <FormGroupLabelHelp aria-label="More info for mount path field" />
@@ -2395,32 +2490,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                 fieldId={`mount-path-${application.id}`}
                                 style={{ marginBottom: '1.5rem' }}
                               >
-                                <Select
-                                id={`mount-path-${application.id}`}
-                                isOpen={getApplicationDropdownState(application.id, 'mountPath')}
-                                selected={application.mountPath}
-                                onSelect={(_event, selection) => {
-                                  updateApplicationField(application.id, 'mountPath', selection as string);
-                                  toggleApplicationDropdown(application.id, 'mountPath', false);
-                                }}
-                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                  <MenuToggle
-                                    ref={toggleRef}
-                                    onClick={() => toggleApplicationDropdown(application.id, 'mountPath', !getApplicationDropdownState(application.id, 'mountPath'))}
-                                    isExpanded={getApplicationDropdownState(application.id, 'mountPath')}
-                                    style={{ width: '100%' }}
-                                  >
-                                    {application.mountPath}
-                                  </MenuToggle>
-                                )}
-                              >
-                                <SelectList>
-                                  <SelectOption value="Select">Select</SelectOption>
-                                  <SelectOption value="Home">Home</SelectOption>
-                                  <SelectOption value="Camadorg">Camadorg</SelectOption>
-                                  <SelectOption value="my-app-volume-folder">my-app-volume-folder</SelectOption>
-                                </SelectList>
-                              </Select>
+                                <TextInput
+                                  type="text"
+                                  id={`mount-path-${application.id}`}
+                                  value={application.mountPath}
+                                  onChange={(_event, value) => updateApplicationField(application.id, 'mountPath', value)}
+                                  placeholder="/path/to/somewhere"
+                                />
                               </FormGroup>
                             </div>
                           )}
@@ -2428,6 +2504,30 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                           {/* Conditional fields for Image Mount Volume */}
                           {application.selectedVolume === 'Image Mount Volume' && (
                             <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
+                              <FormGroup
+                                label="Name"
+                                labelHelp={
+                                  <Popover
+                                    triggerAction="hover"
+                                    headerContent="Name"
+                                    bodyContent="Provide a descriptive name for this volume. This name will be used to identify the volume in your configuration. Choose a meaningful name that describes the purpose or content of the volume."
+                                    hasClose={false}
+                                  >
+                                    <FormGroupLabelHelp aria-label="More info for volume name field" />
+                                  </Popover>
+                                }
+                                fieldId={`volume-name-image-${application.id}`}
+                                style={{ marginBottom: '1.5rem' }}
+                              >
+                                <TextInput
+                                  type="text"
+                                  id={`volume-name-image-${application.id}`}
+                                  value={application.volumeName || ''}
+                                  onChange={(_event, value) => updateApplicationField(application.id, 'volumeName', value)}
+                                  placeholder="e.g., config-volume"
+                                />
+                              </FormGroup>
+
                               <FormGroup
                                 label="Image reference"
                                 labelHelp={
@@ -2518,7 +2618,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                   <Popover
                                     triggerAction="hover"
                                     headerContent="Mount path"
-                                    bodyContent="Choose the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
+                                    bodyContent="Enter the directory path where the volume will be mounted inside your container. This determines where your application can access the volume data. Common paths include '/data', '/config', '/app/storage'. The path must exist in the container or be created by your application. Choose paths that align with your application's expected directory structure."
                                     hasClose={false}
                                   >
                                     <FormGroupLabelHelp aria-label="More info for mount path field" />
@@ -2527,35 +2627,17 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                 fieldId={`mount-path-image-${application.id}`}
                                 style={{ marginBottom: '1.5rem' }}
                               >
-                                <Select
-                                id={`mount-path-image-${application.id}`}
-                                isOpen={getApplicationDropdownState(application.id, 'mountPathImage')}
-                                selected={application.mountPath}
-                                onSelect={(_event, selection) => {
-                                  updateApplicationField(application.id, 'mountPath', selection as string);
-                                  toggleApplicationDropdown(application.id, 'mountPathImage', false);
-                                }}
-                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                  <MenuToggle
-                                    ref={toggleRef}
-                                    onClick={() => toggleApplicationDropdown(application.id, 'mountPathImage', !getApplicationDropdownState(application.id, 'mountPathImage'))}
-                                    isExpanded={getApplicationDropdownState(application.id, 'mountPathImage')}
-                                    style={{ width: '100%' }}
-                                  >
-                                    {application.mountPath}
-                                  </MenuToggle>
-                                )}
-                              >
-                                <SelectList>
-                                  <SelectOption value="Select">Select</SelectOption>
-                                  <SelectOption value="Home">Home</SelectOption>
-                                  <SelectOption value="Camadorg">Camadorg</SelectOption>
-                                  <SelectOption value="my-app-volume-folder">my-app-volume-folder</SelectOption>
-                                </SelectList>
-                              </Select>
+                                <TextInput
+                                  type="text"
+                                  id={`mount-path-image-${application.id}`}
+                                  value={application.mountPath}
+                                  onChange={(_event, value) => updateApplicationField(application.id, 'mountPath', value)}
+                                  placeholder="/path/to/somewhere"
+                                />
                               </FormGroup>
                             </div>
                           )}
+
                             </>
                           )}
 
@@ -2572,7 +2654,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                     <div>
                                       <p><strong>Configuration Sources:</strong></p>
                                       <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
-                                        <li><strong>OCI Artifact</strong> - Pull definitions from container registry (reusable, versioned)</li>
+                                        <li><strong>OCI Reference</strong> - Pull definitions from container registry (reusable, versioned)</li>
                                         <li><strong>Inline</strong> - Define Quadlet files directly in this interface (custom, one-off)</li>
                                       </ul>
                                     </div>
@@ -2587,11 +2669,11 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                               >
                                 <div style={{ display: 'flex', gap: '1rem' }}>
                                   <Radio
-                                    isChecked={application.sourceType === 'OCI Artifact'}
+                                    isChecked={application.sourceType === 'OCI Reference'}
                                     name={`definition-source-${application.id}`}
-                                    onChange={() => updateApplicationField(application.id, 'sourceType', 'OCI Artifact')}
-                                    label="OCI Artifact"
-                                    id={`oci-artifact-${application.id}`}
+                                    onChange={() => updateApplicationField(application.id, 'sourceType', 'OCI Reference')}
+                                    label="OCI Reference"
+                                    id={`oci-reference-${application.id}`}
                                   />
                                   <Radio
                                     isChecked={application.sourceType === 'Inline'}
@@ -2609,20 +2691,20 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                 </div>
                               </FormGroup>
 
-                              {/* OCI Artifact Scenario */}
-                              {application.sourceType === 'OCI Artifact' && (
+                              {/* OCI Reference Scenario */}
+                              {application.sourceType === 'OCI Reference' && (
                                 <div style={{ marginLeft: '24px', paddingLeft: '16px', borderLeft: '2px solid #f0f0f0' }}>
-                                  {/* OCI Artifact URL */}
+                                  {/* OCI Reference URL */}
                                   <FormGroup
-                                    label="OCI Artifact URL"
+                                    label="OCI Reference URL"
                                     labelHelp={
                                       <Popover
                                         triggerAction="hover"
-                                        headerContent="OCI Artifact URL"
-                                        bodyContent="Specify the full URL to the OCI artifact containing your Quadlet application definition. Use the format 'oci://registry.example.com/path/to/artifact:tag'. The artifact should contain Quadlet files (.container, .volume, .pod, etc.) packaged as an OCI artifact. Ensure your devices have access to the specified registry."
+                                        headerContent="OCI Reference URL"
+                                        bodyContent="Specify the full URL to the OCI reference containing your Quadlet application definition. Use the format 'oci://registry.example.com/path/to/reference:tag'. The reference should contain Quadlet files (.container, .volume, .pod, etc.) packaged as an OCI reference. Ensure your devices have access to the specified registry."
                                         hasClose={false}
                                       >
-                                        <FormGroupLabelHelp aria-label="More info for OCI artifact URL field" />
+                                        <FormGroupLabelHelp aria-label="More info for OCI reference URL field" />
                                       </Popover>
                                     }
                                     fieldId={`oci-url-${application.id}`}
@@ -2638,7 +2720,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                     <FormHelperText>
                                       <HelperText>
                                         <HelperTextItem>
-                                          Provide a valid OCI artifact URL (e.g., "oci://registry.example.com/my-quadlet:latest")
+                                          Provide a valid OCI reference URL (e.g., "oci://registry.example.com/my-quadlet:latest")
                                         </HelperTextItem>
                                       </HelperText>
                                     </FormHelperText>
@@ -2968,23 +3050,8 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                     ) : (
                                                       <>
                                                         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                                          {fileDef.name || `File Definition ${index + 1}`}
+                                                          {fileDef.name || (fileDef.filePath ? fileDef.filePath.split('/').pop() : `File Definition ${index + 1}`)}
                                                         </span>
-                                                        <Button
-                                                          className="edit-controls"
-                                                          variant="plain"
-                                                          onClick={() => {
-                                                            setEditingFileDefTitle(`${application.id}-${index}`);
-                                                            setEditingTitleValue(fileDef.name || '');
-                                                          }}
-                                                          style={{ padding: '4px', marginLeft: '4px' }}
-                                                          aria-label="Edit file definition name"
-                                                        >
-                                                          <PenToSquareIcon
-                                                            style={{ fontSize: '12px', color: '#6a6e73' }}
-                                                            title="Edit file definition name"
-                                                          />
-                                                        </Button>
                                                       </>
                                                     )}
                                                   </div>
@@ -2997,11 +3064,11 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                     <Stack hasGutter>
                                                       <StackItem>
                                                         <FormGroup
-                                                          label="File Path"
+                                                          label="File name"
                                                           labelHelp={
                                                             <Popover
                                                               triggerAction="hover"
-                                                              headerContent="File Path Guidelines"
+                                                              headerContent="File name Guidelines"
                                                               bodyContent={
                                                                 <div>
                                                                   <p><strong>Recommended Quadlet Types:</strong></p>
@@ -3022,7 +3089,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                               }
                                                               hasClose={false}
                                                             >
-                                                              <FormGroupLabelHelp aria-label="File path guidelines" />
+                                                              <FormGroupLabelHelp aria-label="File name guidelines" />
                                                             </Popover>
                                                           }
                                                           fieldId={`file-path-${application.id}-${index}`}
@@ -3043,7 +3110,7 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                                   console.log('Input focused, value:', event.target.value);
                                                                 }}
                                                                 placeholder="/etc/containers/systemd/webapp.container"
-                                                                aria-label="File path"
+                                                                aria-label="File name"
                                                                 autoComplete="off"
                                                                 validated={(() => {
                                                                   const validation = validateFilePath(fileDef.filePath);
@@ -3053,55 +3120,13 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                                 })()}
                                                               />
                                                             </SplitItem>
-                                                            <SplitItem>
-                                                              <Select
-                                                                id={`file-extension-helper-${application.id}-${index}`}
-                                                                isOpen={getApplicationDropdownState(application.id, `fileExtension-${index}`)}
-                                                                selected="Quick Add"
-                                                                onSelect={(_event, selection) => {
-                                                                  if (selection !== 'Quick Add') {
-                                                                    const currentPath = fileDef.filePath;
-                                                                    const pathWithoutExt = currentPath.replace(/\.[^/.]+$/, '') || '/path/to/file';
-                                                                    const newPath = `${pathWithoutExt}${selection}`;
-
-                                                                    const newFileDefs = [...application.fileDefinitions];
-                                                                    newFileDefs[index] = { ...newFileDefs[index], filePath: newPath };
-                                                                    updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
-                                                                  }
-                                                                  toggleApplicationDropdown(application.id, `fileExtension-${index}`, false);
-                                                                }}
-                                                                toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                                                                  <MenuToggle
-                                                                    ref={toggleRef}
-                                                                    onClick={() => toggleApplicationDropdown(application.id, `fileExtension-${index}`, !getApplicationDropdownState(application.id, `fileExtension-${index}`))}
-                                                                    isExpanded={getApplicationDropdownState(application.id, `fileExtension-${index}`)}
-                                                                    variant="secondary"
-                                                                    style={{ minWidth: '120px' }}
-                                                                  >
-                                                                    Quick Add
-                                                                  </MenuToggle>
-                                                                )}
-                                                              >
-                                                                <SelectList>
-                                                                  <SelectOption value=".container">.container</SelectOption>
-                                                                  <SelectOption value=".volume">.volume</SelectOption>
-                                                                  <SelectOption value=".pod">.pod</SelectOption>
-                                                                  <SelectOption value=".image">.image</SelectOption>
-                                                                  <SelectOption value=".network">.network</SelectOption>
-                                                                  <SelectOption isDivider />
-                                                                  <SelectOption value=".service">.service</SelectOption>
-                                                                  <SelectOption value=".yaml">.yaml</SelectOption>
-                                                                  <SelectOption value=".json">.json</SelectOption>
-                                                                </SelectList>
-                                                              </Select>
-                                                            </SplitItem>
                                                           </Split>
 
                                                           {/* Base helper text always shown */}
                                                           <FormHelperText>
                                                             <HelperText>
                                                               <HelperTextItem>
-                                                                Use recommended extensions: <strong>.container</strong>, <strong>.volume</strong>, <strong>.pod</strong>, <strong>.image</strong>, <strong>.network</strong>
+                                                                Supported extensions: <strong>.container</strong>, <strong>.volume</strong>, <strong>.pod</strong>, <strong>.image</strong>, <strong>.network</strong>
                                                               </HelperTextItem>
                                                             </HelperText>
                                                           </FormHelperText>
@@ -3133,48 +3158,43 @@ const CreateFleetWizardClean: React.FC<CreateFleetWizardCleanProps> = ({ onNavig
                                                           label="Content"
                                                           fieldId={`file-content-${application.id}-${index}`}
                                                         >
-                                                          <div style={{ position: 'relative' }}>
-                                                            <CodeBlock style={{
-                                                              height: '150px',
-                                                              position: 'relative',
-                                                              border: '1px solid #D2D2D2',
-                                                              borderRadius: '4px',
-                                                              backgroundColor: '#F8F8F8'
-                                                            }}>
-                                                              <textarea
-                                                                id={`file-content-${application.id}-${index}`}
-                                                                value={fileDef.content}
-                                                                onChange={(event) => {
-                                                                  const newFileDefs = [...application.fileDefinitions];
-                                                                  newFileDefs[index] = { ...newFileDefs[index], content: event.target.value };
-                                                                  updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
-                                                                }}
-                                                                placeholder="Paste file content here
-Configs, scripts, YAML, Containerfiles"
-                                                                style={{
-                                                                  position: 'absolute',
-                                                                  top: 0,
-                                                                  left: 0,
-                                                                  right: 0,
-                                                                  bottom: 0,
-                                                                  width: '100%',
-                                                                  height: '100%',
-                                                                  padding: '1rem',
-                                                                  fontFamily: 'Monaco, "Courier New", monospace',
-                                                                  fontSize: '14px',
-                                                                  lineHeight: '1.4',
-                                                                  color: '#151515',
-                                                                  backgroundColor: 'transparent',
-                                                                  border: 'none',
-                                                                  outline: 'none',
-                                                                  resize: 'vertical',
-                                                                  whiteSpace: 'pre',
-                                                                  overflow: 'auto',
-                                                                  zIndex: 1
-                                                                }}
-                                                              />
-                                                            </CodeBlock>
-                                                          </div>
+                                                          <FileUpload
+                                                            id={`file-content-${application.id}-${index}`}
+                                                            type="text"
+                                                            value={fileDef.content}
+                                                            filename={fileDef.filename || ''}
+                                                            filenamePlaceholder="Drag and drop a file or upload one"
+                                                            onFileInputChange={(_, file: File) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], filename: file.name };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onDataChange={(_, value: string) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], content: value };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onTextChange={(_, value: string) => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], content: value };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            onClearClick={() => {
+                                                              const newFileDefs = [...application.fileDefinitions];
+                                                              newFileDefs[index] = { ...newFileDefs[index], filename: '', content: '' };
+                                                              updateApplicationField(application.id, 'fileDefinitions', newFileDefs);
+                                                            }}
+                                                            allowEditingUploadedText={true}
+                                                            browseButtonText="Upload"
+                                                          >
+                                                            <FileUploadHelperText>
+                                                              <HelperText>
+                                                                <HelperTextItem>
+                                                                  Upload a file or paste content. Configs, scripts, YAML, Containerfiles
+                                                                </HelperTextItem>
+                                                              </HelperText>
+                                                            </FileUploadHelperText>
+                                                          </FileUpload>
                                                         </FormGroup>
                                                       </StackItem>
                                                     </Stack>
